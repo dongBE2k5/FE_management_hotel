@@ -1,33 +1,38 @@
+import { Image } from 'expo-image';
+import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
-export default function App() {
-  const [log, setLog] = useState('');
+
+export default function HomeScreen() {
+    const [message, setMessage] = useState(''); // state lưu nội dung sẽ hiển thị
 
   const handlePress = () => {
-    setLog(prev => prev + ' ➡️ Bạn vừa nhấn nút!');
+    setMessage(...'Xin chào! Bạn vừa nhấn nút.');
   };
 
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.button} onPress={handlePress}>
-        <Text style={styles.buttonText}>Nhấn để nối chữ</Text>
+        <Text style={styles.buttonText}>Nhấn vào đây</Text>
       </TouchableOpacity>
-      <Text style={styles.message}>{log}</Text>
+
+      {/* Hiển thị chữ khi state thay đổi */}
+      {message !== '' && <Text style={styles.message}>{message}</Text>}
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    backgroundColor: '#f5f5f5',
   },
   button: {
-    backgroundColor: '#FF5722',
-    paddingVertical: 10,
+    backgroundColor: '#007BFF',
+    paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 10,
   },
@@ -40,6 +45,5 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 18,
     color: '#333',
-    textAlign: 'center',
   },
 });
