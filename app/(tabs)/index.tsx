@@ -1,5 +1,6 @@
+import Header from '@/components/header';
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 export default function App() {
   const [log, setLog] = useState('');
@@ -9,11 +10,9 @@ export default function App() {
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity style={styles.button} onPress={handlePress}>
-        <Text style={styles.buttonText}>Nhấn để nối chữ</Text>
-      </TouchableOpacity>
-      <Text style={styles.message}>{log}</Text>
+    <View >
+      <Header/>
+     
     </View>
   );
 }
