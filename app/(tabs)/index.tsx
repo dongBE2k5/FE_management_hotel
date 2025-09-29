@@ -2,21 +2,19 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
 export default function App() {
-  const [log, setLog] = useState('');
+ 
 
-  const handlePress = () => {
-    setLog(prev => prev + ' ➡️ Bạn vừa nhấn nút!');
-  };
+  
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.button} onPress={handlePress}>
-        <Text style={styles.buttonText}>Nhấn để nối chữ</Text>
-      </TouchableOpacity>
-      <Text style={styles.message}>{log}</Text>
+      
     </View>
   );
 }
+   
+
+ 
 
 const styles = StyleSheet.create({
   container: {
