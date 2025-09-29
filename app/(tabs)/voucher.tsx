@@ -2,7 +2,7 @@ import Header from '@/components/header';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
-export default function Test() {
+export default function Voucher() {
   
 
   return (
