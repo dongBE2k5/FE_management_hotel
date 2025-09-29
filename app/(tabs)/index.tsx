@@ -13,6 +13,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+<<<<<<< HEAD
 const Stack = createStackNavigator();
 
 
@@ -89,9 +90,22 @@ export function HomeScreen() {
         <VoucherZone />
         <ZoneHotel />
       </ScrollView>
+=======
+export default function App() {
+ 
+
+  
+
+  return (
+    <View style={styles.container}>
+      
+>>>>>>> d3a37e7 (create employee)
     </View>
   );
 }
+   
+
+ 
 
 // ❗️Không bọc NavigationContainer ở đây nữa
 export default function App() {
