@@ -1,24 +1,66 @@
-import { Image, ImageBackground, ScrollView, TouchableOpacity, StyleSheet, Text, View, TextInput } from "react-native";
+import { Hotel } from '@/models/Hotel';
+import LocationModel from '@/models/Location';
+import { getAllHotel, getHotelByLocation } from '@/service/HotelAPI';
+import { getAllLocation } from '@/service/LocationAPI';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import { useNavigation } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Image, ImageBackground, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import type { RootStackParamList } from '../types/navigation'; // đường dẫn tuỳ dự án
 import HotelCard from "./hotelCard";
 import Location from "./location";
-import { useNavigation } from '@react-navigation/native';
-import type { StackNavigationProp } from '@react-navigation/stack';
-import type { RootStackParamList } from '../types/navigation'; // đường dẫn tuỳ dự án
 import Slide from "./slideImage";
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { Pressable } from 'react-native';
 
 type ZoneHotelNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
 export default function ZoneHotel() {
+    const [hotels, setHotels] = useState<Hotel[]>([]);
+    const [locations, setLocations] = useState<LocationModel[]>([]);
+
+    useEffect(() => {
+        const fetchHotels = async () => {
+            try {
+                const data = await getAllHotel();
+                setHotels(data);
+            } catch (err) {
+                console.error(err);
+            }
+        };
+        const fetchLocation = async () => {
+            try {
+                const data = await getAllLocation();
+                setLocations(data)
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        fetchLocation()
+        fetchHotels();
+    }, []);
     const navigation = useNavigation<ZoneHotelNavigationProp>();
+    
+     const handleNavigation = (hotelId: number) => {
+        navigation.navigate('HotelDetail', {hotelId})
+    }
+
+    const changeLocation = async (id: Number) => {
+        try {
+            const data = await getHotelByLocation(id)
+            setHotels(data)
+        } catch (error) {
+            console.error(error);
+        }
+    }
+  
+
     return (
         <View style={styles.voucherzone}>
             <ImageBackground
                 source={require("../assets/images/bgKhachSanHome.png")}
                 style={styles.background}
                 resizeMode="cover"
-
             >
                 <View style={{
                     flexDirection: 'row',
@@ -36,15 +78,13 @@ export default function ZoneHotel() {
                     style={styles.cardScroll}
                 >
                     <Pressable
-                        onPress={() => navigation.navigate('HotelDetail')}
+                        // onPress={() => navigation.navigate('HotelDetail', {hotelId: 1})}
                         pressRetentionOffset={{ left: 20, right: 20, top: 20, bottom: 20 }}
                     >
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{   marginTop: 10,}}>
-                            <HotelCard />
-                            <HotelCard />
-                            <HotelCard />
-                            <HotelCard />
-
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10, }}>
+                            {hotels.map(hotel => (
+                                <HotelCard key={hotel.id} handleNavigations={handleNavigation} data={hotel} />
+                            ))}
                         </ScrollView>
                     </Pressable>
                 </ScrollView>
@@ -68,7 +108,7 @@ export default function ZoneHotel() {
                 </View>
 
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <Location />
+                    <Location locations={locations} changeLocation={changeLocation} />
                 </ScrollView>
 
                 <ScrollView
@@ -77,14 +117,17 @@ export default function ZoneHotel() {
                     style={styles.cardScroll}
                 >
                     <Pressable
-                        onPress={() => navigation.navigate('HotelDetail')}
+                        // onPress={() => navigation.navigate('HotelDetail')}
                         pressRetentionOffset={{ left: 20, right: 20, top: 20, bottom: 20 }}
                     >
-                        <ScrollView  horizontal showsHorizontalScrollIndicator={false} style={{   marginTop: 10,}}>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10, }}>
+                            {/* <HotelCard />
                             <HotelCard />
                             <HotelCard />
-                            <HotelCard />
-                            <HotelCard />
+                            <HotelCard /> */}
+                            {hotels.map(hotel => (
+                                <HotelCard key={hotel.id} handleNavigations={handleNavigation} data={hotel} />
+                            ))}
 
                         </ScrollView>
                     </Pressable>
@@ -103,20 +146,20 @@ export default function ZoneHotel() {
                             showsVerticalScrollIndicator={false}
                             style={styles.cardScroll}
                         >
+                            {/* <HotelCard />
                             <HotelCard />
                             <HotelCard />
-                            <HotelCard />
-                            <HotelCard />
+                            <HotelCard /> */}
                         </ScrollView>
                     </View>
                     <ScrollView
                         showsVerticalScrollIndicator={false}
                         style={styles.cardScroll}
                     >
+                        {/* <HotelCard />
                         <HotelCard />
                         <HotelCard />
-                        <HotelCard />
-                        <HotelCard />
+                        <HotelCard /> */}
                     </ScrollView>
                 </View>
             </View>

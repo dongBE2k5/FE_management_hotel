@@ -1,30 +1,237 @@
-import React from 'react';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
-import RoomCard from "./roomCard";
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Ionicons from '@expo/vector-icons/Ionicons';
 import RoomZone from '@/components/roomZone';
+import Room from '@/models/Room';
+import RoomTypeImage from '@/models/RoomTypeImage';
+import { getRoomAvailableByHotel } from '@/service/RoomAPI';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import React, { useEffect, useState } from 'react';
+import { Button, Image, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import RoomCard from "./roomCard";
 
-export default function MidHotelDetail() {
+type RoomProps = {
+    roomTypeImage: RoomTypeImage[],
+    hotelId: number
+}
+export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
+    const [checkIn, setCheckIn] = useState<Date>(new Date());      // mặc định hôm nay
+    const [checkOut, setCheckOut] = useState<Date | null>();
+    const [showIn, setShowIn] = useState(false);
+    const [showOut, setShowOut] = useState(false);
+    const [rooms, setRooms] = useState<Room[]>([]);
+    const [insuranceSelected, setInsuranceSelected] = useState(false);
+    const [isSearch, setIsSearch] = useState(false);
+    const phongDon = rooms.filter(room => room.typeRoom == "DON");
+    const phongDoi = rooms.filter(room => room.typeRoom == "DOI");
+    const phongGiaDinh = rooms.filter(room => room.typeRoom == "GIA_DINH");
+
+    const tomorrow = new Date(checkIn);
+    tomorrow.setDate(checkIn.getDate() + 1);
+    console.log("tomorrow", tomorrow);
+    
+    useEffect(() => {
+        if (!checkOut) {
+            setCheckOut(tomorrow);
+        }
+    }, [checkIn]);
+    useEffect(() => {
+        const fetchRoomAvailableByHotel = async (id: number, checkIn: Date, tomorrow: Date) => {
+            console.log("checkIn", checkIn);
+            console.log("checkOut", tomorrow.setDate(checkIn.getDate() + 1));
+            try {
+                const data = await getRoomAvailableByHotel(id, checkIn, tomorrow);
+                console.log("Room", data);
+                setRooms(data); 
+                setIsSearch(false);
+            } catch (err) {
+                console.error(err);
+            }
+        };
+        fetchRoomAvailableByHotel(hotelId, checkIn, checkOut || new Date());
+    }, [isSearch]);
+    // console.log(rooms);
+    // console.log(roomTypeImage);
+    const taxFee = 124182;
+    const insurancePrice = 43500;
+    const roomPrice = 43500;
+    const specialRequestTotal = 12344;
+
+    const formatVN = (date: Date) =>
+        format(date, "EEE, d 'thg' M yyyy", { locale: vi });
+    const nights =
+        checkOut
+            ? Math.max(
+                1,
+                Math.round(
+                    (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
+                )
+            )
+            : 0;
+    const totalPrice =
+        checkOut
+            ? (roomPrice * nights) + taxFee + specialRequestTotal + (insuranceSelected ? insurancePrice : 0)
+            : 0;
     const insets = useSafeAreaInsets();
 
     return (
         <View
         >
-            {/* Thông tin khách sạn */}
-            <View style={styles.section}>
-                <Text style={styles.title}>Khách sạn Alibaba Đà Nẵng, Phước Mỹ</Text>
-                <Text style={styles.subTitle}>(Alibaba Hotel)</Text>
-                <Text style={styles.hotelTag}>Khách Sạn</Text>
-
+            <View style={styles.container}>
+                <Text style={{ fontWeight: 'bold', marginBottom: 5 }}>Khách sạn Mường Thanh Grand Đà Nẵng</Text>
+                {/* Ngày nhận phòng + số đêm */}
                 <View style={styles.row}>
-                    <Ionicons name="location" size={20} color="#999494" style={styles.iconTop} />
-                    <Text style={[styles.grayText, { flex: 1 }]}>
-                        168 Hồ Nghinh, Phước Mỹ, Sơn Trà, Đà Nẵng 550000
-                    </Text>
-                </View>
-            </View>
+                    <TouchableOpacity style={styles.leftBox} onPress={() => setShowIn(true)}>
+                        <Text style={styles.label}>Ngày nhận phòng</Text>
+                        <Text style={styles.value}>{formatVN(checkIn)}</Text>
+                    </TouchableOpacity>
 
+                    <View style={styles.rightBox}>
+                        <Text style={styles.label}>Số đêm nghỉ</Text>
+                        <Text style={[styles.value, { fontWeight: 'bold' }]}>
+                            {checkOut ? `${nights} đêm` : '--'}
+                        </Text>
+                    </View>
+                </View>
+
+                {/* Ngày trả phòng */}
+                <TouchableOpacity
+                    style={styles.bottomBox}
+                    onPress={() => setShowOut(true)}
+                >
+                    <Text style={styles.label}>Trả phòng</Text>
+                    <Text style={styles.value}>
+                        {checkOut ? formatVN(checkOut) : 'Chưa chọn'}
+                    </Text>
+                </TouchableOpacity>
+
+                {/* Date Pickers */}
+                {/* ----- Date Pickers ----- */}
+                {/* Nhận phòng */}
+
+                <Modal
+                    transparent
+                    animationType="slide"
+                    visible={showIn}
+                    onRequestClose={() => setShowIn(false)}
+                >
+                    <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000066' }}>
+                        <View style={{
+                            backgroundColor: '#fff',
+                            height: 260,
+                            borderTopLeftRadius: 12,
+                            borderTopRightRadius: 12,
+                            justifyContent: 'center'
+                        }}>
+                            {/* <DateTimePicker
+                                value={checkIn}
+                                minimumDate={checkIn}
+                                mode="date"
+                                display="spinner"
+                                onChange={(_, date) => date && setCheckIn(date)}
+                                style={{ height: 200 }}
+                            /> */}
+                            <input
+                                type="date"
+                                value={checkIn?.toISOString().split('T')[0]}
+                                min={new Date().toISOString().split('T')[0]}
+                                onChange={(e) => setCheckIn(new Date(e.target.value))}
+                                style={{ fontSize: 18, padding: 8 }}
+                            />
+                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingRight: 12 }}>
+                                <Button title="Chọn" onPress={() => {
+                                    setShowIn(false);
+                                    if (checkOut && checkIn >= checkOut) setCheckOut(null);
+                                }} />
+                            </View>
+                        </View>
+                    </View>
+                </Modal>
+
+                {/* Android giữ nguyên */}
+                {Platform.OS === 'android' && showIn && (
+                    <DateTimePicker
+                        value={checkIn}
+                        mode="date"
+                        display="default"
+                        minimumDate={new Date()} // 👈 Chặn ngày quá khứ
+                        onChange={(_, date) => {
+                            setShowIn(false);
+                            if (date) {
+                                setCheckIn(date);
+                                if (checkOut && date >= checkOut) setCheckOut(null);
+                            }
+                        }}
+                    />
+                )}
+
+
+                {/* ----- Trả phòng ----- */}
+                <Modal
+                    transparent
+                    animationType="slide"
+                    visible={showOut}
+                    onRequestClose={() => setShowOut(false)}
+                >
+                    <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000066' }}>
+                        <View style={{
+                            backgroundColor: '#fff',   // trắng rõ ràng
+                            height: 260,
+                            borderTopLeftRadius: 12,
+                            borderTopRightRadius: 12,
+                            justifyContent: 'center'
+                        }}>
+                            {/* <DateTimePicker
+                                value={checkOut || new Date()}       // 👈 luôn mặc định ngày hôm nay
+                                minimumDate={new Date()}
+                                mode="date"
+                                display="spinner"
+                                themeVariant="light" // ép sáng
+                                textColor="black"    // màu chữ của spinner (iOS 14+)
+                                style={{ flex: 1 }}
+                                onChange={(_, date) => date && setCheckOut(date)}
+                            /> */}
+                            <input
+                                type="date"
+                                value={checkOut?.toISOString().split('T')[0]}
+                                min={(() => {
+                                    const tomorrow = new Date(checkIn);
+                                    tomorrow.setDate(tomorrow.getDate() + 1);
+                                    return tomorrow.toISOString().split('T')[0];
+                                })()}
+                                onChange={(e) => setCheckOut(new Date(e.target.value))}
+                                style={{ fontSize: 18, padding: 8 }}
+                            />
+                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 12 }}>
+                                <Button title="Chọn" onPress={() => setShowOut(false)} />
+
+                            </View>
+                        </View>
+                    </View>
+                </Modal>
+
+                {Platform.OS === 'android' && showOut && (
+                    <DateTimePicker
+                        value={checkOut || new Date(checkIn.getTime() + 86400000)}
+                        minimumDate={new Date(checkIn.getTime() + 86400000)}
+                        mode="date"
+                        display="default"
+                        onChange={(_, date) => {
+                            setShowOut(false);
+                            if (date) setCheckOut(date);
+                        }}
+                    />
+                )}
+                <View style={{ marginTop: 10 }}>
+                <Button title='Tìm kiếm' onPress={() => {
+                    // fetchRoomAvailableByHotel(hotelId, checkIn, checkOut);
+                    setIsSearch(true);
+                   }} />
+                </View>
+
+
+            </View>
             {/* Tiện ích */}
             <View style={styles.section}>
                 <Text style={styles.title}>Tiện ích</Text>
@@ -93,24 +300,79 @@ export default function MidHotelDetail() {
             </View>
 
             {/* Zone phòng */}
+            {phongDon.length > 0 && (
+                <>
+                    <RoomZone roomTypeImage={roomTypeImage.filter(image => image.roomTypeId == 1)} />
+
+                    <RoomCard rooms={rooms.filter(room => room.typeRoom == "DON")} />
+                </>
+            )}
+
+            {phongDoi.length > 0 && (
+                <>
+                    <RoomZone roomTypeImage={roomTypeImage.filter(image => image.roomTypeId == 2)} />
+
+                    <RoomCard rooms={rooms.filter(room => room.typeRoom == "DOI")} />
+                </>
+            )}
+
+            {phongGiaDinh.length > 0 && (
+                <>
+                    <RoomZone roomTypeImage={roomTypeImage.filter(image => image.roomTypeId == 3)} />
+
+                    <RoomCard rooms={rooms.filter(room => room.typeRoom == "GIA_DINH")} />
+                </>
+                )}
+
+            {/* Zone phòng
             <RoomZone />
-               <RoomCard />
-                 <RoomCard />
-                   <RoomCard />
-                     <RoomCard />
-               
-                 {/* Zone phòng */}
-            <RoomZone />
-               <RoomCard />
-                 <RoomCard />
-                   <RoomCard />
-                     <RoomCard />
-               
+            <RoomCard />
+            <RoomCard />
+            <RoomCard />
+            <RoomCard /> */}
+
         </View>
     );
 }
 
 const styles = StyleSheet.create({
+    container: {
+        borderRadius: 10,
+        margin: 10,
+        marginTop: 0,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: '#fff',
+        // iOS
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        // Android
+        elevation: 4,
+    },
+    leftBox: {
+        flex: 1,
+        marginRight: 10,
+    },
+    rightBox: {
+        width: 100,
+        alignItems: 'flex-end',
+    },
+    bottomBox: {
+        // borderBottomWidth: StyleSheet.hairlineWidth,
+        borderColor: '#ddd',
+        marginTop: 12,
+    },
+    label: {
+        fontSize: 11,
+        color: '#666',
+        marginBottom: 4,
+    },
+    value: {
+        fontSize: 12,
+        color: '#000',
+    },
     section: { margin: 15 },
     row: { flexDirection: 'row', alignItems: 'center' },
     title: { color: 'black', fontWeight: 'bold', fontSize: 15 },

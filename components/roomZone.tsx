@@ -1,10 +1,14 @@
-import { Image, ImageBackground, ScrollView, StyleSheet, Text, View, TextInput } from "react-native";
-import Slide from "./slideImage";
-import RoomCard from "./roomCard";
-import Ionicons from '@expo/vector-icons/Ionicons';
+import RoomTypeImage from '@/models/RoomTypeImage';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 
-export default function RoomZone() {
+interface RoomZoneProps {
+    roomTypeImage: RoomTypeImage[];
+}
+export default function RoomZone({roomTypeImage} : RoomZoneProps) {
+    console.log(roomTypeImage);
+    
     return (
         <View style={{ backgroundColor: '#EFEFEF', borderRadius: 15, width: '100%', height: 400 }}>
             <Text style={{ color: '#275DE5', fontWeight: 'bold', margin: 10, fontSize: 20, marginLeft: 10 }}>Phòng có sẵn</Text>
@@ -27,10 +31,10 @@ export default function RoomZone() {
                     style={{ height: 150 }}    // ✨ thêm chiều cao bằng đúng chiều cao ảnh
                     contentContainerStyle={{ alignItems: 'center' }} // căn giữa nếu muốn
                 >
-                    <Image style={{ width: 300, height: 150, marginRight: 10 }} source={require("../assets/images/room1.jpg")} />
-                    <Image style={{ width: 300, height: 150, marginRight: 10 }} source={require("../assets/images/room2.jpg")} />
-                    <Image style={{ width: 300, height: 150, marginRight: 10 }} source={require("../assets/images/room3.jpg")} />
-                    <Image style={{ width: 300, height: 150, marginRight: 10 }} source={require("../assets/images/room4.jpg")} />
+                    {roomTypeImage.map((image) => (
+                        <Image style={{ width: 300, height: 150, marginRight: 10 }} source={{ uri: image.image }} />
+                    ))}
+                   
                 </ScrollView>
 
                 <Text style={{ marginTop: 15, marginLeft: 15, color: 'black', fontSize: 15, fontWeight: 'bold' }}>Tiện ích phòng</Text>

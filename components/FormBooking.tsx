@@ -1,16 +1,15 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Platform, TouchableOpacity, Image, Modal, FlatList, Button, Alert, } from 'react-native';
-import { Text } from 'react-native-paper';
+import SpecialRequest from '@/components/SpecialRequest';
+import type { RootStackParamList } from '@/types/navigation';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import type { RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import SpecialRequest from '@/components/SpecialRequest';
-import type { RouteProp } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '@/types/navigation';
-import { useRoute } from '@react-navigation/native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState } from 'react';
+import { Button, Image, Modal, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Text } from 'react-native-paper';
 
 
 export default function FormBooking() {
@@ -350,10 +349,10 @@ export default function FormBooking() {
                         ]}
                         activeOpacity={0.8}
                         onPress={() => {
-                            if (!checkOut) {
-                                Alert.alert('Thông báo !', 'Vui lòng chọn ngày trả phòng trước khi tiếp tục.');
-                                return;
-                            }
+                            // if (!checkOut) {
+                            //     Alert.alert('Thông báo !', 'Vui lòng chọn ngày trả phòng trước khi tiếp tục.');
+                            //     return;
+                            // }
                             navigation.navigate('ReviewBooking', {
                                 hotelName,
                                 checkIn,

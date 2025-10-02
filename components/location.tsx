@@ -1,31 +1,48 @@
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { useState } from "react";
-
+import Location from "@/models/Location";
+import { useEffect, useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 // Danh sách các vị trí
-const locations = ["Đà Nẵng", "Hà Nội", "TP.HCM","Nha Trang","Vũng Tàu","Đà Lạt","Hạ Long","Quy Nhơn"];
+const locations = ["Đà Nẵng", "Hà Nội", "TP.HCM", "Nha Trang", "Vũng Tàu", "Đà Lạt", "Hạ Long", "Quy Nhơn"];
 
-export default function LocationSelector() {
-    // Mặc định chọn vị trí đầu tiên
-    const [selectedLocation, setSelectedLocation] = useState(locations[0]);
+type Props = {
+    locations: Location[];
+    changeLocation: (id: number) => void;
+};
+
+export default function LocationSelector({ locations, changeLocation }: Props) {
+        const [selectedLocation, setSelectedLocation] = useState<Number | null>(null);
+
+     useEffect(() => {
+    if (locations.length > 0 && selectedLocation === null) {
+      const firstId = locations[0].id;
+      setSelectedLocation(firstId);
+      changeLocation(firstId);
+    }
+  }, [locations]);
+  
 
     return (
         <View style={{ flexDirection: "row", padding: 10 }}>
-            {locations.map((loc) => (
+            {locations.map((location) => (
                 <TouchableOpacity
-                    key={loc}
-                    onPress={() => setSelectedLocation(loc)}
+                   key={location.id}
+                    onPress={() => {
+                        setSelectedLocation(location.id)
+                        changeLocation(location.id)
+                    }}
                     style={[
                         styles.locationButton,
-                        selectedLocation === loc && styles.activeButton,
+                        selectedLocation === location.id && styles.activeButton,
                     ]}
                 >
                     <Text
+                    
                         style={[
                             styles.locationText,
-                            selectedLocation === loc && styles.activeText,
+                            selectedLocation === location.id && styles.activeText,
                         ]}
                     >
-                        {loc}
+                        {location.name}
                     </Text>
                 </TouchableOpacity>
             ))}

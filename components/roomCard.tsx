@@ -1,27 +1,42 @@
+import Room from '@/models/Room';
+import type { RootStackParamList } from '@/types/navigation';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, Text, View ,TouchableOpacity } from "react-native";
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import type { RootStackParamList } from '@/types/navigation';
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-export default function RoomCard() {
+interface RoomCardProps {
+    rooms: Room[];
+}
+
+export default function RoomCard({rooms} : RoomCardProps) {
 
  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-
+  if(rooms.length === 0) return "Đã hết phòng";
   const goBooking = () => {
     navigation.navigate('FormBooking', {
     roomPrice: 756423   // => số, không phải chuỗi có dấu chấm
   });
   };
+  const formatVND = (amount: number): string => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+      maximumFractionDigits: 0, // bỏ phần thập phân
+    }).format(amount);
+  };
+  
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.title}>Phòng đôi</Text>
+    <>
+    {rooms.map((room) => (
+    <View key={room.id} style={styles.card}>
+      <Text style={styles.title}>{room.typeRoom == "DON" ? "Phòng đơn" : room.typeRoom == "DOI" ? "Phòng đôi" : "Phòng gia đình"}</Text>
 
       <View style={styles.row}>
         {/* Cột trái */}
         <View style={{ flex: 1 }}>
-          <Text style={styles.breakfast}>Không bao gồm bữa sáng</Text>
+          <Text style={styles.breakfast}>{room.description}</Text>
 
           <View style={styles.iconRow}>
             <Ionicons style={styles.icon} name="checkmark" size={20} color="green" />
@@ -30,7 +45,7 @@ export default function RoomCard() {
 
           <View style={styles.iconRow}>
             <Ionicons style={styles.icon} name="checkmark" size={20} color="green" />
-            <Text style={styles.infoText}>2 người lớn</Text>
+            <Text style={styles.infoText}>{room.typeRoom == "DON" ? "Phòng 1 người" : room.typeRoom == "DOI" ? "Phòng 2 người" : "Phòng 4 trở lên"}</Text>
           </View>
 
           <View style={styles.iconRow}>
@@ -39,23 +54,25 @@ export default function RoomCard() {
           </View>
 
           <View style={styles.priceRow}>
-            <Text style={styles.newPrice}>756.423 VND</Text>
-            <Text style={styles.oldPrice}>1.042.423 VND</Text>
+            <Text style={styles.newPrice}>{formatVND(Number(room.price))}</Text>
+            {/* <Text style={styles.oldPrice}>1.042.423 VND</Text> */}
           </View>
 
-          <Text style={styles.subText}>Tổng giá 785.421 VND</Text>
+          <Text style={styles.subText}>Tổng giá {formatVND(Number(room.price))}</Text>
           <Text style={styles.subText}>Bao gồm thuế và phí</Text>
         </View>
 
         {/* Cột phải */}
         <View style={styles.rightCol}>
-          <Text style={styles.limited}>Chỉ còn 4 phòng</Text>
+          {/* <Text style={styles.limited}>Chỉ còn 4 phòng</Text> */}
           <TouchableOpacity onPress={goBooking} style={styles.bookBtn}>
             <Text style={styles.bookText}>Đặt</Text>
           </TouchableOpacity>
         </View>
       </View>
     </View>
+    ))}
+    </>
   );
 }
 
