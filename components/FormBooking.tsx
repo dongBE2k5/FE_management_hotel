@@ -20,10 +20,13 @@ export default function FormBooking() {
     const [specialRequests, setSpecialRequests] = useState<string[]>([]);
     const route = useRoute<RouteProp<RootStackParamList, 'FormBooking'>>();
     const { roomPrice } = route.params;
+    
     type FormBookingNavProp = NativeStackNavigationProp<RootStackParamList, 'FormBooking'>;
     const navigation = useNavigation<FormBookingNavProp>();
 
     const hotelName = 'Khách sạn Mường Thanh Grand Đà Nẵng';
+    const roomName = 'Superior Twin Room - Room with Breakfast';
+    const hotelImage = require('@/assets/images/ks1.jpg');
 
     const specialRequestPrice = 30000;
     const specialRequestTotal = specialRequestPrice * specialRequests.length;
@@ -355,6 +358,8 @@ export default function FormBooking() {
                             // }
                             navigation.navigate('ReviewBooking', {
                                 hotelName,
+                                hotelImage,
+                                roomName,
                                 checkIn,
                                 checkOut,
                                 nights,

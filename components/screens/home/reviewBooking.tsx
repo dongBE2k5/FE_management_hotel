@@ -14,6 +14,7 @@ export default function HotelDetail() {
   // 👇 Lấy dữ liệu từ FormBooking (đã navigate sang ReviewBooking)
   const {
     hotelName,
+    roomName,
     checkIn,
     checkOut,
     nights,
