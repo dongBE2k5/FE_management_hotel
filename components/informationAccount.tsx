@@ -1,20 +1,18 @@
+import HeaderProfile from '@/components/headerProfile';
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
+import Ionicons from "@expo/vector-icons/Ionicons";
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { Picker } from '@react-native-picker/picker';
+import { useNavigation } from "@react-navigation/native";
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
+  Pressable,
   StyleSheet,
-  TouchableOpacity,
+  Text,
   TextInput,
-  Pressable
+  TouchableOpacity,
+  View
 } from 'react-native';
-import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
-import { Picker } from '@react-native-picker/picker';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import BannerAccount from '@/components/accountBanner';
-import { ScrollView } from 'react-native-gesture-handler';
-import HeaderProfile from '@/components/headerProfile';
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { useNavigation } from "@react-navigation/native";
 
 
 export default function AccountInfo() {

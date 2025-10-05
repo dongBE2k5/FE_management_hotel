@@ -1,7 +1,7 @@
 import LoginBanner from '@/components/bannerLogin';
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity } from 'react-native';
 import Checkbox from 'expo-checkbox';
+import React, { useState } from 'react';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 
 export default function Register() {
