@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image, StyleSheet, Text, TextInput, View } from "react-native";
-export default function Header() {
+export default function HeaderProfile() {
 
   return (
     <>
@@ -8,15 +8,6 @@ export default function Header() {
         <View style={styles.wrapper}>
           <Text style={styles.title}>TravelokaTDC</Text>
           <Image style={{ marginLeft: 5 }} source={require("../assets/images/logo.png")} />
-        </View>
-        <View style={styles.profile}>
-          <Image style={styles.avatar} source={require("../assets/images/logo.png")} />
-          <View>
-            <Text style={{ color: 'white', fontWeight: 700 }}>Xin chào Admin</Text>
-            <View style={styles.tell}>
-              <Text style={{ color: '#999494', fontWeight: 700 }}>84+ 983214123112</Text>
-            </View>
-          </View>
         </View>
 
       </View>
