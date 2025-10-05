@@ -32,7 +32,7 @@ export default function RoomZone({roomTypeImage} : RoomZoneProps) {
                     contentContainerStyle={{ alignItems: 'center' }} // căn giữa nếu muốn
                 >
                     {roomTypeImage.map((image) => (
-                        <Image style={{ width: 300, height: 150, marginRight: 10 }} source={{ uri: image.image }} />
+                        <Image key={image.id} style={{ width: 300, height: 150, marginRight: 10 }} source={{ uri: image.image }} />
                     ))}
                    
                 </ScrollView>
