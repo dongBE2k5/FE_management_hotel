@@ -1,4 +1,4 @@
-import ConfirmBooking from '@/components/ConfirmBooking';
+import ConfirmBooking from '@/components/userHotelDetail/ConfirmBooking';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';

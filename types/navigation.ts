@@ -1,12 +1,12 @@
 // src/types/navigation.ts
 export type RootStackParamList = {
   Home: undefined;
-  HotelDetail: undefined; // có params thì khai báo ở đây
+  HotelDetail: { hotelId: number } | undefined; // 👈 thêm dòng này
   RoomCard: undefined;
   FormBooking: { roomPrice: number };   // 👈 thêm roomPrice
   ConfirmBooking: {
     hotelName: string;
-        hotelImage: string;   
+    hotelImage: string;
     roomName: string;
     checkIn: Date;
     checkOut: Date | null;
@@ -20,7 +20,7 @@ export type RootStackParamList = {
   };
   ReviewBooking: {
     hotelName: string;
-        hotelImage: string;   
+    hotelImage: string;
     roomName: string;
     checkIn: Date;
     checkOut: Date | null;
@@ -34,7 +34,7 @@ export type RootStackParamList = {
   };
   Booking: {
     hotelName: string;
-        hotelImage: string;   
+    hotelImage: string;
     roomName: string;
     checkIn: any;
     checkOut: any;
@@ -50,7 +50,7 @@ export type RootStackParamList = {
   };
   BookingDetail: {
     hotelName: string;
-        hotelImage: string;   
+    hotelImage: string;
     roomName: string;
     checkIn: any;
     checkOut: any;
@@ -71,6 +71,6 @@ export type ProfileStackParamList = {
   Account: undefined;
   Login: undefined;
   Register: undefined;
-  InFormationAccount:undefined;
-  LoggedAccount:undefined;
+  InFormationAccount: undefined;
+  LoggedAccount: undefined;
 };

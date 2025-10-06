@@ -1,12 +1,12 @@
 // App.tsx
 import React, { useState } from 'react';
 import { StyleSheet, View, ScrollView, Text, TextInput } from 'react-native';
-import Header from '@/components/header';
-import VoucherZone from '@/components/voucherzone';
-import ZoneHotel from '@/components/zoneHotel';
-import ConfirmBooking from '@/components/ConfirmBooking';
-import RoomCard from '@/components/roomCard';
-import BookingDetail from '@/components/bookingDetail';
+import Header from '@/components/userHome/header';
+import VoucherZone from '@/components/userHome/voucherzone';
+import ZoneHotel from '@/components/userHome/zoneHotel';
+import ConfirmBooking from '@/components/userHotelDetail/ConfirmBooking';
+import RoomCard from '@/components/userHotelDetail/roomCard';
+import BookingDetail from '@/components//userBooking/bookingDetail';
 import HotelDetail from '@/components/screens/home/hotelDetail';
 import FormBooking from '@/components/screens/home/formBooking';
 import ReviewBooking from '@/components/screens/home/reviewBooking';

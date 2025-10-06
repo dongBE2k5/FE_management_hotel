@@ -1,21 +1,55 @@
+import React, { useEffect, useState } from 'react';
 import { Image, ImageBackground, ScrollView, TouchableOpacity, StyleSheet, Text, View, TextInput } from "react-native";
 import HotelCard from "./hotelCard";
 import Location from "./location";
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import type { RootStackParamList } from '../types/navigation'; // đường dẫn tuỳ dự án
-import Slide from "./slideImage";
+import type { RootStackParamList } from '../../types/navigation'; // đường dẫn tuỳ dự án
+import Slide from "../userHotelDetail/slideImage";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Pressable } from 'react-native';
+import bgKhachSanHome from "../../assets/images/bgKhachSanHome.png";
+import bgBestChoice from "../../assets/images/fire.png";
+import { saveViewedHotel, getViewedHotels } from '../../untils/hotelViewStorage';
+
 
 type ZoneHotelNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
 export default function ZoneHotel() {
     const navigation = useNavigation<ZoneHotelNavigationProp>();
+
+    const [viewedHotels, setViewedHotels] = useState<any[]>([]);
+
+    useEffect(() => {
+        const load = async () => {
+            const data = await getViewedHotels();
+            setViewedHotels(data);
+        };
+        const unsubscribe = navigation.addListener('focus', load);
+        return unsubscribe;
+    }, [navigation]);
     return (
         <View style={styles.voucherzone}>
+
+            {viewedHotels.length > 0 && (
+                <View>
+                    <Text style={styles.text}>Đã xem gần đây</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        {viewedHotels.map((hotel, index) => (
+                            <Pressable
+                                key={index}
+                                onPress={() => navigation.navigate('HotelDetail', { hotelId: hotel.id })}
+                            >
+                                <HotelCard hotel={hotel} />
+                                
+                            </Pressable>
+                        ))}
+                    </ScrollView>
+                </View>
+            )}
+
             <ImageBackground
-                source={require("../assets/images/bgKhachSanHome.png")}
+                source={bgKhachSanHome}
                 style={styles.background}
                 resizeMode="cover"
 
@@ -26,7 +60,7 @@ export default function ZoneHotel() {
                     marginHorizontal: 10,
                 }}>
                     <Text style={styles.text}>Best Choice</Text>
-                    <Image source={require("../assets/images/fire.png")} />
+                    <Image source={bgBestChoice} />
                 </View>
 
 
@@ -36,10 +70,18 @@ export default function ZoneHotel() {
                     style={styles.cardScroll}
                 >
                     <Pressable
-                        onPress={() => navigation.navigate('HotelDetail')}
-                        pressRetentionOffset={{ left: 20, right: 20, top: 20, bottom: 20 }}
+                        onPress={() => {
+                            const hotel = {
+                                id: 1,
+                                name: 'Khách sạn Mường Thanh',
+                                location: 'Đà Nẵng',
+                                image: 'https://example.com/muongthanh.jpg'
+                            };
+                            saveViewedHotel(hotel);
+                            navigation.navigate('HotelDetail', { hotelId: hotel.id });
+                        }}
                     >
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{   marginTop: 10,}}>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10, }}>
                             <HotelCard />
                             <HotelCard />
                             <HotelCard />
@@ -80,7 +122,7 @@ export default function ZoneHotel() {
                         onPress={() => navigation.navigate('HotelDetail')}
                         pressRetentionOffset={{ left: 20, right: 20, top: 20, bottom: 20 }}
                     >
-                        <ScrollView  horizontal showsHorizontalScrollIndicator={false} style={{   marginTop: 10,}}>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10, }}>
                             <HotelCard />
                             <HotelCard />
                             <HotelCard />

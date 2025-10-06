@@ -13,7 +13,7 @@ export default function BannerAccount(props: { subtitle: string }) {
 
   return (
     <ImageBackground
-      source={require("../assets/images/bannerAccount.png")}
+      source={require("../../assets/images/bannerAccount.png")}
       style={styles.container}
       resizeMode="cover"
     >

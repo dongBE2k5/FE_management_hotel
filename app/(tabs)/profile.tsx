@@ -1,4 +1,4 @@
-import Header from '@/components/header';
+import Header from '@/components/userHome/header';
 import React from 'react';
 import Account from '@/components/screens/profile/account';
 import { StyleSheet, View } from 'react-native';

@@ -9,10 +9,10 @@ import {
 } from 'react-native';
 import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import BannerAccount from '@/components/accountBanner';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import BannerAccount from './accountBanner';
 import { ScrollView } from 'react-native-gesture-handler';
-import HeaderProfile from '@/components/headerProfile';
+import HeaderProfile from './headerProfile';
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
 
@@ -23,12 +23,13 @@ export default function AccountInfo() {
   const [showDate, setShowDate] = useState(false);
   const navigation = useNavigation();
 
-  const onChangeDate = (event, selectedDate) => {
-    setShowDate(false); // luôn ẩn picker
+  const onChangeDate = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    setShowDate(false);
     if (event.type === 'set' && selectedDate) {
       setDate(selectedDate);
     }
   };
+
 
   return (
     <View style={{ backgroundColor: '#ddd' }}>
@@ -41,7 +42,7 @@ export default function AccountInfo() {
         {/* Box Thông tin cá nhân */}
         <View style={styles.box}>
           {/* Icon mũi tên */}
-          <View style={{marginBottom:5}}>
+          <View style={{ marginBottom: 5 }}>
             <Pressable onPress={() => navigation.goBack()} hitSlop={10}>
               <Ionicons name="arrow-back" size={20} color="#009EDE" />
             </Pressable>

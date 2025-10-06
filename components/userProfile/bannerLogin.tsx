@@ -14,7 +14,7 @@ export default function LoginBanner({ title, subtitle }: Props) {
   return (
     <>
       <ImageBackground
-        source={require("../assets/images/loginBanner.png")}
+        source={require("../../assets/images/loginBanner.png")}
         style={styles.container}
         resizeMode="cover"
       >

@@ -1,4 +1,4 @@
-import Login from '@/components/Login';
+import Login from '@/components/userProfile/Login';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable, } from 'react-native';
 

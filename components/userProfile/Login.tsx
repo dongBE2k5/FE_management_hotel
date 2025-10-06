@@ -1,4 +1,4 @@
-import LoginBanner from '@/components/bannerLogin';
+import LoginBanner from './bannerLogin';
 import React from 'react';
 import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';

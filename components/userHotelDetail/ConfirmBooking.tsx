@@ -15,6 +15,8 @@ import type { RootStackParamList } from '@/types/navigation';
 import type { RouteProp } from '@react-navigation/native';
 import { Linking } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import ks1 from "../../assets/images/ks1.jpg";
+
 
 export default function ConfirmBooking() {
   const router = useRouter();
@@ -28,7 +30,7 @@ export default function ConfirmBooking() {
   const {
     hotelName = 'Khách sạn Mường Thanh Grand Đà Nẵng',
     roomName = 'Superior Twin Room - Room with Breakfast',
-    hotelImage = require('@/assets/images/ks1.jpg'),
+    hotelImage = require("../../assets/images/ks1.jpg"),
     checkIn,
     checkOut,
     nights = 1,

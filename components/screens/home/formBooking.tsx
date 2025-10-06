@@ -1,4 +1,4 @@
-import FormBooking from '@/components/FormBooking';
+import FormBooking from '@/components/userHotelDetail/FormBooking';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable, } from 'react-native';
 import { useNavigation } from "@react-navigation/native";

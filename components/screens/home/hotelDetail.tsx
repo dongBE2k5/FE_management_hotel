@@ -1,5 +1,5 @@
-import HeaderHotelDetail from '@/components/headerHotelDetail';
-import MidHotelDetail from '@/components/midHotelDetail';
+import HeaderHotelDetail from '@/components/userHotelDetail/headerHotelDetail';
+import MidHotelDetail from '@/components/userHotelDetail/midHotelDetail';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable, } from 'react-native';
 import { useNavigation } from "@react-navigation/native";

@@ -1,4 +1,4 @@
-import LoggedAccount from '@/components/loggedAccount';
+import LoggedAccount from '@/components/userProfile/loggedAccount';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable, } from 'react-native';
 import { useNavigation } from "@react-navigation/native";

@@ -8,13 +8,15 @@ import {
   TouchableOpacity,
 } from 'react-native';
 
+import imgKS1 from "../../assets/images/ksslide1.jpeg";
+import imgKS2 from "../../assets/images/ksslide2.jpg";
+import imgKS3 from "../../assets/images/ksslide3.jpg";
+import imgKS4 from "../../assets/images/ksslide4.jpg";
+
 const { width } = Dimensions.get('window');
 
 const images = [
-  require('@/assets/images/ksslide1.jpeg'),
-  require('@/assets/images/ksslide2.jpg'),
-  require('@/assets/images/ksslide3.jpg'),
-  require('@/assets/images/ksslide4.jpg'),
+ imgKS1,imgKS2,imgKS3,imgKS4
 ];
 
 export default function ImageCarousel() {

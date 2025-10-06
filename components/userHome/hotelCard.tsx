@@ -1,23 +1,35 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 import { Image, ImageBackground, StyleSheet, Text, View } from "react-native";
+import imgKhachSan1 from "../../assets/images/ks1.jpg";
+import imgGps from "../../assets/images/gps.png";
+import Logo from "../../assets/images/logo.png";
 
+
+type Hotel = {
+  id: number;
+  name: string;
+  location: string;
+  image: string;
+};
 
 type Props = {
-  onPress?: () => void;   // ✅ khai báo prop onPress
+  hotel?: Hotel;      // ✅ thêm dòng này
+  onPress?: () => void;
 };
+
 
 export default function HotelCard({ onPress }: Props) {
     return (
         <View style={styles.cardWrapper}>
             <ImageBackground
-                source={require("../assets/images/ks1.jpg")}
+                source={imgKhachSan1}
                 style={styles.container}
 
             >
                 <View style={{ flexDirection: 'row' }}>
                     <View style={{ backgroundColor: '#0E0E14', width: 80, padding: 5, borderRadius: 5, flexDirection: 'row' }}>
-                        <Image style={{ width: 10, height: 10 }} source={require("../assets/images/gps.png")} />
+                        <Image style={{ width: 10, height: 10 }} source={imgGps} />
                         <Text style={{ color: 'white', fontSize: 10, marginLeft: 5 }}>Phước Mỹ</Text>
 
                     </View>
@@ -58,7 +70,7 @@ export default function HotelCard({ onPress }: Props) {
                     <Ionicons name="star-outline" size={13} color="#FFD700" />
                 </View>
                 <View style={{ flexDirection: 'row', marginLeft: 5 }}>
-                    <Image style={{ width: 10, height: 10, tintColor: '#009EDE' }} source={require("../assets/images/logo.png")} />
+                    <Image style={{ width: 10, height: 10, tintColor: '#009EDE' }} source={Logo} />
                     <Text style={{ fontSize: 9, marginLeft: 5, color: '#009EDE', fontWeight: 'bold' }}>8.4/10</Text>
                     <Text style={{ fontSize: 9, marginLeft: 5, color: 'black', fontWeight: 'bold' }}>(795)</Text>
                 </View>

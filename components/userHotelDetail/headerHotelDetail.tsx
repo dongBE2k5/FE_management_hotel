@@ -16,11 +16,11 @@ import { useNavigation } from "@react-navigation/native";
 const { width } = Dimensions.get("window");
 
 const images = [
-    require("../assets/images/ks1.jpg"),
-    require("../assets/images/ksslide1.jpeg"),
-    require("../assets/images/ksslide2.jpg"),
-    require("../assets/images/ksslide3.jpg"),
-    require("../assets/images/ksslide4.jpg"),
+    require("../../assets/images/ks1.jpg"),
+    require("../../assets/images/ksslide1.jpeg"),
+    require("../../assets/images/ksslide2.jpg"),
+    require("../../assets/images/ksslide3.jpg"),
+    require("../../assets/images/ksslide4.jpg"),
 ];
 
 export default function HeaderHotelDetail() {

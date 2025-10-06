@@ -3,7 +3,9 @@ import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import RoomCard from "./roomCard";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import RoomZone from '@/components/roomZone';
+import RoomZone from './roomZone';
+import Logo from "../../assets/images/logo.png";
+
 
 export default function MidHotelDetail() {
     const insets = useSafeAreaInsets();
@@ -51,7 +53,7 @@ export default function MidHotelDetail() {
                     <Image
                         tintColor="#009EDE"
                         style={{ marginLeft: 5, width: 30, height: 20, marginTop: 10 }}
-                        source={require('../assets/images/logo.png')}
+                        source={Logo}
                     />
                     <Text style={{ marginLeft: 5, marginTop: 12, color: '#0046de', fontWeight: 'bold' }}>8.7</Text>
                     <Text style={{ marginLeft: 5, marginTop: 12, color: '#009EDE', fontWeight: 'bold' }}>Ấn tượng</Text>

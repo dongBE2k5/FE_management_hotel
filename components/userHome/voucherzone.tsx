@@ -1,11 +1,13 @@
 import { StyleSheet, Text, View, ImageBackground,ScrollView } from "react-native";
 import VoucherCard from "./voucherCard";
+import bgVoucher from "../../assets/images/bgvoucher.png"
+
 
 export default function VoucherZone() {
     return (
         <View style={styles.voucherzone}>
             <ImageBackground
-                source={require("../assets/images/bgvoucher.png")}
+                source={bgVoucher}
                 style={styles.background}
                 resizeMode="cover"
             >

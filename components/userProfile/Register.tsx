@@ -1,4 +1,4 @@
-import LoginBanner from '@/components/bannerLogin';
+import LoginBanner from './bannerLogin';
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, TextInput, TouchableOpacity } from 'react-native';
 import Checkbox from 'expo-checkbox';

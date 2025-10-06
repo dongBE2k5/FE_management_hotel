@@ -3,6 +3,11 @@ import Slide from "./slideImage";
 import RoomCard from "./roomCard";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import room1 from "../../assets/images/room1.jpg";
+import room2 from "../../assets/images/room2.jpg";
+import room3 from "../../assets/images/room3.jpg";
+import room4 from "../../assets/images/room4.jpg";
+
 
 export default function RoomZone() {
     return (
@@ -27,10 +32,10 @@ export default function RoomZone() {
                     style={{ height: 150 }}    // ✨ thêm chiều cao bằng đúng chiều cao ảnh
                     contentContainerStyle={{ alignItems: 'center' }} // căn giữa nếu muốn
                 >
-                    <Image style={{ width: 300, height: 150, marginRight: 10 }} source={require("../assets/images/room1.jpg")} />
-                    <Image style={{ width: 300, height: 150, marginRight: 10 }} source={require("../assets/images/room2.jpg")} />
-                    <Image style={{ width: 300, height: 150, marginRight: 10 }} source={require("../assets/images/room3.jpg")} />
-                    <Image style={{ width: 300, height: 150, marginRight: 10 }} source={require("../assets/images/room4.jpg")} />
+                    <Image style={{ width: 300, height: 150, marginRight: 10 }} source={room1} />
+                    <Image style={{ width: 300, height: 150, marginRight: 10 }} source={room2} />
+                    <Image style={{ width: 300, height: 150, marginRight: 10 }} source={room3} />
+                    <Image style={{ width: 300, height: 150, marginRight: 10 }} source={room4} />
                 </ScrollView>
 
                 <Text style={{ marginTop: 15, marginLeft: 15, color: 'black', fontSize: 15, fontWeight: 'bold' }}>Tiện ích phòng</Text>
@@ -66,7 +71,7 @@ export default function RoomZone() {
                     </View>
                 </View>
             </View>
-        
+
         </View>
     );
 }

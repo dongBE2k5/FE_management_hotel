@@ -7,7 +7,7 @@ export default function HeaderProfile() {
       <View style={styles.header}>
         <View style={styles.wrapper}>
           <Text style={styles.title}>TravelokaTDC</Text>
-          <Image style={{ marginLeft: 5 }} source={require("../assets/images/logo.png")} />
+          <Image style={{ marginLeft: 5 }} source={require("../../assets/images/logo.png")} />
         </View>
 
       </View>

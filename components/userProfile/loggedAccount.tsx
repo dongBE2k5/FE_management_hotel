@@ -1,9 +1,9 @@
 import React from 'react';
-import BannerAccount from '@/components/accountBanner';
+import BannerAccount from './accountBanner';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { ScrollView } from 'react-native-gesture-handler';
-import HeaderProfile from '@/components/headerProfile';
+import HeaderProfile from './headerProfile';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { ProfileStackParamList } from '@/types/navigation';
