@@ -3,7 +3,7 @@ export type RootStackParamList = {
   Home: undefined;
   HotelDetail: { hotelId: number }; // có params thì khai báo ở đây
   RoomCard: undefined;
-  FormBooking: { roomPrice: number };   // 👈 thêm roomPrice
+  FormBooking: { roomId: number, checkInDate: Date, checkOutDate: Date | null, roomPrice: number };   // 👈 thêm roomPrice
   ConfirmBooking: {
     hotelName: string;
         hotelImage: string;   
@@ -64,13 +64,17 @@ export type RootStackParamList = {
     totalPrice: number;
     isPaid: boolean;
   };
+  Login: undefined
+  Register: undefined
 };
 
 
 export type ProfileStackParamList = {
+
   Account: undefined;
   Login: undefined;
   Register: undefined;
   InFormationAccount:undefined;
   LoggedAccount:undefined;
+  Home: undefined;
 };

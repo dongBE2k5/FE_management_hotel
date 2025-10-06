@@ -17,7 +17,7 @@ type RoomProps = {
 }
 export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
     const [checkIn, setCheckIn] = useState<Date>(new Date());      // mặc định hôm nay
-    const [checkOut, setCheckOut] = useState<Date | null>();
+    const [checkOut, setCheckOut] = useState<Date | null>(null);
     const [showIn, setShowIn] = useState(false);
     const [showOut, setShowOut] = useState(false);
     const [rooms, setRooms] = useState<Room[]>([]);
@@ -29,7 +29,7 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
 
     const tomorrow = new Date(checkIn);
     tomorrow.setDate(checkIn.getDate() + 1);
-    console.log("tomorrow", tomorrow);
+
     
     useEffect(() => {
         if (!checkOut) {
@@ -38,11 +38,9 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
     }, [checkIn]);
     useEffect(() => {
         const fetchRoomAvailableByHotel = async (id: number, checkIn: Date, tomorrow: Date) => {
-            console.log("checkIn", checkIn);
-            console.log("checkOut", tomorrow.setDate(checkIn.getDate() + 1));
+
             try {
                 const data = await getRoomAvailableByHotel(id, checkIn, tomorrow);
-                console.log("Room", data);
                 setRooms(data); 
                 setIsSearch(false);
             } catch (err) {
@@ -304,7 +302,7 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                 <>
                     <RoomZone roomTypeImage={roomTypeImage.filter(image => image.roomTypeId == 1)} />
 
-                    <RoomCard rooms={rooms.filter(room => room.typeRoom == "DON")} />
+                    <RoomCard checkInDate={checkIn} checkOutDate={checkOut} rooms={rooms.filter(room => room.typeRoom == "DON")} />
                 </>
             )}
 
@@ -312,7 +310,7 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                 <>
                     <RoomZone roomTypeImage={roomTypeImage.filter(image => image.roomTypeId == 2)} />
 
-                    <RoomCard rooms={rooms.filter(room => room.typeRoom == "DOI")} />
+                    <RoomCard checkInDate={checkIn} checkOutDate={checkOut} rooms={rooms.filter(room => room.typeRoom == "DOI")} />
                 </>
             )}
 
@@ -320,7 +318,7 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                 <>
                     <RoomZone roomTypeImage={roomTypeImage.filter(image => image.roomTypeId == 3)} />
 
-                    <RoomCard rooms={rooms.filter(room => room.typeRoom == "GIA_DINH")} />
+                    <RoomCard checkInDate={checkIn} checkOutDate={checkOut} rooms={rooms.filter(room => room.typeRoom == "GIA_DINH")} />
                 </>
                 )}
 

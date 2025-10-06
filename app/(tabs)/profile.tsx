@@ -1,13 +1,13 @@
-import Header from '@/components/header';
-import React from 'react';
 import Account from '@/components/screens/profile/account';
-import { StyleSheet, View } from 'react-native';
-import Login from '@/components/screens/profile/loginDisplay';
-import Register from '@/components/screens/profile/registerDisplay';
 import InFormationAccount from '@/components/screens/profile/informationDisplay';
 import LoggedAccount from '@/components/screens/profile/logged';
-import { createStackNavigator } from "@react-navigation/stack"
+import Login from '@/components/screens/profile/loginDisplay';
+import Register from '@/components/screens/profile/registerDisplay';
 import type { ProfileStackParamList } from '@/types/navigation';
+import { createStackNavigator } from "@react-navigation/stack";
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import { HomeScreen } from '.';
 
   
 const Stack = createStackNavigator<ProfileStackParamList>();
@@ -29,6 +29,7 @@ export default function ProfileNavigator() {
       <Stack.Screen name="Register" component={Register} />
       <Stack.Screen name="InFormationAccount" component={InFormationAccount} />
       <Stack.Screen name="LoggedAccount" component={LoggedAccount} />
+      <Stack.Screen name="Home" component={HomeScreen} />
     </Stack.Navigator>
   );
 }

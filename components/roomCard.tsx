@@ -6,16 +6,23 @@ import type { StackNavigationProp } from '@react-navigation/stack';
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface RoomCardProps {
+  checkInDate: Date;
+  checkOutDate?: Date | null;
     rooms: Room[];
 }
 
-export default function RoomCard({rooms} : RoomCardProps) {
-
+export default function RoomCard({rooms, checkInDate, checkOutDate} : RoomCardProps) {
+  console.log("checkInDate", checkInDate);
+  console.log("checkOutDate", checkOutDate);
  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   if(rooms.length === 0) return "Đã hết phòng";
-  const goBooking = () => {
+  const goBooking = (room : Room) => {
     navigation.navigate('FormBooking', {
-    roomPrice: 756423   // => số, không phải chuỗi có dấu chấm
+      roomId: room.id,
+      checkInDate: checkInDate,
+      checkOutDate: checkOutDate || null,
+    roomPrice: Number(room.price),
+       // => số, không phải chuỗi có dấu chấm
   });
   };
   const formatVND = (amount: number): string => {
@@ -65,7 +72,7 @@ export default function RoomCard({rooms} : RoomCardProps) {
         {/* Cột phải */}
         <View style={styles.rightCol}>
           {/* <Text style={styles.limited}>Chỉ còn 4 phòng</Text> */}
-          <TouchableOpacity onPress={goBooking} style={styles.bookBtn}>
+          <TouchableOpacity onPress={() => goBooking(room)} style={styles.bookBtn}>
             <Text style={styles.bookText}>Đặt</Text>
           </TouchableOpacity>
         </View>

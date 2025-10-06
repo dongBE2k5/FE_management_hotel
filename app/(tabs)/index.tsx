@@ -1,24 +1,24 @@
 // App.tsx
-import React, { useState } from 'react';
-import { StyleSheet, View, ScrollView, Text, TextInput } from 'react-native';
+import ConfirmBooking from '@/components/ConfirmBooking';
 import Header from '@/components/header';
+import RoomCard from '@/components/roomCard';
+import FormBooking from '@/components/screens/home/formBooking';
+import HotelDetail from '@/components/screens/home/hotelDetail';
+import ReviewBooking from '@/components/screens/home/reviewBooking';
 import VoucherZone from '@/components/voucherzone';
 import ZoneHotel from '@/components/zoneHotel';
-import ConfirmBooking from '@/components/ConfirmBooking';
-import RoomCard from '@/components/roomCard';
-import BookingDetail from '@/components/bookingDetail';
-import HotelDetail from '@/components/screens/home/hotelDetail';
-import FormBooking from '@/components/screens/home/formBooking';
-import ReviewBooking from '@/components/screens/home/reviewBooking';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { createStackNavigator } from '@react-navigation/stack';
+import Login from '@/components/Login';
 import type { RootStackParamList } from '@/types/navigation';
+import { createStackNavigator } from '@react-navigation/stack';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
 
-function HomeScreen() {
+export function HomeScreen() {
   const [showStickyHeader, setShowStickyHeader] = useState(false);
 
   const handleScroll = (event: { nativeEvent: { contentOffset: { y: number } } }) => {
@@ -105,6 +105,8 @@ export default function App() {
       <Stack.Screen name="FormBooking" component={FormBooking} />
       <Stack.Screen name="ConfirmBooking" component={ConfirmBooking} />
       <Stack.Screen name="ReviewBooking" component={ReviewBooking} />
+      <Stack.Screen name="Login" component={Login} />
+
     </Stack.Navigator>
   );
 }

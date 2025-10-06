@@ -19,7 +19,7 @@ export default function FormBooking() {
     const [showOut, setShowOut] = useState(false);
     const [specialRequests, setSpecialRequests] = useState<string[]>([]);
     const route = useRoute<RouteProp<RootStackParamList, 'FormBooking'>>();
-    const { roomPrice } = route.params;
+    const { roomId, checkInDate, checkOutDate, roomPrice } = route.params;
     
     type FormBookingNavProp = NativeStackNavigationProp<RootStackParamList, 'FormBooking'>;
     const navigation = useNavigation<FormBookingNavProp>();
@@ -42,7 +42,7 @@ export default function FormBooking() {
             ? Math.max(
                 1,
                 Math.round(
-                    (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
+                    (checkOutDate!.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)
                 )
             )
             : 0;
@@ -72,15 +72,15 @@ export default function FormBooking() {
                 <Text style={{ fontWeight: 'bold', marginBottom: 5 }}>Khách sạn Mường Thanh Grand Đà Nẵng</Text>
                 {/* Ngày nhận phòng + số đêm */}
                 <View style={styles.row}>
-                    <TouchableOpacity style={styles.leftBox} onPress={() => setShowIn(true)}>
+                    <TouchableOpacity style={styles.leftBox}>
                         <Text style={styles.label}>Ngày nhận phòng</Text>
-                        <Text style={styles.value}>{formatVN(checkIn)}</Text>
+                        <Text style={styles.value}>{formatVN(checkInDate)}</Text>
                     </TouchableOpacity>
 
                     <View style={styles.rightBox}>
                         <Text style={styles.label}>Số đêm nghỉ</Text>
                         <Text style={[styles.value, { fontWeight: 'bold' }]}>
-                            {checkOut ? `${nights} đêm` : '--'}
+                            {checkOutDate ? `${nights} đêm` : '--'}
                         </Text>
                     </View>
                 </View>
@@ -88,12 +88,10 @@ export default function FormBooking() {
                 {/* Ngày trả phòng */}
                 <TouchableOpacity
                     style={styles.bottomBox}
-                    onPress={() => setShowOut(true)}
                 >
                     <Text style={styles.label}>Trả phòng</Text>
-                    <Text style={styles.value}>
-                        {checkOut ? formatVN(checkOut) : 'Chưa chọn'}
-                    </Text>
+                    <Text style={styles.value}>{formatVN(checkOutDate!)}</Text>
+
                 </TouchableOpacity>
 
                 {/* Date Pickers */}

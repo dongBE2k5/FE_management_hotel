@@ -1,8 +1,7 @@
 import Register from '@/components/Register';
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable, } from 'react-native';
 import { useNavigation } from "@react-navigation/native";
-import Ionicons from "@expo/vector-icons/Ionicons";
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 export default function HotelDetail() {
     const [showStickyHeader, setShowStickyHeader] = useState(false);
 
