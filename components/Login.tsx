@@ -1,11 +1,17 @@
 import LoginBanner from '@/components/bannerLogin';
 import UserLogin from '@/models/UserLogin';
 import { loginFunction } from '@/service/UserAPI';
+import { ProfileStackParamList } from '@/types/navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { useNavigation, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
+type LoginScreenNavigationProp = StackNavigationProp<
+  ProfileStackParamList,
+  "Login"
+>;
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -13,12 +19,13 @@ export default function Login() {
   const [modalMessage, setModalMessage] = useState('');
   const [modalType, setModalType] = useState<'success' | 'error'>('success');
   const [userLogin, setUserLogin] = useState<UserLogin>({
+
     username: '',
     password: ''
   });
  
   const router = useRouter();
-
+  const navigation = useNavigation<LoginScreenNavigationProp>();
   const handleLogin = async () => {
     try {
       userLogin.username = username;
