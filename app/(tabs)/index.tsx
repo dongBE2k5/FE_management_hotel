@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // App.tsx
 import FormBooking from '@/components/screens/home/formBooking';
 import HotelDetail from '@/components/screens/home/hotelDetail';
@@ -93,19 +94,33 @@ export function HomeScreen() {
 =======
 export default function App() {
  
+=======
+import React, { useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 
-  
+>>>>>>> 242c8ad (updateEmployee)
+
+
+export default function IndexScreen() {
+  const [showStaffList, setShowStaffList] = useState(false);
 
   return (
     <View style={styles.container}>
+<<<<<<< HEAD
       
 >>>>>>> d3a37e7 (create employee)
+=======
+      <Text style={styles.title}>Demo Staff List & ListRoom</Text>
+
+      <TouchableOpacity style={styles.button} onPress={() => setShowStaffList(true)}>
+        <Text style={styles.buttonText}>Mở danh sách nhân viên</Text>
+      </TouchableOpacity>
+
+
+>>>>>>> 242c8ad (updateEmployee)
     </View>
   );
 }
-   
-
- 
 
 // ❗️Không bọc NavigationContainer ở đây nữa
 export default function App() {
@@ -131,6 +146,7 @@ const colors = {
 };
 
 const styles = StyleSheet.create({
+<<<<<<< HEAD
   container: { flex: 1, backgroundColor: '#fff' },
   scrollView: { flex: 1 },
   stickyHeader: {
@@ -218,3 +234,34 @@ const styles = StyleSheet.create({
   }
 
 });
+=======
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+    backgroundColor: "#f7f7f7",
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "700",
+    marginBottom: 20,
+    color: "#333",
+  },
+  button: {
+    backgroundColor: "#FF5722",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+});
+>>>>>>> 242c8ad (updateEmployee)
