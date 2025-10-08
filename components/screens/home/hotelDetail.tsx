@@ -1,10 +1,5 @@
-<<<<<<< HEAD
-import HeaderHotelDetail from '@/components/headerHotelDetail';
-import MidHotelDetail from '@/components/midHotelDetail';
-=======
 import HeaderHotelDetail from '@/components/userHotelDetail/headerHotelDetail';
 import MidHotelDetail from '@/components/userHotelDetail/midHotelDetail';
->>>>>>> thuan
 import { Hotel } from '@/models/Hotel';
 import RoomTypeImage from '@/models/RoomTypeImage';
 import { find } from '@/service/HotelAPI';

@@ -1,12 +1,5 @@
-<<<<<<< HEAD
-import ConfirmBooking from '@/components/ConfirmBooking';
-import type { RootStackParamList } from '@/types/navigation';
-=======
 import ConfirmBooking from '@/components/userHotelDetail/ConfirmBooking';
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
->>>>>>> thuan
+import { RootStackParamList } from '@/types/navigation';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';

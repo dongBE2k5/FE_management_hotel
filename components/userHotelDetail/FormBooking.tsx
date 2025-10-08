@@ -1,8 +1,3 @@
-<<<<<<< HEAD:components/FormBooking.tsx
-import SpecialRequest from '@/components/SpecialRequest';
-=======
-import SpecialRequest from './SpecialRequest';
->>>>>>> thuan:components/userHotelDetail/FormBooking.tsx
 import RegisterResponse from '@/models/RegisterResponse';
 import { getUserById } from '@/service/UserAPI';
 import type { RootStackParamList } from '@/types/navigation';
@@ -18,6 +13,7 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Button, Image, Modal, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from 'react-native-paper';
+import SpecialRequest from './SpecialRequest';
 
 
 export default function FormBooking() {

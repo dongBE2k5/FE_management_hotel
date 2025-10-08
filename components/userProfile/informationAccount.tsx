@@ -1,7 +1,7 @@
-import HeaderProfile from '@/components/headerProfile';
+
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import Ionicons from "@expo/vector-icons/Ionicons";
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from "@react-navigation/native";
 import React, { useState } from 'react';
@@ -13,17 +13,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-<<<<<<< HEAD:components/informationAccount.tsx
-=======
-import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
-import { Picker } from '@react-native-picker/picker';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import BannerAccount from './accountBanner';
-import { ScrollView } from 'react-native-gesture-handler';
 import HeaderProfile from './headerProfile';
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { useNavigation } from "@react-navigation/native";
->>>>>>> thuan:components/userProfile/informationAccount.tsx
 
 
 export default function AccountInfo() {

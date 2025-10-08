@@ -1,10 +1,4 @@
-<<<<<<< HEAD
-import Register from '@/components/Register';
-=======
 import Register from '@/components/userProfile/Register';
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable, } from 'react-native';
->>>>>>> thuan
 import { useNavigation } from "@react-navigation/native";
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';

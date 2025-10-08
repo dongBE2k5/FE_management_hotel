@@ -1,4 +1,5 @@
 // App.tsx
+import Login from '@/components/Login';
 import FormBooking from '@/components/screens/home/formBooking';
 import HotelDetail from '@/components/screens/home/hotelDetail';
 import ReviewBooking from '@/components/screens/home/reviewBooking';
@@ -7,11 +8,9 @@ import VoucherZone from '@/components/userHome/voucherzone';
 import ZoneHotel from '@/components/userHome/zoneHotel';
 import ConfirmBooking from '@/components/userHotelDetail/ConfirmBooking';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { default as React, default as React, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-
-import Login from '@/components/Login';
 import { createStackNavigator } from '@react-navigation/stack';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 const Stack = createStackNavigator();
 

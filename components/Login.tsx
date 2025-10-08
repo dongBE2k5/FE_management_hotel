@@ -1,4 +1,4 @@
-import LoginBanner from '@/components/bannerLogin';
+
 import UserLogin from '@/models/UserLogin';
 import { loginFunction } from '@/service/UserAPI';
 import { ProfileStackParamList } from '@/types/navigation';
@@ -7,6 +7,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { useNavigation, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import LoginBanner from './userProfile/bannerLogin';
 
 type LoginScreenNavigationProp = StackNavigationProp<
   ProfileStackParamList,
