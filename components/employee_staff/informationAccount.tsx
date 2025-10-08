@@ -27,7 +27,7 @@ export default function AccountInfo() {
   return (
     <View style={{ flex: 1, backgroundColor: '#ddd' }}>
       <BannerAccount title="Thông tin tài khoản" />
-
+      
       <ScrollView style={styles.container}>
         {/* Box Thông tin cá nhân */}
         <View style={styles.box}>

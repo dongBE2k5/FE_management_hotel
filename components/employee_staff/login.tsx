@@ -8,21 +8,20 @@ export default function Login() {
   // Ô nhập tên đăng nhập
   const LoginInput = () => {
     return (
-      <ScrollView style={styles.container}>
+      <View style={styles.container}>
         <Text style={styles.label}>Tên Đăng Nhập:</Text>
         <TextInput
           style={styles.input}
           placeholder="Nhập tên đăng nhập"
           placeholderTextColor="#999"
         />
-      </ScrollView>
+      </View>
     );
   };
-
   // Ô nhập mật khẩu
   const PassInput = () => {
     return (
-      <ScrollView style={styles.container}>
+      <View style={styles.container}>
         <Text style={styles.label}>Mật Khẩu:</Text>
         <TextInput
           style={styles.input}
@@ -30,7 +29,7 @@ export default function Login() {
           placeholderTextColor="#999"
           secureTextEntry={true}   // ẩn ký tự mật khẩu
         />
-      </ScrollView>
+      </View>
     );
   };
 
@@ -77,7 +76,7 @@ export default function Login() {
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 10,
+    marginVertical: 20,
     paddingHorizontal: 20
   },
   // Label cho mỗi input
