@@ -1,9 +1,11 @@
+import Room from "@/models/Room";
+
 // src/types/navigation.ts
 export type RootStackParamList = {
   Home: undefined;
   HotelDetail: { hotelId: number }; // có params thì khai báo ở đây
   RoomCard: undefined;
-  FormBooking: { roomId: number, checkInDate: Date, checkOutDate: Date | null, roomPrice: number };   // 👈 thêm roomPrice
+  FormBooking: { room: Room, checkInDate: Date, checkOutDate: Date | null };   // 👈 thêm roomPrice
   ConfirmBooking: {
     hotelName: string;
         hotelImage: string;   
@@ -66,6 +68,9 @@ export type RootStackParamList = {
   };
   Login: undefined
   Register: undefined
+  Account: undefined;
+  InFormationAccount:undefined;
+  LoggedAccount:undefined;
 };
 
 

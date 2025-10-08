@@ -12,10 +12,9 @@ import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import Login from '@/components/Login';
-import type { RootStackParamList } from '@/types/navigation';
 import { createStackNavigator } from '@react-navigation/stack';
 
-const Stack = createStackNavigator<RootStackParamList>();
+const Stack = createStackNavigator();
 
 
 export function HomeScreen() {
@@ -98,6 +97,7 @@ export function HomeScreen() {
 // ❗️Không bọc NavigationContainer ở đây nữa
 export default function App() {
   return (
+
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="HotelDetail" component={HotelDetail} />

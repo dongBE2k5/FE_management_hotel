@@ -1,15 +1,15 @@
 // BannerAccount.tsx
-import React from 'react';
-import { View, Text, StyleSheet, ImageBackground, TouchableOpacity } from 'react-native';
+import type { RootStackParamList } from '@/types/navigation';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import type { ProfileStackParamList } from '@/types/navigation';
+import React from 'react';
+import { ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 type BannerAccountProps = {
   subtitle?: string;
 };
 
 export default function BannerAccount(props: { subtitle: string }) {
- const navigation = useNavigation<StackNavigationProp<ProfileStackParamList>>();
+ const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   return (
     <ImageBackground

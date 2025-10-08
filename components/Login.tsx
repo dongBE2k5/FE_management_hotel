@@ -1,12 +1,15 @@
 import LoginBanner from '@/components/bannerLogin';
 import UserLogin from '@/models/UserLogin';
 import { loginFunction } from '@/service/UserAPI';
-import type { RootStackParamList } from '@/types/navigation';
+import type { ProfileStackParamList } from '@/types/navigation';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, "Login">;
+
+type LoginScreenNavigationProp = StackNavigationProp<ProfileStackParamList, "Login">;
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -19,6 +22,7 @@ export default function Login() {
     password: ''
   });
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const router = useRouter();
 
   const handleLogin = async () => {
     try {
@@ -29,11 +33,11 @@ export default function Login() {
         setModalType('success');
         setModalMessage('Đăng nhập thành công!');
         setModalVisible(true);
-
+        await AsyncStorage.setItem('userId', res.id.toString());
         // Tự động chuyển sau 1.5s
         setTimeout(() => {
           setModalVisible(false);
-          navigation.navigate('Home');
+          router.push('/');
         }, 1500);
       }else {
         setModalType('error');

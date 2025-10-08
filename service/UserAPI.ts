@@ -68,5 +68,24 @@ async function loginFunction(user: UserLogin): Promise<UserLoginResponse | null>
     }
   }
 
-export { loginFunction, register };
+async function getUserById(userId: string): Promise<RegisterResponse | null> {
+  try {
+    const res = await fetch(`${BaseUrl}/auth/user/${userId}`);
+    if (!res.ok) {
+      const errorBody = await res.text();
+      throw new Error(`HTTP ${res.status}: ${errorBody}`);
+    }
+    const data = await res.json();
+    console.log(data);
+    return {
+      ...data,
+      message: "Lấy thông tin người dùng thành công!",
+    };
+  } catch (error: any) {
+    console.error("❌ Lỗi trong getUser:", error);
+    return null;
+  }
+}
+
+export { getUserById, loginFunction, register };
 

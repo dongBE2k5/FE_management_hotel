@@ -1,16 +1,15 @@
-import React from 'react';
-import BannerAccount from '@/components/accountBanner';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
-import { ScrollView } from 'react-native-gesture-handler';
 import HeaderProfile from '@/components/headerProfile';
+import type { RootStackParamList } from '@/types/navigation';
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import type { ProfileStackParamList } from '@/types/navigation';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
 
 
 const Notification = () => {
- const navigation = useNavigation<StackNavigationProp<ProfileStackParamList>>();
+ const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   return (
     <ScrollView style={styles.container}>
