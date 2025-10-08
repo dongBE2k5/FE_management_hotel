@@ -1,17 +1,20 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Platform, TouchableOpacity, Image, Modal, FlatList, Button, Alert, } from 'react-native';
-import { Text } from 'react-native-paper';
+import SpecialRequest from './SpecialRequest';
+import RegisterResponse from '@/models/RegisterResponse';
+import { getUserById } from '@/service/UserAPI';
+import type { RootStackParamList } from '@/types/navigation';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import type { RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import SpecialRequest from './SpecialRequest';
-import type { RouteProp } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '@/types/navigation';
-import { useRoute } from '@react-navigation/native';
-import { useNavigation } from '@react-navigation/native';
-import ks1 from "../../assets/images/ks1.jpg";
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Button, Image, Modal, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Text } from 'react-native-paper';
+
 
 export default function FormBooking() {
     const [checkIn, setCheckIn] = useState<Date>(new Date());      // mặc định hôm nay
@@ -20,14 +23,33 @@ export default function FormBooking() {
     const [showOut, setShowOut] = useState(false);
     const [specialRequests, setSpecialRequests] = useState<string[]>([]);
     const route = useRoute<RouteProp<RootStackParamList, 'FormBooking'>>();
-    const { roomPrice } = route.params;
-    
+    const { room, checkInDate, checkOutDate } = route.params;
+    const [user, setUser] = useState<RegisterResponse | null>(null);
+    const [price, setPrice] = useState<number>(0);
+    const router = useRouter();
+    useEffect(() => {
+        const getUser = async () => {
+            const userId = await AsyncStorage.getItem('userId');
+            if (userId) {
+                const res = await getUserById(userId!);
+                console.log(res);
+                
+                setUser(res);
+            }else {
+                console.log("Không tìm thấy userId");
+                router.replace('/(tabs)/profile');
+            }
+        };
+        getUser();
+        setPrice(Number(room.price) * nights);
+
+    }, []);
     type FormBookingNavProp = NativeStackNavigationProp<RootStackParamList, 'FormBooking'>;
     const navigation = useNavigation<FormBookingNavProp>();
 
-    const hotelName = 'Khách sạn Mường Thanh Grand Đà Nẵng';
+    // const hotelName = 'Khách sạn Mường Thanh Grand Đà Nẵng';
     const roomName = 'Superior Twin Room - Room with Breakfast';
-    const hotelImage = require("../../assets/images/ks1.jpg");
+    const hotelImage = require('../../assets/images/ks1.jpg');
 
     const specialRequestPrice = 30000;
     const specialRequestTotal = specialRequestPrice * specialRequests.length;
@@ -39,19 +61,18 @@ export default function FormBooking() {
     const insurancePrice = 43500;
 
     const nights =
-        checkOut
+        checkOutDate
             ? Math.max(
                 1,
                 Math.round(
-                    (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
+                    (checkOutDate!.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)
                 )
             )
             : 0;
     const totalPrice =
-        checkOut
-            ? (roomPrice * nights) + taxFee + specialRequestTotal + (insuranceSelected ? insurancePrice : 0)
+        checkOutDate
+            ? (Number(room.price) * nights) + taxFee + specialRequestTotal + (insuranceSelected ? insurancePrice : 0)
             : 0;
-
 
     const options = [
         'Phòng tầng cao',
@@ -70,18 +91,18 @@ export default function FormBooking() {
         <View>
 
             <View style={styles.container}>
-                <Text style={{ fontWeight: 'bold', marginBottom: 5 }}>Khách sạn Mường Thanh Grand Đà Nẵng</Text>
+                <Text style={{ fontWeight: 'bold', marginBottom: 5 }}>{room.hotelName}</Text>
                 {/* Ngày nhận phòng + số đêm */}
                 <View style={styles.row}>
-                    <TouchableOpacity style={styles.leftBox} onPress={() => setShowIn(true)}>
+                    <TouchableOpacity style={styles.leftBox}>
                         <Text style={styles.label}>Ngày nhận phòng</Text>
-                        <Text style={styles.value}>{formatVN(checkIn)}</Text>
+                        <Text style={styles.value}>{formatVN(checkInDate)}</Text>
                     </TouchableOpacity>
 
                     <View style={styles.rightBox}>
                         <Text style={styles.label}>Số đêm nghỉ</Text>
                         <Text style={[styles.value, { fontWeight: 'bold' }]}>
-                            {checkOut ? `${nights} đêm` : '--'}
+                            {checkOutDate ? `${nights} đêm` : '--'}
                         </Text>
                     </View>
                 </View>
@@ -89,12 +110,10 @@ export default function FormBooking() {
                 {/* Ngày trả phòng */}
                 <TouchableOpacity
                     style={styles.bottomBox}
-                    onPress={() => setShowOut(true)}
                 >
                     <Text style={styles.label}>Trả phòng</Text>
-                    <Text style={styles.value}>
-                        {checkOut ? formatVN(checkOut) : 'Chưa chọn'}
-                    </Text>
+                    <Text style={styles.value}>{formatVN(checkOutDate!)}</Text>
+
                 </TouchableOpacity>
 
                 {/* Date Pickers */}
@@ -197,10 +216,10 @@ export default function FormBooking() {
                 )}
 
 
-                <Text style={{ fontWeight: 'bold', marginBottom: 5, marginTop: 10 }}>Superior Twin Room - Room with Breakfast</Text>
+                <Text style={{ fontWeight: 'bold', marginBottom: 5, marginTop: 10 }}>{room.description}</Text>
                 <View style={{ flexDirection: 'row' }}>
                     <Text style={{ color: '#999494', fontSize: 11 }}>Khách</Text>
-                    <Text style={{ color: '#999494', fontSize: 11, left: 68 }}>2 Người lớn /Phòng</Text>
+                    <Text style={{ color: '#999494', fontSize: 11, left: 68 }}>{room.typeRoom == "DON" ? "1 người" : room.typeRoom == "DOI" ? "2 người" : "4 trở lên"} /Phòng</Text>
                 </View>
                 <View style={{ flexDirection: 'row', marginTop: 5 }}>
                     <Text style={{ color: '#999494', fontSize: 11 }}>Loại giường</Text>
@@ -234,13 +253,13 @@ export default function FormBooking() {
                     marginTop: 10
                 }}>
                     <Text style={{ fontWeight: 'bold', fontSize: 10, marginRight: 10 }}>
-                        Nguyễn Phan Huy Thuận
+                      {user?.data?.fullName}
                     </Text>
                     <Text style={{ fontWeight: 'bold', fontSize: 10, marginRight: 10 }}>
-                        huythuan@gmail.com
+                        {user?.data?.email}
                     </Text>
                     <Text style={{ fontWeight: 'bold', fontSize: 10, marginRight: 10 }}>
-                        +84312451231
+                        {user?.data?.phone}
                     </Text>
                     <Ionicons name="checkmark" size={15} color="green" />
                 </View>
@@ -310,7 +329,7 @@ export default function FormBooking() {
                                     (1×) Deluxe Single Beds x {nights} đêm
                                 </Text>
                                 <Text style={styles.itemValue}>
-                                    {(roomPrice * nights).toLocaleString('vi-VN')} VND
+                                    {(Number(room.price) * nights).toLocaleString('vi-VN')} VND
                                 </Text>
                             </View>
 
@@ -339,7 +358,7 @@ export default function FormBooking() {
                         </View>
                     )}
                     <Text style={styles.totalPrice}>
-                        Tổng: {totalPrice.toLocaleString('vi-VN')} VND
+                        Tổng: {price.toLocaleString('vi-VN')} VND
                     </Text>
                     <TouchableOpacity
                         style={[
@@ -353,24 +372,24 @@ export default function FormBooking() {
                         ]}
                         activeOpacity={0.8}
                         onPress={() => {
-                            if (!checkOut) {
-                                Alert.alert('Thông báo !', 'Vui lòng chọn ngày trả phòng trước khi tiếp tục.');
-                                return;
-                            }
-                            navigation.navigate('ReviewBooking', {
-                                hotelName,
-                                hotelImage,
-                                roomName,
-                                checkIn,
-                                checkOut,
-                                nights,
-                                roomPrice,
-                                taxFee,
-                                insuranceSelected,
-                                insurancePrice,
-                                specialRequests,
-                                specialRequestPrice,
-                            });
+                            // if (!checkOut) {
+                            //     Alert.alert('Thông báo !', 'Vui lòng chọn ngày trả phòng trước khi tiếp tục.');
+                            //     return;
+                            // }
+                            // navigation.navigate('ReviewBooking', {
+                            //     hotelName,
+                            //     hotelImage,
+                            //     roomName,
+                            //     checkIn,
+                            //     checkOut,
+                            //     nights,
+                            //     roomPrice,
+                            //     taxFee,
+                            //     insuranceSelected,
+                            //     insurancePrice,
+                            //     specialRequests,
+                            //     specialRequestPrice,
+                            // });
                         }}
                     >
                         <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>

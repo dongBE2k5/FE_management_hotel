@@ -1,22 +1,24 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
-import HotelReviewDialog from '@/components/dialog/HotelReviewDialog';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
 
 type BookingDetailProps = {
   routeParams: Record<string, string | undefined>;
 };
 
 export default function BookingDetail({ routeParams }: BookingDetailProps) {
-  const [visible, setVisible] = useState(false);
-
   const {
     hotelName = 'Khách sạn Mường Thanh Grand Đà Nẵng',
     roomName = 'Superior Twin Room - Room with Breakfast',
-    hotelImage = require("../../assets/images/ks1.jpg"),
+    hotelImage = require('@/assets/images/ks1.jpg'),
     checkIn = '',
     checkOut = '',
     nights = '0',
+    roomPrice = '0',
+    taxFee = '0',
+    insuranceSelected = 'false',
+    insurancePrice = '0',
     specialRequests = '[]',
+    specialRequestPrice = '0',
     totalPrice = '0',
     isPaid = 'false',
   } = routeParams;
@@ -29,7 +31,7 @@ export default function BookingDetail({ routeParams }: BookingDetailProps) {
     }
   })();
 
-  // Nếu chưa thanh toán
+  // ✅ Nếu chưa thanh toán, trả về danh sách trống / thông báo
   if (isPaid !== 'true') {
     return (
       <View style={styles.emptyContainer}>
@@ -38,62 +40,39 @@ export default function BookingDetail({ routeParams }: BookingDetailProps) {
     );
   }
 
+  // ✅ Nếu đã thanh toán, hiển thị chi tiết
   return (
-    <View style={styles.container}>
-      <View>
-        <Text style={styles.title}>Chi tiết đặt phòng</Text>
-        <Text style={styles.label}>{hotelName}</Text>
-        <Image source={hotelImage} style={styles.hotelImage} />
-        <Text style={styles.label}>Loại phòng: {roomName}</Text>
-        <Text style={styles.label}>Ngày nhận: {checkIn}</Text>
-        <Text style={styles.label}>Ngày trả: {checkOut}</Text>
-        <Text style={styles.label}>Số đêm: {nights}</Text>
+    <ScrollView style={styles.container}>
+      <Text style={styles.title}>Khách sạn đã đặt</Text>
+      <Text style={styles.label}>Khách sạn: {hotelName}</Text>
+      <Image source={hotelImage} style={styles.hotelImage} />
+      <Text style={styles.label}>Loại phòng: {roomName}</Text>
+      <Text style={styles.label}>Ngày nhận: {checkIn}</Text>
+      <Text style={styles.label}>Ngày trả: {checkOut}</Text>
+      <Text style={styles.label}>Số đêm: {nights}</Text>
 
-        {specialReqArray.length > 0 && (
-          <View>
-            <Text style={styles.label}>Yêu cầu đặc biệt:</Text>
-            {specialReqArray.map((r: string, i: number) => (
-              <Text key={i} style={styles.label}>• {r}</Text>
-            ))}
-          </View>
-        )}
+      {specialReqArray.length > 0 && (
+        <View>
+          <Text style={styles.label}>Yêu cầu đặc biệt:</Text>
+          {specialReqArray.map((r: string, i: number) => (
+            <Text key={i} style={styles.label}>• {r}</Text>
+          ))}
+        </View>
+      )}
 
-        <Text style={styles.label}>
-          Tổng tiền: {Number(totalPrice).toLocaleString('vi-VN')} VND
-        </Text>
-        <Text style={styles.label}>
-          Trạng thái thanh toán: <Text style={{ color: 'green' }}>Đã thanh toán</Text>
-        </Text>
-
-        {/* 🟦 Nút mở dialog */}
-        <TouchableOpacity style={styles.reviewButton} onPress={() => setVisible(true)}>
-          <Text style={styles.reviewText}>Đánh giá khách sạn</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* 🟨 Dialog đánh giá */}
-      <HotelReviewDialog
-        visible={visible}
-        onClose={() => setVisible(false)}
-        hotelName={hotelName}
-      />
-    </View>
+      <Text style={styles.label}>
+        Tổng tiền: {Number(totalPrice).toLocaleString('vi-VN')} VND
+      </Text>
+      <Text style={styles.label}>
+        Trạng thái thanh toán:{' '}
+        <Text style={{ color: 'green' }}>Đã thanh toán</Text>
+      </Text>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#fff',
-    margin: 10,
-    borderRadius: 10,
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-  },
+  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
   title: { fontSize: 20, fontWeight: 'bold', marginBottom: 20 },
   label: { fontSize: 16, marginBottom: 10 },
   hotelImage: {
@@ -102,22 +81,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 16,
   },
-  reviewButton: {
-    backgroundColor: '#73c5fc',
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  reviewText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 16,
-  },
+  // Kiểu cho phần chưa có thanh toán
   emptyContainer: {
-    flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: '#fff',
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#fff',
   },
   emptyText: {
-    fontSize: 16, color: '#888', textAlign: 'center',
+    fontSize: 16,
+    color: '#888',
+    textAlign: 'center',
   },
 });

@@ -1,37 +1,51 @@
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { useState } from "react";
+import type LocationModel from "@/models/Location";
+import { useEffect, useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-// Danh sách các vị trí
-const locations = ["Đà Nẵng", "Hà Nội", "TP.HCM","Nha Trang","Vũng Tàu","Đà Lạt","Hạ Long","Quy Nhơn"];
+type Props = {
+  locations: LocationModel[];
+  changeLocation: (id: number) => void;
+};
 
-export default function LocationSelector() {
-    // Mặc định chọn vị trí đầu tiên
-    const [selectedLocation, setSelectedLocation] = useState(locations[0]);
+export default function LocationSelector({ locations, changeLocation }: Props) {
+  const [selectedLocation, setSelectedLocation] = useState<number | null>(null);
 
-    return (
-        <View style={{ flexDirection: "row", padding: 10 }}>
-            {locations.map((loc) => (
-                <TouchableOpacity
-                    key={loc}
-                    onPress={() => setSelectedLocation(loc)}
-                    style={[
-                        styles.locationButton,
-                        selectedLocation === loc && styles.activeButton,
-                    ]}
-                >
-                    <Text
-                        style={[
-                            styles.locationText,
-                            selectedLocation === loc && styles.activeText,
-                        ]}
-                    >
-                        {loc}
-                    </Text>
-                </TouchableOpacity>
-            ))}
-        </View>
-    );
+  useEffect(() => {
+    if (locations.length > 0 && selectedLocation === null) {
+      const firstId = locations[0].id;
+      setSelectedLocation(firstId);
+      changeLocation(firstId);
+    }
+  }, [locations]);
+
+  return (
+    <View style={{ flexDirection: "row", padding: 10 }}>
+      {locations.map((location) => (
+        <TouchableOpacity
+          key={location.id}
+          onPress={() => {
+            setSelectedLocation(location.id);
+            changeLocation(location.id);
+          }}
+          style={[
+            styles.locationButton,
+            selectedLocation === location.id && styles.activeButton,
+          ]}
+        >
+          <Text
+            style={[
+              styles.locationText,
+              selectedLocation === location.id && styles.activeText,
+            ]}
+          >
+            {location.name}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
 }
+
 
 const styles = StyleSheet.create({
     locationButton: {

@@ -1,48 +1,102 @@
 import LoginBanner from './bannerLogin';
-import React from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import type { StackNavigationProp } from '@react-navigation/stack';
-import type { ProfileStackParamList } from '@/types/navigation';
+import UserLogin from '@/models/UserLogin';
+import { loginFunction } from '@/service/UserAPI';
+import { ProfileStackParamList } from '@/types/navigation';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { useNavigation, useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
+type LoginScreenNavigationProp = StackNavigationProp<
+  ProfileStackParamList,
+  "Login"
+>;
 export default function Login() {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState<'success' | 'error'>('success');
+  const [userLogin, setUserLogin] = useState<UserLogin>({
 
-  const navigation = useNavigation<StackNavigationProp<ProfileStackParamList>>();
+    username: '',
+    password: ''
+  });
+ 
+  const router = useRouter();
+  const navigation = useNavigation<LoginScreenNavigationProp>();
+  const handleLogin = async () => {
+    try {
+      userLogin.username = username;
+      userLogin.password = password;
+      const res = await loginFunction(userLogin);
+      if(res !== null){
+        setModalType('success');
+        setModalMessage('Đăng nhập thành công!');
+        setModalVisible(true);
+        await AsyncStorage.setItem('userId', res.id.toString());
+        // Tự động chuyển sau 1.5s
+        setTimeout(() => {
+          setModalVisible(false);
+          router.replace('/');
+        }, 1500);
+      }else {
+        setModalType('error');
+        setModalMessage('Tên đăng nhập hoặc mật khẩu không chính xác!');
+        setModalVisible(true);
+
+        // Tự động chuyển sau 1.5s
+        setTimeout(() => {
+          setModalVisible(false);
+        }, 1500);
+      }
+      
+      
+    } catch (err) {
+      console.error(err);
+      alert("Lỗi kết nối đến máy chủ!");
+    }
+  };
 
 
   // Ô nhập tên đăng nhập
   const LoginInput = () => {
     return (
-      <ScrollView style={styles.container}>
+      <View style={styles.container}>
         <Text style={styles.label}>Tên Đăng Nhập:</Text>
         <TextInput
           style={styles.input}
           placeholder="Nhập tên đăng nhập"
           placeholderTextColor="#999"
+          value={username}
+          onChangeText={setUsername}
         />
-      </ScrollView>
+      </View>
     );
   };
 
   // Ô nhập mật khẩu
   const PassInput = () => {
     return (
-      <ScrollView style={styles.container}>
+      <View style={styles.container}>
         <Text style={styles.label}>Mật Khẩu:</Text>
         <TextInput
           style={styles.input}
           placeholder="Nhập mật khẩu"
           placeholderTextColor="#999"
           secureTextEntry={true}   // ẩn ký tự mật khẩu
+          value={password}
+          onChangeText={setPassword}
         />
-      </ScrollView>
+      </View>
     );
   };
 
   // Nút đăng nhập
   const LoginButton = () => (
     <TouchableOpacity style={styles.button}>
-      <TouchableOpacity onPress={() => navigation.navigate('LoggedAccount')}>
+      <TouchableOpacity onPress={handleLogin}>
         <Text style={styles.buttonText}>Đăng nhập</Text>
       </TouchableOpacity>
     </TouchableOpacity>
@@ -50,7 +104,7 @@ export default function Login() {
 
   // Phần đăng ký (nếu chưa có tài khoản)
   const RegisterSection = () => (
-    <ScrollView style={styles.registerContainer}>
+    <View style={styles.registerContainer}>
       <Text style={styles.registerText}>
         Nếu chưa có tài khoản vui lòng ấn{' '}
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
@@ -64,7 +118,7 @@ export default function Login() {
       <Text style={styles.infoText}>
         Chúng tôi sẽ bảo vệ dữ liệu của bạn để ngăn ngừa rủi ro bảo mật.
       </Text>
-    </ScrollView>
+    </View>
   );
 
   return (
@@ -76,14 +130,62 @@ export default function Login() {
       />
 
       {/* Form đăng nhập */}
-      <LoginInput />
-      <PassInput />
+      <View style={styles.container}>
+        <Text style={styles.label}>Tên Đăng Nhập:</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Nhập tên đăng nhập"
+          placeholderTextColor="#999"
+          value={username}
+          onChangeText={setUsername}
+        />
+      </View>
+      <View style={styles.container}>
+        <Text style={styles.label}>Mật Khẩu:</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Nhập mật khẩu"
+          placeholderTextColor="#999"
+          secureTextEntry={true}   // ẩn ký tự mật khẩu
+          value={password}
+          onChangeText={setPassword}
+        />
+      </View>
 
       {/* Nút login */}
       <LoginButton />
 
       {/* Phần hướng dẫn đăng ký */}
       <RegisterSection />
+
+      <Modal transparent={true} visible={modalVisible} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalContainer,
+              { borderColor: modalType === 'success' ? '#28a745' : '#dc3545' },
+            ]}
+          >
+            <Text
+              style={[
+                styles.modalText,
+                { color: modalType === 'success' ? '#28a745' : '#dc3545' },
+              ]}
+            >
+              {modalMessage}
+            </Text>
+            {/* <TouchableOpacity
+              style={[
+                styles.closeButton,
+                { backgroundColor: modalType === 'success' ? '#28a745' : '#dc3545' },
+              ]}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={{ color: '#fff', fontWeight: 'bold' }}>Đóng</Text>
+            </TouchableOpacity> */}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -135,4 +237,30 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
   },
+  closeButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 6,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '75%',
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 12,
+    borderWidth: 2,
+    alignItems: 'center',
+  },
+  modalText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  
 });

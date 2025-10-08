@@ -1,11 +1,53 @@
 import HeaderHotelDetail from '@/components/userHotelDetail/headerHotelDetail';
 import MidHotelDetail from '@/components/userHotelDetail/midHotelDetail';
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable, } from 'react-native';
-import { useNavigation } from "@react-navigation/native";
+import { Hotel } from '@/models/Hotel';
+import RoomTypeImage from '@/models/RoomTypeImage';
+import { find } from '@/service/HotelAPI';
+import { getRoomTypeImageByHotel } from '@/service/RoomTypeImageAPI';
+import { RootStackParamList } from '@/types/navigation';
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
+import React, { useEffect, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View, } from 'react-native';
+
+
+type HotelDetailRouteProp = RouteProp<RootStackParamList, 'HotelDetail'>;
+
 export default function HotelDetail() {
   const [showStickyHeader, setShowStickyHeader] = useState(false);
+  const [hotel, sethotel] = useState<Hotel>();
+  const [roomTypeImage, setRoomTypeImage] = useState<RoomTypeImage[]>([]);
+
+  //Route
+  const route = useRoute<HotelDetailRouteProp>();
+    const { hotelId } = route.params;
+    // console.log(`KS ${hotelId}`);
+    useEffect(() => {
+        
+        const getHotelById = async (id: number) => {
+            try {
+                const data = await find(id);
+                console.log(data);
+                sethotel(data);
+            } catch (err) {
+                console.error(err);
+            }
+        };
+        const getRoomTypeImage = async (id: number) => {
+            try {
+                const data = await getRoomTypeImageByHotel(id);
+                console.log(data);
+                
+                console.log("Type Room" + JSON.stringify(data));
+                setRoomTypeImage(data);
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        getHotelById(hotelId)
+        getRoomTypeImage(hotelId)
+    }, [])
 
   const handleScroll = (event: { nativeEvent: { contentOffset: { y: any; }; }; }) => {
     const scrollY = event.nativeEvent.contentOffset.y;
@@ -43,8 +85,14 @@ export default function HotelDetail() {
         bounces={false}             // tắt hiệu ứng bounce trên iOS
         overScrollMode="never"     // tắt hiệu ứng overscroll trên Android
       >
-        <HeaderHotelDetail />
-        <MidHotelDetail />
+        {hotel && 
+        <>        
+        <HeaderHotelDetail hotel={hotel}/>
+        <MidHotelDetail roomTypeImage={roomTypeImage} hotelId={hotelId} /> 
+        </>
+}
+        {/* <HeaderHotelDetail hotel={hotel}/> */}
+        
 
       </ScrollView>
     </View>
