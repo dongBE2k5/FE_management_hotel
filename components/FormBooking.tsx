@@ -10,6 +10,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Button, Image, Modal, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from 'react-native-paper';
@@ -24,7 +25,8 @@ export default function FormBooking() {
     const route = useRoute<RouteProp<RootStackParamList, 'FormBooking'>>();
     const { room, checkInDate, checkOutDate } = route.params;
     const [user, setUser] = useState<RegisterResponse | null>(null);
-    console.log(room);
+    const [price, setPrice] = useState<number>(0);
+    const router = useRouter();
     useEffect(() => {
         const getUser = async () => {
             const userId = await AsyncStorage.getItem('userId');
@@ -33,10 +35,12 @@ export default function FormBooking() {
                 setUser(res);
             }else {
                 console.log("Không tìm thấy userId");
-                
+                router.replace('/(tabs)/profile');
             }
         };
         getUser();
+        setPrice(Number(room.price) * nights);
+
     }, []);
     type FormBookingNavProp = NativeStackNavigationProp<RootStackParamList, 'FormBooking'>;
     const navigation = useNavigation<FormBookingNavProp>();
@@ -67,7 +71,6 @@ export default function FormBooking() {
         checkOutDate
             ? (Number(room.price) * nights) + taxFee + specialRequestTotal + (insuranceSelected ? insurancePrice : 0)
             : 0;
-
 
     const options = [
         'Phòng tầng cao',
@@ -248,13 +251,13 @@ export default function FormBooking() {
                     marginTop: 10
                 }}>
                     <Text style={{ fontWeight: 'bold', fontSize: 10, marginRight: 10 }}>
-                        Nguyễn Phan Huy Thuận
+                      {user?.data?.fullName}
                     </Text>
                     <Text style={{ fontWeight: 'bold', fontSize: 10, marginRight: 10 }}>
-                        huythuan@gmail.com
+                        {user?.data?.email}
                     </Text>
                     <Text style={{ fontWeight: 'bold', fontSize: 10, marginRight: 10 }}>
-                        +84312451231
+                        {user?.data?.phone}
                     </Text>
                     <Ionicons name="checkmark" size={15} color="green" />
                 </View>
@@ -353,7 +356,7 @@ export default function FormBooking() {
                         </View>
                     )}
                     <Text style={styles.totalPrice}>
-                        Tổng: {totalPrice.toLocaleString('vi-VN')} VND
+                        Tổng: {price.toLocaleString('vi-VN')} VND
                     </Text>
                     <TouchableOpacity
                         style={[
