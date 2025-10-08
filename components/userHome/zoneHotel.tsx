@@ -1,3 +1,4 @@
+<<<<<<< HEAD:components/zoneHotel.tsx
 import { Hotel } from '@/models/Hotel';
 import LocationModel from '@/models/Location';
 import { getAllHotel, getHotelByLocation } from '@/service/HotelAPI';
@@ -12,6 +13,22 @@ import HotelCard from "./hotelCard";
 import Location from "./location";
 import Slide from "./slideImage";
 
+=======
+import React, { useEffect, useState } from 'react';
+import { Image, ImageBackground, ScrollView, TouchableOpacity, StyleSheet, Text, View, TextInput } from "react-native";
+import HotelCard from "./hotelCard";
+import LocationSelector from "./location";
+import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { RootStackParamList } from '../../types/navigation'; 
+import Slide from "../userHotelDetail/slideImage";
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Pressable } from 'react-native';
+import { Hotel } from '@/models/Hotel';
+import LocationModel from '@/models/Location';
+import { getAllHotel, getHotelByLocation } from '@/service/HotelAPI';
+import { getAllLocation } from '@/service/LocationAPI';
+>>>>>>> thuan:components/userHome/zoneHotel.tsx
 type ZoneHotelNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
 export default function ZoneHotel() {
@@ -40,12 +57,46 @@ export default function ZoneHotel() {
         fetchHotels();
     }, []);
     const navigation = useNavigation<ZoneHotelNavigationProp>();
+<<<<<<< HEAD:components/zoneHotel.tsx
     
      const handleNavigation = (hotelId: number) => {
         navigation.navigate('HotelDetail', {hotelId})
     }
 
     const changeLocation = async (id: Number) => {
+=======
+
+    const handleNavigation = (hotelId: number) => {
+        navigation.navigate('HotelDetail', { hotelId })
+    }
+
+    const [hotels, setHotels] = useState<Hotel[]>([]);
+    const [locations, setLocations] = useState<LocationModel[]>([]);
+
+    useEffect(() => {
+        const fetchHotels = async () => {
+            try {
+                const data = await getAllHotel();
+                setHotels(data);
+            } catch (err) {
+                console.error(err);
+            }
+        };
+        const fetchLocation = async () => {
+            try {
+                const data = await getAllLocation();
+                setLocations(data)
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        fetchLocation()
+        fetchHotels();
+    }, []);
+
+     const changeLocation = async (id: Number) => {
+>>>>>>> thuan:components/userHome/zoneHotel.tsx
         try {
             const data = await getHotelByLocation(id)
             setHotels(data)
@@ -55,10 +106,14 @@ export default function ZoneHotel() {
     }
   
 
+<<<<<<< HEAD:components/zoneHotel.tsx
     return (
+=======
+      return (
+>>>>>>> thuan:components/userHome/zoneHotel.tsx
         <View style={styles.voucherzone}>
             <ImageBackground
-                source={require("../assets/images/bgKhachSanHome.png")}
+                source={require("../../assets/images/bgKhachSanHome.png")}
                 style={styles.background}
                 resizeMode="cover"
             >
@@ -68,7 +123,7 @@ export default function ZoneHotel() {
                     marginHorizontal: 10,
                 }}>
                     <Text style={styles.text}>Best Choice</Text>
-                    <Image source={require("../assets/images/fire.png")} />
+                    <Image source={require("../../assets/images/fire.png")} />
                 </View>
 
 
@@ -108,7 +163,11 @@ export default function ZoneHotel() {
                 </View>
 
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+<<<<<<< HEAD:components/zoneHotel.tsx
                     <Location locations={locations} changeLocation={changeLocation} />
+=======
+                  <LocationSelector locations={locations} changeLocation={changeLocation} />
+>>>>>>> thuan:components/userHome/zoneHotel.tsx
                 </ScrollView>
 
                 <ScrollView

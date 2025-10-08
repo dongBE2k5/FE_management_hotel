@@ -28,7 +28,7 @@ export default function ConfirmBooking() {
   const {
     hotelName = 'Khách sạn Mường Thanh Grand Đà Nẵng',
     roomName = 'Superior Twin Room - Room with Breakfast',
-    hotelImage = require('@/assets/images/ks1.jpg'),
+    hotelImage = require('../../assets/images/ks1.jpg'),
     checkIn,
     checkOut,
     nights = 1,

@@ -1,4 +1,4 @@
-import InFormationAccount from '@/components/informationAccount';
+import InFormationAccount from '@/components/userProfile/informationAccount';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable, } from 'react-native';
 export default function HotelDetail() {

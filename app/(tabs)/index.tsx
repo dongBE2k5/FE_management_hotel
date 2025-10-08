@@ -1,13 +1,13 @@
 // App.tsx
-import ConfirmBooking from '@/components/ConfirmBooking';
-import Header from '@/components/header';
 import FormBooking from '@/components/screens/home/formBooking';
 import HotelDetail from '@/components/screens/home/hotelDetail';
 import ReviewBooking from '@/components/screens/home/reviewBooking';
-import VoucherZone from '@/components/voucherzone';
-import ZoneHotel from '@/components/zoneHotel';
+import Header from '@/components/userHome/header';
+import VoucherZone from '@/components/userHome/voucherzone';
+import ZoneHotel from '@/components/userHome/zoneHotel';
+import ConfirmBooking from '@/components/userHotelDetail/ConfirmBooking';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import React, { useState } from 'react';
+import { default as React, default as React, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import Login from '@/components/Login';

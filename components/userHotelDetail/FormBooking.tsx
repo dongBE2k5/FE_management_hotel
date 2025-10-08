@@ -1,4 +1,8 @@
+<<<<<<< HEAD:components/FormBooking.tsx
 import SpecialRequest from '@/components/SpecialRequest';
+=======
+import SpecialRequest from './SpecialRequest';
+>>>>>>> thuan:components/userHotelDetail/FormBooking.tsx
 import RegisterResponse from '@/models/RegisterResponse';
 import { getUserById } from '@/service/UserAPI';
 import type { RootStackParamList } from '@/types/navigation';
@@ -49,7 +53,7 @@ export default function FormBooking() {
 
     // const hotelName = 'Khách sạn Mường Thanh Grand Đà Nẵng';
     const roomName = 'Superior Twin Room - Room with Breakfast';
-    const hotelImage = require('@/assets/images/ks1.jpg');
+    const hotelImage = require('../../assets/images/ks1.jpg');
 
     const specialRequestPrice = 30000;
     const specialRequestTotal = specialRequestPrice * specialRequests.length;
@@ -228,7 +232,7 @@ export default function FormBooking() {
                 </View>
 
                 <View style={{ flexDirection: 'row' }}>
-                    <Image style={{ width: 70, height: 50, borderRadius: 5, marginTop: 5 }} source={require("../assets/images/room1.jpg")} />
+                    <Image style={{ width: 70, height: 50, borderRadius: 5, marginTop: 5 }} source={require("../../assets/images/room1.jpg")} />
                     <View>
                         <Text style={{ color: '#999494', fontSize: 11, left: 28, marginTop: 5 }}>Gồm bữa sáng</Text>
                         <Text style={{ color: '#999494', fontSize: 11, left: 28, marginTop: 5 }}>Wifi miễn phí</Text>
