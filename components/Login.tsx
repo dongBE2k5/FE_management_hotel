@@ -1,15 +1,10 @@
 import LoginBanner from '@/components/bannerLogin';
 import UserLogin from '@/models/UserLogin';
 import { loginFunction } from '@/service/UserAPI';
-import type { ProfileStackParamList } from '@/types/navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
-import type { StackNavigationProp } from '@react-navigation/stack';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-
-type LoginScreenNavigationProp = StackNavigationProp<ProfileStackParamList, "Login">;
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -21,7 +16,7 @@ export default function Login() {
     username: '',
     password: ''
   });
-  const navigation = useNavigation<LoginScreenNavigationProp>();
+ 
   const router = useRouter();
 
   const handleLogin = async () => {
@@ -37,7 +32,7 @@ export default function Login() {
         // Tự động chuyển sau 1.5s
         setTimeout(() => {
           setModalVisible(false);
-          router.push('/');
+          router.replace('/');
         }, 1500);
       }else {
         setModalType('error');
