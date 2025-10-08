@@ -32,6 +32,8 @@ export default function FormBooking() {
             const userId = await AsyncStorage.getItem('userId');
             if (userId) {
                 const res = await getUserById(userId!);
+                console.log(res);
+                
                 setUser(res);
             }else {
                 console.log("Không tìm thấy userId");

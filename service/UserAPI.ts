@@ -76,9 +76,8 @@ async function getUserById(userId: string): Promise<RegisterResponse | null> {
       throw new Error(`HTTP ${res.status}: ${errorBody}`);
     }
     const data = await res.json();
-    console.log(data);
     return {
-      ...data,
+      data: data,
       message: "Lấy thông tin người dùng thành công!",
     };
   } catch (error: any) {

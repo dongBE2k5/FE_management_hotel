@@ -17,7 +17,7 @@ async function getRoomAvailableByHotel(hotelId: number, checkIn: Date, checkOut:
   const checkInDate = checkIn.toISOString().split('T')[0];
   const checkOutDate = checkOut.toISOString().split('T')[0];
   const res = await fetch(
-    `http://localhost:8080/api/rooms/available?hotelId=${hotelId}&checkInDate=${checkInDate}&checkOutDate=${checkOutDate}`
+    `${BaseUrl}/rooms/available?hotelId=${hotelId}&checkInDate=${checkInDate}&checkOutDate=${checkOutDate}`
   );  
   if (!res.ok) {
     throw new Error(`HTTP error! status: ${res.status}`);
