@@ -1,7 +1,6 @@
 // App.tsx
 import ConfirmBooking from '@/components/ConfirmBooking';
 import Header from '@/components/header';
-import RoomCard from '@/components/roomCard';
 import FormBooking from '@/components/screens/home/formBooking';
 import HotelDetail from '@/components/screens/home/hotelDetail';
 import ReviewBooking from '@/components/screens/home/reviewBooking';
@@ -101,7 +100,7 @@ export default function App() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="HotelDetail" component={HotelDetail} />
-      <Stack.Screen name="RoomCard" component={RoomCard} />
+      {/* <Stack.Screen name="RoomCard" component={RoomCard} /> */}
       <Stack.Screen name="FormBooking" component={FormBooking} />
       <Stack.Screen name="ConfirmBooking" component={ConfirmBooking} />
       <Stack.Screen name="ReviewBooking" component={ReviewBooking} />

@@ -17,13 +17,13 @@ const HotelCard: React.FC<HotelCardProps> = ({ handleNavigations, data }) => {
     return (
         <View style={styles.cardWrapper}>
             <TouchableOpacity
-                onPress={() => {handleNavigations(data.id)}}
-                // style={{ backgroundColor: "blue", padding: 10, borderRadius: 5 }}
-            >                <ImageBackground
-                source={{uri: `${data.image}`}}
-                style={styles.container}
-
+                onPress={() => { handleNavigations(data.id) }}
+            // style={{ backgroundColor: "blue", padding: 10, borderRadius: 5 }}
             >
+                <ImageBackground
+                    source={{ uri: `${data.image}` }}
+                    style={styles.container}
+                >
                     <View style={{ flexDirection: 'row' }}>
                         <View style={{ backgroundColor: '#0E0E14', width: 80, padding: 5, borderRadius: 5, flexDirection: 'row' }}>
                             <Image style={{ width: 10, height: 10 }} source={require("../assets/images/gps.png")} />
@@ -81,6 +81,7 @@ const HotelCard: React.FC<HotelCardProps> = ({ handleNavigations, data }) => {
                             textDecorationLine: 'line-through' // ➖ Gạch ngang
                         }}
                     >
+                        1
                     </Text>
                     <Text style={{ fontSize: 10, marginTop: 5, marginLeft: 5, color: '#FF6210', fontWeight: 'bold' }}>Chi tiết</Text>
                 </View>
