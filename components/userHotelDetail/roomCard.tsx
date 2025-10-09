@@ -12,9 +12,7 @@ interface RoomCardProps {
 }
 
 export default function RoomCard({ rooms, checkInDate, checkOutDate }: RoomCardProps) {
-  
-  console.log("checkInDate", checkInDate);
-  console.log("checkOutDate", checkOutDate);
+ 
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   if (rooms.length === 0) return "Đã hết phòng";
   const goBooking = (room: Room) => {

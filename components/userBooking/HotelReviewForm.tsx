@@ -1,14 +1,14 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  TextInput,
-  ScrollView,
   Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import Ionicons from '@expo/vector-icons/Ionicons';
 
 export default function HotelReviewForm({ hotelName = 'Khách sạn Alibaba Đà Nẵng' }) {
   const [rating, setRating] = useState(0);

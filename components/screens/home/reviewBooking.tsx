@@ -13,17 +13,10 @@ export default function HotelDetail() {
 
   // 👇 Lấy dữ liệu từ FormBooking (đã navigate sang ReviewBooking)
   const {
-    hotelName,
-    roomName,
-    checkIn,
-    checkOut,
+    room,
+    checkInDate,
+    checkOutDate,
     nights,
-    roomPrice,
-    taxFee,
-    insuranceSelected,
-    insurancePrice,
-    specialRequests,
-    specialRequestPrice,
   } = route.params;
 
   const handleScroll = (event: { nativeEvent: { contentOffset: { y: number } } }) => {
@@ -58,7 +51,7 @@ export default function HotelDetail() {
         overScrollMode="never"
       >
         {/* ✅ Truyền toàn bộ dữ liệu xuống ConfirmBooking qua props */}
-       <ConfirmBooking />
+       <ConfirmBooking room={room} checkInDate={checkInDate} checkOutDate={checkOutDate} nights={nights} />
       </ScrollView>
     </View>
   );

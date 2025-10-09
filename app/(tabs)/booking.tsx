@@ -1,54 +1,66 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Text } from 'react-native';
-import Header from '@/components/userHome/header';
-import BookingDetail from '@/components/userBooking/bookingDetail';
-import { useLocalSearchParams } from 'expo-router';
+import BookedList from '@/components/userBooking/BookedList';
+import { createStackNavigator } from '@react-navigation/stack';
+import React from 'react';
+import { StyleSheet } from 'react-native';
 
-export default function Booking() {
-  const [showStickyHeader, setShowStickyHeader] = useState(false);
 
-  const params = useLocalSearchParams<{
-    hotelName?: string;
-    checkIn?: string;
-    checkOut?: string;
-    nights?: string;
-    roomPrice?: string;
-    taxFee?: string;
-    insuranceSelected?: string;
-    insurancePrice?: string;
-    specialRequests?: string;
-    specialRequestPrice?: string;
-    totalPrice?: string;
-    isPaid?: string;
-  }>();
+const Stack = createStackNavigator();
 
-  // Khi cuộn vượt quá 100px thì hiển thị header
-  const handleScroll = (event: any) => {
-    const scrollY = event.nativeEvent.contentOffset.y;
-    setShowStickyHeader(scrollY > 10);
-  };
+// export default function Booking() {
+//   const [showStickyHeader, setShowStickyHeader] = useState(false);
 
+//   const params = useLocalSearchParams<{
+//     hotelName?: string;
+//     checkIn?: string;
+//     checkOut?: string;
+//     nights?: string;
+//     roomPrice?: string;
+//     taxFee?: string;
+//     insuranceSelected?: string;
+//     insurancePrice?: string;
+//     specialRequests?: string;
+//     specialRequestPrice?: string;
+//     totalPrice?: string;
+//     isPaid?: string;
+//   }>();
+
+//   // Khi cuộn vượt quá 100px thì hiển thị header
+//   const handleScroll = (event: any) => {
+//     const scrollY = event.nativeEvent.contentOffset.y;
+//     setShowStickyHeader(scrollY > 10);
+//   };
+
+//   return (
+//     <View style={styles.container}>
+//       {/* Sticky Header (hiện khi scroll xuống) */}
+//       {showStickyHeader && (
+//         <View style={styles.stickyHeader}>
+//           <Text style={styles.stickyText}>Traveloka TDC</Text>
+//         </View>
+//       )}
+
+//       {/* Nội dung cuộn */}
+//       <ScrollView
+//         style={styles.scrollView}
+//         onScroll={handleScroll}
+//         scrollEventThrottle={16}
+//         bounces={false}
+//         overScrollMode="never"
+//       >
+//         <Header />
+//         <BookedList />
+//         {/* <BookingDetail routeParams={params} /> */}
+//       </ScrollView>
+//     </View>
+//   );
+// }
+export default function BookingNavigator() {
   return (
-    <View style={styles.container}>
-      {/* Sticky Header (hiện khi scroll xuống) */}
-      {showStickyHeader && (
-        <View style={styles.stickyHeader}>
-          <Text style={styles.stickyText}>Traveloka TDC</Text>
-        </View>
-      )}
-
-      {/* Nội dung cuộn */}
-      <ScrollView
-        style={styles.scrollView}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        bounces={false}
-        overScrollMode="never"
-      >
-        <Header />
-        <BookingDetail routeParams={params} />
-      </ScrollView>
-    </View>
+    // <Stack.Navigator screenOptions={{ headerShown: false }}>
+    //   <Stack.Screen name="index" component={BookedList} />
+    //   <Stack.Screen name="bookingdetail" component={BookingDetailScreen} />
+    // </Stack.Navigator>
+    <BookedList />
   );
 }
 

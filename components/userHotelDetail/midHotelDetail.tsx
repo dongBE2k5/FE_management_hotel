@@ -1,4 +1,3 @@
-import RoomZone from './roomZone';
 import Room from '@/models/Room';
 import RoomTypeImage from '@/models/RoomTypeImage';
 import { getRoomAvailableByHotel } from '@/service/RoomAPI';
@@ -10,14 +9,18 @@ import React, { useEffect, useState } from 'react';
 import { Button, Image, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RoomCard from "./roomCard";
+import RoomZone from './roomZone';
 
 type RoomProps = {
     roomTypeImage: RoomTypeImage[],
     hotelId: number
 }
 export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
-    const [checkIn, setCheckIn] = useState<Date>(new Date());      // mặc định hôm nay
-    const [checkOut, setCheckOut] = useState<Date | null>(null);
+    const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+    const [checkIn, setCheckIn] = useState<Date>(today);      // mặc định hôm nay
+    const [checkOut, setCheckOut] = useState<Date | null>(tomorrow);
     const [showIn, setShowIn] = useState(false);
     const [showOut, setShowOut] = useState(false);
     const [rooms, setRooms] = useState<Room[]>([]);
@@ -27,27 +30,29 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
     const phongDoi = rooms.filter(room => room.typeRoom == "DOI");
     const phongGiaDinh = rooms.filter(room => room.typeRoom == "GIA_DINH");
 
-    const tomorrow = new Date(checkIn);
-    tomorrow.setDate(checkIn.getDate() + 1);
 
     
     useEffect(() => {
-        if (!checkOut) {
-            setCheckOut(tomorrow);
+        if (checkIn) {
+          const nextDay = new Date(checkIn);
+          nextDay.setDate(nextDay.getDate() + 1); // +1 ngày
+          setCheckOut(nextDay);
         }
-    }, [checkIn]);
+      }, [checkIn]);
     useEffect(() => {
-        const fetchRoomAvailableByHotel = async (id: number, checkIn: Date, tomorrow: Date) => {
-
+        const fetchRoomAvailableByHotel = async (id: number, checkIn: Date, checkOut: Date) => {
+            console.log("fetchRoomAvailableByHotel");
+            console.log(checkIn, checkOut);
+            
             try {
-                const data = await getRoomAvailableByHotel(id, checkIn, tomorrow);
+                const data = await getRoomAvailableByHotel(id, checkIn, checkOut);
                 setRooms(data); 
                 setIsSearch(false);
             } catch (err) {
                 console.error(err);
             }
         };
-        fetchRoomAvailableByHotel(hotelId, checkIn, checkOut || new Date());
+        fetchRoomAvailableByHotel(hotelId, checkIn, checkOut!);
     }, [isSearch]);
     // console.log(rooms);
     // console.log(roomTypeImage);
