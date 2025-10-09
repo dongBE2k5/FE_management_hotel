@@ -7,10 +7,11 @@ import HeaderProfile from './headerProfile';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { ProfileStackParamList } from '@/types/navigation';
+import { logoutFunction } from '@/service/UserAPI';
 
 
 const Notification = () => {
- const navigation = useNavigation<StackNavigationProp<ProfileStackParamList>>();
+  const navigation = useNavigation<StackNavigationProp<ProfileStackParamList>>();
 
   return (
     <ScrollView style={styles.container}>
@@ -27,16 +28,30 @@ const Notification = () => {
           </View>
 
           {/* Nút đăng xuất */}
-          <TouchableOpacity  onPress={() => navigation.navigate('Account')}>
+          <TouchableOpacity onPress={async () => {
+            const result = await logoutFunction();
+            if (result.success) {
+              // Hiển thị thông báo
+              alert(result.message);
+              // Điều hướng về màn hình Login
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Account' }], // đổi 'Login' thành tên route màn hình login của bạn
+              });
+            } else {
+              alert('Đăng xuất thất bại: ' + result.message);
+            }
+          }}>
             <View style={styles.logoutBtn}>
               <Text style={styles.logoutText}>Đăng xuất</Text>
             </View>
           </TouchableOpacity>
+
         </View>
 
         {/* Nút chỉnh sửa hồ sơ */}
         <TouchableOpacity onPress={() => navigation.navigate('InFormationAccount')}>
-          <View  style={styles.editBtn}>
+          <View style={styles.editBtn}>
             <Text style={styles.editText}>Chỉnh sửa hồ sơ</Text>
           </View>
         </TouchableOpacity>
@@ -77,9 +92,9 @@ export default function LoginAccount() {
     <View style={{ flex: 1, backgroundColor: '#ddd' }}>
       {/* Banner trên cùng (có thể hiển thị tiêu đề/subtitle) */}
       <HeaderProfile />
-      
+
       {/* Danh sách các box hiển thị thông tin */}
-      <Notification /> 
+      <Notification />
     </View>
   );
 }
@@ -89,7 +104,7 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: 10,
     paddingHorizontal: 20,
-        transform: [{ translateY: -50 }],
+    transform: [{ translateY: -50 }],
   },
   // Box trắng bo góc có bóng đổ
   box: {

@@ -101,7 +101,7 @@ export default function App() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="HotelDetail" component={HotelDetail} />
-      <Stack.Screen name="RoomCard" component={RoomCard} />
+      {/* <Stack.Screen name="RoomCard" component={RoomCard} /> */}
       <Stack.Screen name="FormBooking" component={FormBooking} />
       <Stack.Screen name="ConfirmBooking" component={ConfirmBooking} />
       <Stack.Screen name="ReviewBooking" component={ReviewBooking} />

@@ -23,7 +23,7 @@ export default function Login() {
     username: '',
     password: ''
   });
- 
+
   const router = useRouter();
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const handleLogin = async () => {
@@ -31,17 +31,20 @@ export default function Login() {
       userLogin.username = username;
       userLogin.password = password;
       const res = await loginFunction(userLogin);
-      if(res !== null){
+      if (res !== null) {
         setModalType('success');
         setModalMessage('Đăng nhập thành công!');
         setModalVisible(true);
         await AsyncStorage.setItem('userId', res.id.toString());
+        await AsyncStorage.setItem('userToken', res.accessToken); // lưu token nếu cần dùng cho API sau này
         // Tự động chuyển sau 1.5s
         setTimeout(() => {
           setModalVisible(false);
-          router.replace('/');
+          // Chuyển sang màn hình LoggedAccount
+          navigation.replace('LoggedAccount'); // đổi đường dẫn theo file của bạn
         }, 1500);
-      }else {
+      }
+      else {
         setModalType('error');
         setModalMessage('Tên đăng nhập hoặc mật khẩu không chính xác!');
         setModalVisible(true);
@@ -51,8 +54,8 @@ export default function Login() {
           setModalVisible(false);
         }, 1500);
       }
-      
-      
+
+
     } catch (err) {
       console.error(err);
       alert("Lỗi kết nối đến máy chủ!");
@@ -262,5 +265,5 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     textAlign: 'center',
   },
-  
+
 });
