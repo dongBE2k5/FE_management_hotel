@@ -23,7 +23,7 @@ export default function Login() {
     username: '',
     password: ''
   });
- 
+
   const router = useRouter();
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const handleLogin = async () => {
@@ -31,7 +31,7 @@ export default function Login() {
       userLogin.username = username;
       userLogin.password = password;
       const res = await loginFunction(userLogin);
-      if(res !== null){
+      if (res !== null) {
         setModalType('success');
         setModalMessage('Đăng nhập thành công!');
         setModalVisible(true);
@@ -45,7 +45,8 @@ export default function Login() {
          router.replace("/");
 
         }, 1500);
-      }else {
+      }
+      else {
         setModalType('error');
         setModalMessage('Tên đăng nhập hoặc mật khẩu không chính xác!');
         setModalVisible(true);
@@ -55,8 +56,8 @@ export default function Login() {
           setModalVisible(false);
         }, 1500);
       }
-      
-      
+
+
     } catch (err) {
       console.error(err);
       alert("Lỗi kết nối đến máy chủ!");
@@ -266,5 +267,5 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     textAlign: 'center',
   },
-  
+
 });

@@ -13,12 +13,12 @@ export default function App() {
         const checkRole = async () => {
 
             try {
-                await AsyncStorage.setItem("role","ROLE_EMPLOYEE")
+                await AsyncStorage.setItem("role", "ROLE_USER")
                 const role = await AsyncStorage.getItem("role")
-                  
+
                 if (!role) {
-                 router.replace("/(tabs)");
-                 return;
+                    router.replace("/(tabs)");
+                    return;
                 }
 
                 if (role === "ROLE_EMPLOYEE" || role === "ROLE_ADMIN") {

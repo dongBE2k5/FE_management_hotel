@@ -1,21 +1,42 @@
-import { Hotel } from '@/models/Hotel';
-import LocationModel from '@/models/Location';
-import { getAllHotel, getHotelByLocation } from '@/service/HotelAPI';
-import { getAllLocation } from '@/service/LocationAPI';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import React, { useEffect, useState } from 'react';
+import { Image, ImageBackground, ScrollView, TouchableOpacity, StyleSheet, Text, View, TextInput } from "react-native";
+import HotelCard from "./hotelCard";
+import LocationSelector from "./location";
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import React, { useEffect, useState } from 'react';
-import { Image, ImageBackground, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import type { RootStackParamList } from '../../types/navigation';
-import LocationSelector from '../location';
 import Slide from "../userHotelDetail/slideImage";
-import HotelCard from "./hotelCard";
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Pressable } from 'react-native';
+import { Hotel } from '@/models/Hotel';
+import LocationModel from '@/models/Location';
+import { getAllHotel, getHotelByLocation, getRecentlyViewedHotels } from '@/service/HotelAPI';
+import { getAllLocation } from '@/service/LocationAPI';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
+
 type ZoneHotelNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
 export default function ZoneHotel() {
+
+    const navigation = useNavigation<ZoneHotelNavigationProp>();
+
+    const handleNavigation = (hotelId: number) => {
+        navigation.navigate('HotelDetail', { hotelId })
+    }
+
+    //
     const [hotels, setHotels] = useState<Hotel[]>([]);
     const [locations, setLocations] = useState<LocationModel[]>([]);
+    const [recentHotels, setRecentHotels] = useState<Hotel[]>([]);
+    // Loại bỏ các khách sạn trùng id trong danh sách
+    const uniqueRecentHotels = recentHotels.filter(
+        (hotel, index, self) =>
+            index === self.findIndex(h => h.id === hotel.id)
+    );
+
 
     useEffect(() => {
         const fetchHotels = async () => {
@@ -38,11 +59,39 @@ export default function ZoneHotel() {
         fetchLocation()
         fetchHotels();
     }, []);
-    const navigation = useNavigation<ZoneHotelNavigationProp>();
-    
-     const handleNavigation = (hotelId: number) => {
-        navigation.navigate('HotelDetail', {hotelId})
-    }
+
+    useFocusEffect(
+        useCallback(() => {
+            const fetchViewedHotels = async () => {
+                try {
+                    const userId = await AsyncStorage.getItem('userId');
+                    if (!userId) return;
+                    const data = await getRecentlyViewedHotels(Number(userId));
+                    setRecentHotels(data);
+                } catch (err) {
+                    console.error(err);
+                }
+            };
+            fetchViewedHotels();
+        }, [])
+    );
+    const fetchViewedHotels = async () => {
+        try {
+            const userId = await AsyncStorage.getItem('userId');
+            if (!userId) return;
+            const data = await getRecentlyViewedHotels(Number(userId));
+            setRecentHotels(data);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    // Dùng useFocusEffect để load lại khi quay về
+    useFocusEffect(
+        useCallback(() => {
+            fetchViewedHotels();
+        }, [])
+    );
 
     const changeLocation = async (id: Number) => {
         try {
@@ -52,15 +101,35 @@ export default function ZoneHotel() {
             console.error(error);
         }
     }
-  
 
-      return (
+
+    return (
         <View style={styles.voucherzone}>
             <ImageBackground
                 source={require("../../assets/images/bgKhachSanHome.png")}
                 style={styles.background}
                 resizeMode="cover"
             >
+
+                {/* === ĐÃ XEM GẦN ĐÂY === */}
+                {recentHotels.length > 0 && (
+                    <View style={{ marginBottom: 15 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginHorizontal: 10 }}>
+                            <Ionicons name="time-outline" size={22} color="#f39c12" />
+                            <Text style={[styles.text, { marginLeft: 5 }]}>Khách sạn đã xem</Text>
+                        </View>
+
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cardScroll}>
+                            {/* lọc khách sạn trùng lặp*/}
+                            {uniqueRecentHotels.map(hotel => (
+                                <HotelCard key={hotel.id} handleNavigations={handleNavigation} data={hotel}  onViewedUpdate={fetchViewedHotels}  />
+                            ))}
+
+                        </ScrollView>
+                    </View>
+                )}
+
+
                 <View style={{
                     flexDirection: 'row',
                     alignItems: 'center',
@@ -107,7 +176,7 @@ export default function ZoneHotel() {
                 </View>
 
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  <LocationSelector locations={locations} changeLocation={changeLocation} />
+                    <LocationSelector locations={locations} changeLocation={changeLocation} />
                 </ScrollView>
 
                 <ScrollView
