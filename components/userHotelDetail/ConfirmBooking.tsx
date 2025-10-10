@@ -1,3 +1,4 @@
+import Booking from '@/models/Booking/Booking';
 import Room from '@/models/Room';
 import { createBooking } from '@/service/BookingAPI';
 import type { RootStackParamList } from '@/types/navigation';
@@ -75,11 +76,11 @@ export default function ConfirmBooking() {
     console.log("addBooking");
 
     const userId = await AsyncStorage.getItem('userId');
-    const booking = {
+    const booking: Booking = {
       userId: Number(userId!),
       roomId: room.id,
-      checkInDate: checkInDate,
-      checkOutDate: checkOutDate!,
+      checkInDate: new Date(checkInDate),
+      checkOutDate: new Date(checkOutDate!),
       totalPrice: totalPrice,
     }
     try {
