@@ -4,18 +4,18 @@ import Room from "@/models/Room";
 export type RootStackParamList = {
   Home: undefined;
   HotelDetail: { hotelId: number }; // có params thì khai báo ở đây
- RoomCard: { rooms: Room[]; checkInDate: Date; checkOutDate?: Date | null };
+  RoomCard: { rooms: Room[]; checkInDate: Date; checkOutDate?: Date | null };
   FormBooking: { room: Room, checkInDate: Date, checkOutDate: Date | null };   // 👈 thêm roomPrice
   ConfirmBooking: {
-    room: Room,
-    checkInDate: Date,
-    checkOutDate: Date | null,
-    nights: number,
+    room: Room;
+    checkInDate: string;
+    checkOutDate: string;
+    nights: number;
   };
   ReviewBooking: {
     room: Room,
-    checkInDate : Date,
-    checkOutDate : Date | null,
+    checkInDate: Date,
+    checkOutDate: Date | null,
     nights: number,
   };
   Booking: {

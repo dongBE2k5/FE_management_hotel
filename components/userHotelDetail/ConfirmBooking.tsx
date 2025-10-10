@@ -20,14 +20,17 @@ import {
 type ConfirmBookingProps = {
   room: Room,
   checkInDate: Date,
-  checkOutDate?: Date | null,
+  checkOutDate: Date | null,
   nights: number
 }
 
-export default function ConfirmBooking({ room, checkInDate, checkOutDate, nights }: ConfirmBookingProps) {
+export default function ConfirmBooking() {
+  // const route = useRoute<ConfirmBookingRouteProp>();
 
   const router = useRouter();
   const route = useRoute<RouteProp<RootStackParamList, 'ConfirmBooking'>>();
+  const { room, checkInDate, checkOutDate, nights } = route.params;
+
   type ConfirmBookingNavigationProp = NativeStackNavigationProp<
     RootStackParamList,
     'ConfirmBooking'
