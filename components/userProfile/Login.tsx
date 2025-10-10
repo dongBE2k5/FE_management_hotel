@@ -36,10 +36,14 @@ export default function Login() {
         setModalMessage('Đăng nhập thành công!');
         setModalVisible(true);
         await AsyncStorage.setItem('userId', res.id.toString());
+        await AsyncStorage.setItem('userToken', res.accessToken); // lưu token nếu cần dùng cho API sau này
+        await AsyncStorage.setItem('role', res.role.name); 
         // Tự động chuyển sau 1.5s
         setTimeout(() => {
           setModalVisible(false);
-          router.replace('/');
+         
+         router.replace("/");
+
         }, 1500);
       }else {
         setModalType('error');

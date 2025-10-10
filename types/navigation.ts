@@ -8,7 +8,7 @@ export type RootStackParamList = {
   FormBooking: { room: Room, checkInDate: Date, checkOutDate: Date | null };   // 👈 thêm roomPrice
   ConfirmBooking: {
     hotelName: string;
-        hotelImage: string;   
+    hotelImage: string;
     roomName: string;
     checkIn: Date;
     checkOut: Date | null;
@@ -28,7 +28,7 @@ export type RootStackParamList = {
   };
   Booking: {
     hotelName: string;
-        hotelImage: string;   
+    hotelImage: string;
     roomName: string;
     checkIn: any;
     checkOut: any;
@@ -44,7 +44,7 @@ export type RootStackParamList = {
   };
   BookingDetail: {
     hotelName: string;
-        hotelImage: string;   
+    hotelImage: string;
     roomName: string;
     checkIn: any;
     checkOut: any;
@@ -61,8 +61,8 @@ export type RootStackParamList = {
   Login: undefined
   Register: undefined
   Account: undefined;
-  InFormationAccount:undefined;
-  LoggedAccount:undefined;
+  InFormationAccount: undefined;
+  LoggedAccount: undefined;
 };
 
 
@@ -71,7 +71,13 @@ export type ProfileStackParamList = {
   Account: undefined;
   Login: undefined;
   Register: undefined;
-  InFormationAccount:undefined;
-  LoggedAccount:undefined;
+  InFormationAccount: undefined;
+  LoggedAccount: undefined;
   Home: undefined;
 };
+
+export type EmployeeStackParamList = {
+  listRoom: undefined;
+  bookingDetail: { bookingId: number }; // có params thì khai báo ở đây
+  checkout: undefined; // có params thì khai báo ở đây
+}
