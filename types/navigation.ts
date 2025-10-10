@@ -7,18 +7,10 @@ export type RootStackParamList = {
  RoomCard: { rooms: Room[]; checkInDate: Date; checkOutDate?: Date | null };
   FormBooking: { room: Room, checkInDate: Date, checkOutDate: Date | null };   // 👈 thêm roomPrice
   ConfirmBooking: {
-    hotelName: string;
-    hotelImage: string;
-    roomName: string;
-    checkIn: Date;
-    checkOut: Date | null;
-    nights: number;
-    roomPrice: number;
-    taxFee: number;
-    insuranceSelected: boolean;
-    insurancePrice: number;
-    specialRequests: string[];
-    specialRequestPrice: number;
+    room: Room,
+    checkInDate: Date,
+    checkOutDate: Date | null,
+    nights: number,
   };
   ReviewBooking: {
     room: Room,

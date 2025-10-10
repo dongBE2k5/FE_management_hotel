@@ -1,37 +1,37 @@
 import { Hotel } from '@/models/Hotel';
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { saveViewedHotelAPI } from '@/service/HotelAPI';
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import Ionicons from '@expo/vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface HotelCardProps {
     handleNavigations: (id: number) => void
     data: Hotel;
-     onViewedUpdate?: () => void; 
+    onViewedUpdate?: () => void;
 }
 
-const HotelCard: React.FC<HotelCardProps> = ({ handleNavigations, data,onViewedUpdate  }) => {
+const HotelCard: React.FC<HotelCardProps> = ({ handleNavigations, data, onViewedUpdate }) => {
     const handlePress = async () => {
         try {
             const userId = await AsyncStorage.getItem('userId');
             if (userId) {
                 // ✅ Gọi API lưu lịch sử đã xem gần đây
                 await saveViewedHotelAPI(Number(userId), data.id);
-                  onViewedUpdate?.();
+                onViewedUpdate?.();
             }
         } catch (err) {
             console.error("Error saving viewed hotel:", err);
         } finally {
             // ✅ Sau khi lưu, chuyển sang trang chi tiết
             handleNavigations(data.id);
-            
+
         }
     };
 
     return (
         <View style={styles.cardWrapper}>
             <TouchableOpacity
-              onPress={handlePress}
+                onPress={handlePress}
             // style={{ backgroundColor: "blue", padding: 10, borderRadius: 5 }}
             >
                 <ImageBackground
@@ -81,13 +81,15 @@ const HotelCard: React.FC<HotelCardProps> = ({ handleNavigations, data,onViewedU
                         <Ionicons name="star-half" size={13} color="#FFD700" />
                         <Ionicons name="star-outline" size={13} color="#FFD700" />
                     </View>
-                    <View style={{ flexDirection: 'row', marginLeft: 5, marginTop: 'auto' }}>
+                    <View style={{ flexDirection: 'row', marginLeft: 5, marginTop: 5 }}>
                         <Image style={{ width: 10, height: 10, tintColor: '#009EDE' }} source={require("../../assets/images/logo.png")} />
                         <Text style={{ fontSize: 9, marginLeft: 5, color: '#009EDE', fontWeight: 'bold' }}>8.4/10</Text>
                         <Text style={{ fontSize: 9, marginLeft: 5, color: 'black', fontWeight: 'bold', }}>(795)</Text>
                     </View>
+                    <View style={{ flexDirection: 'row', marginTop: 'auto', marginBottom: 5 }}>
+                        <Text style={{ fontSize: 10, marginTop: 5, marginLeft: 5, color: '#FF6210', fontWeight: 'bold' }}>{data?.minPrice && data?.maxPrice ? `${data?.minPrice?.toLocaleString('vi-VN')} VNĐ - ${data?.maxPrice?.toLocaleString('vi-VN')} VNĐ` : ''}</Text>
 
-                    <Text style={{ fontSize: 10, marginTop: 5, marginLeft: 5, color: '#FF6210', fontWeight: 'bold' }}>Chi tiết</Text>
+                    </View>
                 </View>
             </TouchableOpacity>
         </View>

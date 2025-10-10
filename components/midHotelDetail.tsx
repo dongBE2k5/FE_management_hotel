@@ -122,14 +122,14 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                             borderTopRightRadius: 12,
                             justifyContent: 'center'
                         }}>
-                            {/* <DateTimePicker
+                            <DateTimePicker
                                 value={checkIn}
                                 minimumDate={checkIn}
                                 mode="date"
                                 display="spinner"
                                 onChange={(_, date) => date && setCheckIn(date)}
                                 style={{ height: 200 }}
-                            /> */}
+                            />
                             <input
                                 type="date"
                                 value={checkIn?.toISOString().split('T')[0]}

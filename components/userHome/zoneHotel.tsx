@@ -1,18 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { Image, ImageBackground, ScrollView, TouchableOpacity, StyleSheet, Text, View, TextInput } from "react-native";
-import HotelCard from "./hotelCard";
-import LocationSelector from "./location";
-import { useNavigation } from '@react-navigation/native';
-import type { StackNavigationProp } from '@react-navigation/stack';
-import type { RootStackParamList } from '../../types/navigation';
-import Slide from "../userHotelDetail/slideImage";
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { Pressable } from 'react-native';
 import { Hotel } from '@/models/Hotel';
 import LocationModel from '@/models/Location';
 import { getAllHotel, getHotelByLocation, getRecentlyViewedHotels } from '@/service/HotelAPI';
 import { getAllLocation } from '@/service/LocationAPI';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import React, { useEffect, useState } from 'react';
+import { Image, ImageBackground, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import type { RootStackParamList } from '../../types/navigation';
+import Slide from "../userHotelDetail/slideImage";
+import HotelCard from "./hotelCard";
+import LocationSelector from "./location";
 
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
@@ -57,7 +56,7 @@ export default function ZoneHotel() {
         }
 
         fetchLocation()
-        fetchHotels();
+        // fetchHotels();
     }, []);
 
     useFocusEffect(
@@ -96,6 +95,7 @@ export default function ZoneHotel() {
     const changeLocation = async (id: Number) => {
         try {
             const data = await getHotelByLocation(id)
+            console.log(data)
             setHotels(data)
         } catch (error) {
             console.error(error);

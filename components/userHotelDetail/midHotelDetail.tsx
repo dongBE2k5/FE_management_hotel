@@ -127,21 +127,21 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                             borderTopRightRadius: 12,
                             justifyContent: 'center'
                         }}>
-                            {/* <DateTimePicker
+                            <DateTimePicker
                                 value={checkIn}
                                 minimumDate={checkIn}
                                 mode="date"
                                 display="spinner"
                                 onChange={(_, date) => date && setCheckIn(date)}
                                 style={{ height: 200 }}
-                            /> */}
-                            <input
+                            />
+                            {/* <input
                                 type="date"
                                 value={checkIn?.toISOString().split('T')[0]}
                                 min={new Date().toISOString().split('T')[0]}
                                 onChange={(e) => setCheckIn(new Date(e.target.value))}
                                 style={{ fontSize: 18, padding: 8 }}
-                            />
+                            /> */}
                             <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingRight: 12 }}>
                                 <Button title="Chọn" onPress={() => {
                                     setShowIn(false);
@@ -185,7 +185,7 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                             borderTopRightRadius: 12,
                             justifyContent: 'center'
                         }}>
-                            {/* <DateTimePicker
+                            <DateTimePicker
                                 value={checkOut || new Date()}       // 👈 luôn mặc định ngày hôm nay
                                 minimumDate={new Date()}
                                 mode="date"
@@ -194,8 +194,8 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                                 textColor="black"    // màu chữ của spinner (iOS 14+)
                                 style={{ flex: 1 }}
                                 onChange={(_, date) => date && setCheckOut(date)}
-                            /> */}
-                            <input
+                            />
+                            {/* <input
                                 type="date"
                                 value={checkOut?.toISOString().split('T')[0]}
                                 min={(() => {
@@ -205,7 +205,7 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                                 })()}
                                 onChange={(e) => setCheckOut(new Date(e.target.value))}
                                 style={{ fontSize: 18, padding: 8 }}
-                            />
+                            /> */}
                             <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 12 }}>
                                 <Button title="Chọn" onPress={() => setShowOut(false)} />
 

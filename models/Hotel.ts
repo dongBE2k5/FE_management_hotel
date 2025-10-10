@@ -7,5 +7,7 @@ interface Hotel {
   status: string;
   image: string
   locationName: string;
+  minPrice: number | null;
+  maxPrice: number | null;
 }
 export { Hotel };
