@@ -1,389 +1,410 @@
-import { useNavigation, useRouter } from 'expo-router';
-import React, { useState } from "react";
+import { useNavigation } from "@react-navigation/native";
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from "react";
 import { Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from '@expo/vector-icons';
-
-// SỬA ĐỔI: Sử dụng các component thật được import từ thư mục model
 import CheckinModal from "../model/check_in";
 import MiniBarScreen from "../model/minibar";
-import SuccessModal from "../model/sucsessModal"; // Giữ nguyên lỗi chính tả 'sucsess' để khớp với code của bạn
+import SuccessModal from "../model/sucsessModal";
 
-
-export default function BookingDetail(props) {
-  const navigation = useNavigation();
-  // Nhận dữ liệu thật từ props thay vì hardcode
-  const item = props.item || {
-    id_booking: 'B00123',
-    name: 'Nguyễn Văn An',
-    phone: '0987 654 321',
-    cccd: '012345678912',
-    userId: 'U00456'
-  };
-
-  // State
-  const [isCheckedIn, setIsCheckedIn] = useState(false); // Bắt đầu với trạng thái chưa check-in
-  const router = useRouter();
-  const [showCheckInModal, setShowCheckInModal] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showMiniBar, setShowMiniBar] = useState(false);
-
-  const handleCheckInSuccess = () => {
-    setShowCheckInModal(false);
-    setShowSuccess(true);
-    setIsCheckedIn(true); // Cập nhật trạng thái sau khi check-in thành công
-    setTimeout(() => setShowSuccess(false), 2000); // Tự động đóng modal thành công
-  }
-
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={COLORS.textDark} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Chi tiết đặt phòng</Text>
-          <View style={{ width: 40 }} /> {/* Spacer */}
-        </View>
-
-        {/* Nút Check-in / Check-out */}
-        {isCheckedIn ? (
-          <TouchableOpacity
-            style={[styles.mainActionButton, { backgroundColor: COLORS.danger }]}
-            onPress={() => navigation.navigate("checkout")} // SỬA LỖI: Dùng router.push
-          >
-            <Ionicons name="log-out-outline" size={22} color={COLORS.white} />
-            <Text style={styles.mainActionButtonText}>Check-out</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={[styles.mainActionButton, { backgroundColor: COLORS.success }]}
-            onPress={() => setShowCheckInModal(true)}
-          >
-             <Ionicons name="log-in-outline" size={22} color={COLORS.white} />
-            <Text style={styles.mainActionButtonText}>Check-in</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Action buttons phụ */}
-        <View style={styles.actionRow}>
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => setShowMiniBar(true)}
-          >
-            <Ionicons name="add-circle-outline" size={20} color={COLORS.primary} />
-            <Text style={styles.secondaryButtonText}>Thêm dịch vụ</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.secondaryButton}>
-             <Ionicons name="create-outline" size={20} color={COLORS.primary} />
-            <Text style={styles.secondaryButtonText}>Chỉnh sửa</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Thông tin khách */}
-        <View style={styles.card}>
-            <View style={styles.customerRow}>
-                <Image
-                    source={{ uri: `https://i.pravatar.cc/150?u=${item.userId}` }}
-                    style={styles.avatar}
-                />
-                <View style={{ flex: 1 }}>
-                    <Text style={styles.customerName}>{item.name}</Text>
-                    <Text style={styles.customerInfo}>CCCD: {item.cccd}</Text>
-                    <Text style={styles.customerInfo}>User ID: {item.userId}</Text>
-                    <Text style={styles.customerInfo}>Mã Booking: {item.id_booking}</Text>
-                </View>
-            </View>
-            <View style={styles.statusBadgeContainer}>
-                <View style={[styles.statusBadge, {backgroundColor: COLORS.primaryFaded}]}>
-                    <Text style={[styles.statusBadgeText, {color: COLORS.primary}]}>Đã thanh toán</Text>
-                </View>
-                {isCheckedIn && (
-                    <View style={[styles.statusBadge, {backgroundColor: COLORS.successFaded}]}>
-                        <Text style={[styles.statusBadgeText, {color: COLORS.success}]}>Đã Check-in</Text>
-                    </View>
-                )}
-            </View>
-        </View>
-
-        {/* Lịch sử nhận phòng - Giao diện bảng */}
-        <View style={styles.card}>
-            <Text style={styles.cardTitle}>Lịch sử nhận phòng</Text>
-            <View style={styles.table}>
-                {/* Header */}
-                <View style={styles.tableRowHeader}>
-                    <Text style={[styles.tableHeader, {flex: 1.5}]}>Thời gian</Text>
-                    <Text style={[styles.tableHeader, {flex: 2}]}>Trạng thái</Text>
-                </View>
-                {/* Body */}
-                <View style={styles.tableRow}>
-                    <Text style={styles.tableCell}>16:18 28/09/2025</Text>
-                    <Text style={styles.tableCell}>Đặt phòng thành công</Text>
-                </View>
-                 <View style={styles.tableRow}>
-                    <Text style={styles.tableCell}>16:20 28/09/2025</Text>
-                    <Text style={styles.tableCell}>Đã thanh toán</Text>
-                </View>
-                {isCheckedIn && (
-                    <View style={styles.tableRow}>
-                        <Text style={styles.tableCell}>14:00 29/09/2025</Text>
-                        <Text style={[styles.tableCell, {color: COLORS.success, fontWeight: '600'}]}>Đã Check-in</Text>
-                    </View>
-                )}
-            </View>
-        </View>
-
-        {/* Thông tin phòng */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Thông tin phòng</Text>
-          <Text style={styles.roomName}>
-            Phòng Superior Double <Text style={styles.roomNumber}>P.501</Text>
-          </Text>
-           <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Check-in:</Text>
-                <Text style={styles.infoValue}>Thứ Ba, 28/01/2025</Text>
-            </View>
-             <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Check-out:</Text>
-                <Text style={styles.infoValue}>Thứ Năm, 30/01/2025</Text>
-            </View>
-             <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Số đêm:</Text>
-                <Text style={styles.infoValue}>2 đêm</Text>
-            </View>
-             <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Số người:</Text>
-                <Text style={styles.infoValue}>2 người lớn</Text>
-            </View>
-        </View>
-
-        {/* Thông tin giá & dịch vụ */}
-        <View style={styles.card}>
-            <Text style={styles.cardTitle}>Chi tiết thanh toán</Text>
-            {/* Giá phòng */}
-            <View style={styles.priceRow}>
-                <Text style={styles.priceLabel}>Giá phòng (2 đêm x 2.500.000₫)</Text>
-                <Text style={styles.priceValue}>5.000.000 ₫</Text>
-            </View>
-             {/* Dịch vụ */}
-            <View style={styles.priceRow}>
-                <Text style={styles.priceLabel}>Xe đưa đón sân bay</Text>
-                <Text style={styles.priceValue}>1.000.000 ₫</Text>
-            </View>
-             <View style={styles.priceRow}>
-                <Text style={styles.priceLabel}>Spa thư giãn (x1)</Text>
-                <Text style={styles.priceValue}>800.000 ₫</Text>
-            </View>
-            {/* Total */}
-             <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Tổng cộng</Text>
-                <Text style={styles.totalPrice}>6.800.000 ₫</Text>
-            </View>
-        </View>
-
-        {/* Modals */}
-        <CheckinModal
-            visible={showCheckInModal}
-            onClose={() => setShowCheckInModal(false)}
-            onConfirm={handleCheckInSuccess}
-        />
-        <SuccessModal
-            visible={showSuccess}
-            message="Check-in thành công!"
-            onClose={() => setShowSuccess(false)}
-        />
-        <Modal visible={showMiniBar} animationType="slide" transparent={true}>
-            <MiniBarScreen onClose={() => setShowMiniBar(false)} />
-        </Modal>
-
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
-
-const COLORS = {
-  primary: '#007AFF',
-  primaryFaded: '#E6F2FF',
-  success: '#34C759',
-  successFaded: '#E2F8E8',
-  danger: '#FF3B30',
-  white: '#FFFFFF',
-  lightGray: '#EFEFEF',
-  mediumGray: '#D1D1D6',
-  textDark: '#1C1C1E',
-  textLight: '#8A8A8E',
-  background: '#F9F9F9', // Nền sáng hơn một chút
-  border: '#EAEAEA',
+// --- DỮ LIỆU MẪU ---
+// Trong ứng dụng thực tế, bạn sẽ nhận dữ liệu này từ API hoặc qua navigation params
+const mockBookingData = {
+    id_booking: '445454646',
+    status: 'pending_checkin', // 'pending_checkin' hoặc 'checked_in'
+    payment_status: 'paid', // 'paid' hoặc 'unpaid'
+    customer: {
+        id: '154548',
+        name: 'Nguyễn Văn A',
+        cccd: '032547458151215',
+        avatar: 'https://i.pravatar.cc/100',
+    },
+    room: {
+        name: 'Phòng đôi',
+        number: '501',
+        checkin_date: '28/01/2025',
+        checkout_date: '30/01/2025',
+        nights: 2,
+        guests: 2,
+    },
+    pricing: {
+        price_per_night: 2500000,
+        extra_hour_fee: 0,
+        room_total: 5000000,
+    },
+    services: [
+        { id: 1, name: 'Buffet buổi sáng', type: 'Thường', quantity: 1, price: 2500000 },
+        { id: 2, name: 'Xe đưa đón sân bay', type: 'VIP', quantity: 2, price: 1000000 },
+        { id: 3, name: 'Spa thư giãn', type: 'Thường', quantity: 1, price: 800000 },
+    ],
+    history: [
+        { time: '16:18:00 28/9/2025', status: 'Đã đặt phòng thành công', link: true },
+        { time: '16:18:00 28/9/2025', status: 'Đã Thanh Toán', link: true },
+        { time: '16:18:00 28/9/2025', status: 'Đã Check-in', color: 'green' },
+        { time: '16:18:00 28/9/2025', status: 'Đã Check-out', color: 'red' },
+    ]
 };
 
+// Sử dụng `props` để truyền dữ liệu vào, ví dụ: { bookingData }
+export default function BookingDetail({ route }) {
+    // Lấy dữ liệu từ navigation params, nếu không có thì dùng dữ liệu mẫu
+    const bookingData = route?.params?.bookingData || mockBookingData;
+
+    const navigation = useNavigation();
+    const router = useRouter(); // Giữ lại nếu bạn có dùng
+
+    // ----- STATE QUẢN LÝ TRẠNG THÁI UI -----
+    const [isCheckedIn, setIsCheckedIn] = useState(false);
+    const [showCheckInModal, setShowCheckInModal] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [showMiniBar, setShowMiniBar] = useState(false);
+
+    // Cập nhật trạng thái isCheckedIn khi dữ liệu bookingData thay đổi
+    useEffect(() => {
+        if (bookingData) {
+            setIsCheckedIn(bookingData.status === 'checked_in');
+        }
+    }, [bookingData]);
+
+    // ----- CÁC HÀM XỬ LÝ SỰ KIỆN -----
+    const handleCheckInConfirm = () => {
+        // Trong thực tế, bạn sẽ gọi API để check-in ở đây
+        // Sau khi API trả về thành công, cập nhật lại state
+        setIsCheckedIn(true);
+        setShowCheckInModal(false);
+        setShowSuccess(true);
+    };
+
+    const handleNavigateToCheckout = () => {
+        navigation.navigate("checkout", { bookingId: bookingData.id_booking });
+    };
+
+    const serviceTotal = bookingData.services.reduce((total, service) => total + service.price, 0);
+
+    if (!bookingData) {
+        return <View><Text>Đang tải dữ liệu...</Text></View>; // Hoặc một component loading
+    }
+    
+    return (
+        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+            {/* Header */}
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <Text style={styles.back}>←</Text>
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Chi tiết đặt phòng</Text>
+            </View>
+
+            {/* Nút Check-in / Check-out */}
+            {isCheckedIn ? (
+                <TouchableOpacity
+                    style={[styles.checkinBtn, { backgroundColor: "#c02727" }]}
+                    onPress={handleNavigateToCheckout}
+                >
+                    <Text style={styles.checkinText}>Check-out</Text>
+                </TouchableOpacity>
+            ) : (
+                <TouchableOpacity
+                    style={[styles.checkinBtn, { backgroundColor: "#32d35d" }]}
+                    onPress={() => setShowCheckInModal(true)}
+                >
+                    <Text style={styles.checkinText}>Check-in</Text>
+                </TouchableOpacity>
+            )}
+
+            {/* Modals */}
+            <CheckinModal
+                visible={showCheckInModal}
+                onClose={() => setShowCheckInModal(false)}
+                onConfirm={handleCheckInConfirm}
+            />
+            <SuccessModal
+                visible={showSuccess}
+                message="Check-in thành công!"
+                onClose={() => setShowSuccess(false)}
+            />
+            <Modal visible={showMiniBar} animationType="slide">
+                <MiniBarScreen onClose={() => setShowMiniBar(false)} />
+            </Modal>
+
+            {/* Action buttons */}
+            <View style={styles.actionRow}>
+                <TouchableOpacity
+                    style={styles.actionBtn}
+                    onPress={() => setShowMiniBar(true)}
+                >
+                    <Text style={styles.actionText}>Thêm dịch vụ</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.actionBtn, styles.editBtn]}>
+                    <Text style={styles.actionText}>Chỉnh sửa</Text>
+                </TouchableOpacity>
+            </View>
+
+            {/* Thông tin khách */}
+            <View style={styles.card}>
+                <View style={styles.customerRow}>
+                    <Image
+                        source={{ uri: bookingData.customer.avatar }}
+                        style={styles.avatar}
+                    />
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.customerName}>{bookingData.customer.name}</Text>
+                        <Text>CCCD: {bookingData.customer.cccd}</Text>
+                        <Text>User Id: {bookingData.customer.id}</Text>
+                        <Text>Mã Booking: {bookingData.id_booking}</Text>
+                    </View>
+                </View>
+
+                {bookingData.payment_status === 'paid' && (
+                    <TouchableOpacity style={styles.paidBox}>
+                        <Text style={styles.paidText}>Đã thanh toán</Text>
+                    </TouchableOpacity>
+                )}
+                {isCheckedIn && (
+                    <TouchableOpacity style={styles.checkinBox}>
+                        <Text style={styles.checkinBoxText}>Đã Check in</Text>
+                    </TouchableOpacity>
+                )}
+            </View>
+
+            {/* Thông tin nhận phòng */}
+            <View style={styles.card}>
+                <Text style={styles.cardTitle}>Thông tin nhận phòng</Text>
+                <View style={styles.tableWrapper}>
+                    <View style={[styles.tableRow, styles.tableHeaderRow]}>
+                        <Text style={[styles.tableHeader, styles.timeCol]}>Thời gian</Text>
+                        <Text style={[styles.tableHeader, styles.statusCol]}>Trạng thái</Text>
+                    </View>
+                    {bookingData.history.map((item, index) => (
+                        <View style={styles.tableRow} key={index}>
+                            <Text style={[styles.tableText, styles.timeCol]}>{item.time}</Text>
+                            <Text style={[styles.tableText, styles.statusCol, item.link && styles.link, item.color && { color: item.color }]}>
+                                {item.status}
+                            </Text>
+                        </View>
+                    ))}
+                </View>
+            </View>
+
+            {/* Thông tin phòng */}
+            <View style={styles.card}>
+                <Text style={styles.cardTitle}>Thông tin phòng</Text>
+                <Text style={styles.roomName}>
+                    {bookingData.room.name} <Text style={styles.roomTag}>: {bookingData.room.number}</Text>
+                </Text>
+                <View style={styles.rowBetween}>
+                    <Text>📅 Check-in: {bookingData.room.checkin_date}</Text>
+                    <Text>📅 Check-out: {bookingData.room.checkout_date}</Text>
+                </View>
+                <View style={styles.rowBetween}>
+                    <Text>🛏️ Số đêm: {bookingData.room.nights} đêm</Text>
+                    <Text>👥 Số người: {bookingData.room.guests} người</Text>
+                </View>
+            </View>
+
+            {/* Thông tin giá phòng */}
+            <View style={styles.card}>
+                <Text style={styles.cardTitle}>Thông tin giá phòng</Text>
+                <View style={[styles.rowBetween, styles.rowLine]}>
+                    <Text>Giá mỗi đêm</Text>
+                    <Text>{bookingData.pricing.price_per_night.toLocaleString('vi-VN')} ₫</Text>
+                </View>
+                <View style={[styles.rowBetween, styles.rowLine]}>
+                    <Text>{bookingData.room.nights} đêm</Text>
+                    <Text>{bookingData.pricing.room_total.toLocaleString('vi-VN')} ₫</Text>
+                </View>
+                <View style={[styles.rowBetween, styles.rowLine]}>
+                    <Text>Thêm giờ</Text>
+                    <Text>{bookingData.pricing.extra_hour_fee.toLocaleString('vi-VN')} ₫</Text>
+                </View>
+                <View style={[styles.rowBetween, styles.totalRow]}>
+                    <Text style={styles.totalLabel}>Tổng cộng</Text>
+                    <Text style={styles.totalPrice}>{bookingData.pricing.room_total.toLocaleString('vi-VN')} ₫</Text>
+                </View>
+            </View>
+
+            {/* Thông tin dịch vụ */}
+            <View style={styles.card}>
+                <Text style={styles.cardTitle}>Thông tin dịch vụ</Text>
+                <View>
+                    <View style={[styles.tableRow, styles.tableHeaderRow]}>
+                        <Text style={[styles.tableHeader, styles.serviceNameCol]}>Tên dịch vụ</Text>
+                        <Text style={[styles.tableHeader, styles.serviceCol]}>Loại</Text>
+                        <Text style={[styles.tableHeader, styles.serviceCol]}>Số lượng</Text>
+                        <Text style={[styles.tableHeader, styles.servicePriceCol]}>Giá</Text>
+                    </View>
+                    {bookingData.services.map(service => (
+                        <View style={styles.tableRow} key={service.id}>
+                            <Text style={[styles.tableText, styles.serviceNameCol]}>{service.name}</Text>
+                            <Text style={[styles.tableText, styles.serviceCol]}>{service.type}</Text>
+                            <Text style={[styles.tableText, styles.serviceCol]}>{service.quantity}</Text>
+                            <Text style={[styles.tableText, styles.servicePriceCol]}>{service.price.toLocaleString('vi-VN')} ₫</Text>
+                        </View>
+                    ))}
+                </View>
+                <View style={[styles.rowBetween, styles.serviceTotalRow]}>
+                    <Text style={styles.totalLabel}>Tổng cộng</Text>
+                    <Text style={styles.totalPrice}>{serviceTotal.toLocaleString('vi-VN')} ₫</Text>
+                </View>
+            </View>
+        </ScrollView>
+    );
+}
+// Giữ nguyên phần styles của bạn
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: COLORS.background },
-  container: { flex: 1, paddingHorizontal: 16, },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    marginBottom: 10,
-  },
-  backButton: {
-    padding: 5,
-  },
-  headerTitle: { fontSize: 20, fontWeight: "bold", color: COLORS.textDark },
+    // ... Dán toàn bộ styles của bạn vào đây ...
+    container: { flex: 1, backgroundColor: "#ffffffff", padding: 16 },
+    header: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
+    back: { fontSize: 20, marginRight: 8 },
+    headerTitle: { fontSize: 18, fontWeight: "bold" },
 
-  mainActionButton: {
-    paddingVertical: 15,
-    borderRadius: 12,
-    alignItems: "center",
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 10,
-    marginVertical: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  mainActionButtonText: { color: COLORS.white, fontWeight: "bold", fontSize: 18 },
+    checkinBtn: {
+        backgroundColor: "#c02727ff",
+        padding: 12,
+        borderRadius: 8,
+        alignItems: "center",
+        marginBottom: 12,
+    },
+    checkinText: { color: "#fff", fontWeight: "bold" },
 
-  actionRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 20, gap: 15 },
-  secondaryButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    padding: 12,
-    backgroundColor: COLORS.white,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLORS.lightGray,
-  },
-  secondaryButtonText: { fontSize: 14, fontWeight: "600", color: COLORS.primary },
+    actionRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 12 },
+    actionBtn: {
+        padding: 10,
+        backgroundColor: "#e0f7fa",
+        borderRadius: 8,
+    },
+    editBtn: { backgroundColor: "#f1f1f1" },
+    actionText: { fontSize: 14, fontWeight: "500" },
 
-  card: {
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  cardTitle: { fontWeight: "bold", marginBottom: 15, fontSize: 17, color: COLORS.textDark },
-  
-  customerRow: { flexDirection: "row", alignItems: "center", marginBottom: 15 },
-  avatar: { width: 60, height: 60, borderRadius: 30, marginRight: 15 },
-  customerName: { fontSize: 18, fontWeight: "bold", color: COLORS.textDark, marginBottom: 4 },
-  customerInfo: { fontSize: 14, color: COLORS.textLight, lineHeight: 20 },
-  
-  statusBadgeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    gap: 10,
-    marginTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.lightGray,
-    paddingTop: 15,
-  },
-  statusBadge: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-  },
-  statusBadgeText: {
-    fontWeight: "600",
-    fontSize: 12,
-  },
-  
-  // Giao diện bảng được làm lại
-  table: {
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    overflow: 'hidden', // Quan trọng để bo góc hoạt động
-  },
-  tableRow: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  tableRowHeader: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.lightGray,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  tableHeader: {
-    padding: 10,
-    fontWeight: 'bold',
-    fontSize: 14,
-    color: COLORS.textDark,
-  },
-  tableCell: {
-    flex: 2, // Mặc định
-    padding: 10,
-    fontSize: 14,
-    color: COLORS.textLight,
-  },
+    card: {
+        backgroundColor: "#f3f3f3ff",
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: "#ddd",
+    },
 
-  roomName: { fontWeight: "600", fontSize: 16, marginBottom: 10, color: COLORS.textDark },
-  roomNumber: { color: COLORS.primary, fontWeight: 'bold' },
-  
-  infoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightGray,
-  },
-  infoLabel: {
-      color: COLORS.textLight,
-      fontSize: 14,
-  },
-  infoValue: {
-      color: COLORS.textDark,
-      fontSize: 14,
-      fontWeight: '500'
-  },
-  
-  priceRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      paddingVertical: 10,
-      borderBottomWidth: 1,
-      borderBottomColor: COLORS.lightGray,
-  },
-  priceLabel: {
-      fontSize: 14,
-      color: COLORS.textLight,
-  },
-  priceValue: {
-      fontSize: 14,
-      color: COLORS.textDark,
-      fontWeight: '500',
-  },
-  totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: 15,
-    marginTop: 5,
-  },
-  totalLabel: { fontWeight: "bold", fontSize: 18, color: COLORS.textDark },
-  totalPrice: { fontWeight: "bold", fontSize: 18, color: COLORS.primary },
+    customerRow: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
+    avatar: { width: 50, height: 50, borderRadius: 25, marginRight: 12 },
 
-  // Styles for Modals (ví dụ)
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-      backgroundColor: 'white',
-      padding: 20,
-      borderRadius: 10,
-  }
+    customerName: { fontSize: 16, fontWeight: "bold", marginBottom: 4 },
+
+    // Box Thanh toán
+    paidBox: {
+        marginTop: 8,
+        width: 140,
+        backgroundColor: "#3432a1ff",
+        paddingVertical: 6,
+        borderRadius: 8,
+        alignSelf: "center",
+        paddingHorizontal: 12,
+    },
+    paidText: {
+        color: "#e9ebf0ff",
+        fontWeight: "600",
+        textAlign: "center",
+    },
+
+    // Box Check-in
+    checkinBox: {
+        marginTop: 8,
+        width: 140,
+        backgroundColor: "#32d35dff",
+        paddingVertical: 6,
+        borderRadius: 8,
+        alignSelf: "center",
+        paddingHorizontal: 12,
+    },
+    checkinBoxText: {
+        color: "#171817ff",
+        fontWeight: "600",
+        textAlign: "center",
+    },
+
+    cardTitle: { fontWeight: "bold", marginBottom: 8, fontSize: 17 },
+    rowBetween: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginBottom: 6,
+    },
+    link: { color: "#0077aa", fontWeight: "500" },
+
+    roomName: { fontWeight: "bold", marginBottom: 6 },
+    roomTag: { fontSize: 14, color: "#555" },
+
+    totalRow: { borderTopWidth: 1, borderColor: "#ddd", paddingTop: 8, marginTop: 8 },
+    totalLabel: { fontWeight: "bold" },
+    totalPrice: { fontWeight: "bold", fontSize: 16 },
+    tableWrapper: {
+        borderWidth: 1,
+        borderColor: "#0c0c0cff",
+        borderRadius: 10,
+        overflow: "hidden",
+    },
+
+    tableRow: {
+        flexDirection: "row",
+        borderBottomWidth: 1,
+        borderColor: "#000000ff",
+    },
+
+    tableHeaderRow: {
+        backgroundColor: "#b3b2b2ff",
+    },
+
+    tableHeader: {
+        fontWeight: "bold",
+        padding: 8,
+        textAlign: "center",
+        fontSize: 14,
+    },
+
+    tableText: {
+        padding: 8,
+        fontSize: 13,
+    },
+
+    timeCol: {
+        flex: 1,
+        borderRightWidth: 1,
+        borderColor: "#000000ff",
+    },
+
+    statusCol: {
+        flex: 1,
+    },
+    rowLine: {
+        borderBottomWidth: 1,
+        borderColor: "#ddd",
+        paddingBottom: 6,
+        marginBottom: 6,
+    },
+
+    serviceNameCol: {
+        flex: 2,
+        borderRightWidth: 1,
+        borderColor: "#ccc",
+        padding: 6,
+    },
+    serviceCol: {
+        flex: 1,
+        borderRightWidth: 1,
+        borderColor: "#ccc",
+        padding: 6,
+        textAlign: "center",
+    },
+    servicePriceCol: {
+        flex: 1.5,
+        padding: 6,
+        textAlign: "right",
+    },
+    serviceTotalRow: {
+        borderTopWidth: 1,
+        borderColor: "#007bff",
+        paddingVertical: 8,
+        marginTop: 8,
+        backgroundColor: "#f9f9f9",
+        borderRadius: 6,
+        paddingHorizontal: 6,
+    },
 });
-

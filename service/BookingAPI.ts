@@ -1,6 +1,10 @@
 import BookingResponse from '@/models/Booking/BookingResponse';
 import BaseUrl from '../constants/BaseURL';
 import Booking from '../models/Booking/Booking';
+import axios from 'axios';
+
+
+
 const createBooking = async (booking: Booking): Promise<BookingResponse> => {
     const response = await fetch(`${BaseUrl}/bookings`, {
         method: 'POST',
@@ -18,24 +22,34 @@ const getBookings = async (): Promise<BookingResponse[]> => {
 }
 
 const getBookingById = async (id: number): Promise<BookingResponse | null> => {
-   try {
-    const response = await fetch(`${BaseUrl}/bookings/${id}`);
-    return response.json();
-   } catch (error) {
-    console.error("❌ Lỗi khi lấy thông tin đặt phòng:", error);
-    return null;
-   }
+    try {
+        const response = await fetch(`${BaseUrl}/bookings/${id}`);
+        return response.json();
+    } catch (error) {
+        console.error("❌ Lỗi khi lấy thông tin đặt phòng:", error);
+        return null;
+    }
 }
 
 const getBookingsByUserId = async (userId: number): Promise<BookingResponse[]> => {
     try {
-    const response = await fetch(`${BaseUrl}/bookings/user/${userId}`);
-    return response.json();
-   } catch (error) {
-    console.error("❌ Lỗi khi lấy danh sách đặt phòng:", error);
-    return [];
-   }
+        const response = await fetch(`${BaseUrl}/bookings/user/${userId}`);
+        return response.json();
+    } catch (error) {
+        console.error("❌ Lỗi khi lấy danh sách đặt phòng:", error);
+        return [];
+    }
 }
 
-export { createBooking, getBookingById, getBookings, getBookingsByUserId };
+const getAllBookingsByHotelId = async (hotelId: number): Promise<BookingResponse[]> => {
+    try {
+        const response = await fetch(`${BaseUrl}/bookings/hotel/${hotelId}`);
+        return response.json();
+    } catch (error) {
+        console.error("❌ Lỗi khi lấy danh sách đặt phòng:", error);
+        return [];
+    }
+}
+
+export { createBooking, getAllBookingsByHotelId, getBookingById, getBookings, getBookingsByUserId };
 

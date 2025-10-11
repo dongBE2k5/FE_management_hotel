@@ -13,7 +13,7 @@ export default function App() {
         const checkRole = async () => {
 
             try {
-                await AsyncStorage.setItem("role", "ROLE_USER")
+                await AsyncStorage.setItem("role", "ROLE_EMPLOYEE")
                 const role = await AsyncStorage.getItem("role")
 
                 if (!role) {

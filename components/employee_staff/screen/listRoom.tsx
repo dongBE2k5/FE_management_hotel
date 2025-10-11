@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native'; // 👈 dùng để điều hướng giữa các màn hình
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   FlatList,
   StyleSheet,
@@ -9,7 +9,46 @@ import {
   View,
 } from 'react-native';
 
+import { getAllBookingsByHotelId } from '@/service/BookingAPI';
+
+
+
 export default function ListRoom() {
+
+  const mapBookingData = (booking) => {
+    const checkIn = new Date(booking.checkInDate);
+    const checkOut = new Date(booking.checkOutDate);
+    const nights = Math.max(0, (checkOut - checkIn) / (1000 * 60 * 60 * 24)); // số ngày
+    return {
+      id_booking: booking.id,
+      name: booking.user?.fullName || '',
+      phone: booking.user?.phone || '',
+      roomType: booking.room?.type || '',
+      roomNumber: booking.room?.number || '',
+      checkIn: booking.checkInDate || '',
+      checkOut: booking.checkOutDate || '',
+      status: booking.status || '',
+      price: booking.totalPrice || '',
+      checkinStatus: '',
+      nights,
+      guests: booking.numberOfGuests || 0,
+    };
+
+  };
+  const [data, setData] = useState([]);
+  useEffect(() => {
+    const fetchViewedHotels = async () => {
+      try {
+        const response = await getAllBookingsByHotelId(Number(1)); // không cần axios.get nữa
+        console.log(response);
+        setData(response.map(mapBookingData)); // tùy backend trả về gì
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách đặt phòng:", error);
+      }
+    };
+    fetchViewedHotels();
+  }, []);
+
   // ✅ Hook điều hướng (dùng navigate để chuyển màn hình)
   const navigation = useNavigation();
 
@@ -17,61 +56,7 @@ export default function ListRoom() {
   const [search, setSearch] = useState('');
 
   // ✅ Dữ liệu demo (mock data)
-  const data = [
-    {
-      id_booking: '1',
-      name: 'Nguyễn Văn A',
-      phone: '0123 456 789',
-      roomType: 'Phòng gia đình',
-      roomNumber: '123',
-      checkIn: '28/01/2025',
-      checkOut: '30/01/2025',
-      nights: 2,
-      guests: 5,
-      price: '5.000.000',
-      status: 'Đã thanh toán',
-      checkinStatus: 'Đã Check-in',
-    },
-    {
-      id_booking: '2',
-      name: 'Nguyễn Văn B',
-      phone: '0987 654 321',
-      roomType: 'Phòng đơn',
-      roomNumber: '456',
-      checkIn: '28/01/2025',
-      checkOut: '29/01/2025',
-      nights: 1,
-      guests: 1,
-      price: '2.000.000',
-      status: 'Chưa thanh toán',
-    },
-    {
-      id_booking: '3',
-      name: 'Nguyễn Văn C',
-      phone: '0909 888 777',
-      roomType: 'Phòng đôi',
-      roomNumber: '789',
-      checkIn: '28/01/2025',
-      checkOut: '31/01/2025',
-      nights: 3,
-      guests: 2,
-      price: '3.500.000',
-      status: 'Đã thanh toán',
-    },
-    {
-      id_booking: '4',
-      name: 'Nguyễn Văn D',
-      phone: '0900 228 777',
-      roomType: 'Phòng đôi',
-      roomNumber: '789',
-      checkIn: '28/01/2025',
-      checkOut: '31/01/2025',
-      nights: 3,
-      guests: 2,
-      price: '3.500.000',
-      status: 'Đã thanh toán',
-    },
-  ];
+
 
   // ✅ Hàm xử lý khi nhấn vào một thẻ đặt phòng
 
