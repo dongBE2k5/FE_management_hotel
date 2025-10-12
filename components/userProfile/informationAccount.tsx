@@ -7,10 +7,14 @@ import { useNavigation } from "@react-navigation/native";
 import React, { useState ,useCallback} from 'react';
 import {
   Pressable,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
+  Text,
+  TextInput,
   TouchableOpacity,
+  View
   View
 } from 'react-native';
 import HeaderProfile from './headerProfile';

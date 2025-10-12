@@ -1,15 +1,15 @@
+import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
-    Modal,
-    View,
-    Text,
     ActivityIndicator,
-    TouchableOpacity,
+    Modal,
     StyleSheet,
+    Text,
+    TouchableOpacity,
     TouchableWithoutFeedback,
+    View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import CostDetailModal from "./costdetailModal";
+import CostDetailModal from "./CostDetailModal";
 import DamageConfirmModal from './dameconfirmmodal';
 
 export default function FeedbackModal({
@@ -150,37 +150,37 @@ export default function FeedbackModal({
             />
 
             {/* 💥 Modal đền bù */}
-         {/* 💥 Modal đền bù */}
-<DamageConfirmModal
-  visible={showDamageModal}
-  onClose={() => {
-    setShowDamageModal(false);
-    setShowCostModal(false);
-    setResult(null);
-    setLoading(false);
-    onClose(); // 🔹 Đóng FeedbackModal
-  }}
-  onBackToFeedback={() => {
-    setShowDamageModal(false);
-    setTimeout(() => {
-      setResult(null);
-      setLoading(true);
-      setTimeout(() => {
-        setLoading(false);
-        setResult("fail");
-      }, 1000);
-    }, 200);
-  }}
-  onBackToConstdetailmodal={() => {
-    // 🔹 Đóng toàn bộ FeedbackModal
-    onClose();
-    onCloseAll?.();
-    // 🔹 Mở lại CostDetailModal sau khi đóng xong FeedbackModal
-    setTimeout(() => {
-      setShowCostModal(true);
-    }, 200);
-  }}
-/>
+            {/* 💥 Modal đền bù */}
+            <DamageConfirmModal
+                visible={showDamageModal}
+                onClose={() => {
+                    setShowDamageModal(false);
+                    setShowCostModal(false);
+                    setResult(null);
+                    setLoading(false);
+                    onClose(); // 🔹 Đóng FeedbackModal
+                }}
+                onBackToFeedback={() => {
+                    setShowDamageModal(false);
+                    setTimeout(() => {
+                        setResult(null);
+                        setLoading(true);
+                        setTimeout(() => {
+                            setLoading(false);
+                            setResult("fail");
+                        }, 1000);
+                    }, 200);
+                }}
+                onBackToConstdetailmodal={() => {
+                    // 🔹 Đóng toàn bộ FeedbackModal
+                    onClose();
+                    onCloseAll?.();
+                    // 🔹 Mở lại CostDetailModal sau khi đóng xong FeedbackModal
+                    setTimeout(() => {
+                        setShowCostModal(true);
+                    }, 200);
+                }}
+            />
 
 
 

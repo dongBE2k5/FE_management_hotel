@@ -3,7 +3,17 @@ import InFormationAccount from '@/components/screens/profile/informationDisplay'
 import LoggedAccount from '@/components/screens/profile/logged';
 import Login from '@/components/screens/profile/loginDisplay';
 import Register from '@/components/screens/profile/registerDisplay';
+import Login from '@/components/screens/profile/loginDisplay';
+import Register from '@/components/screens/profile/registerDisplay';
 import { getCurrentUser } from '@/service/UserAPI';
+import type { ProfileStackParamList } from '@/types/navigation';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import { createStackNavigator } from "@react-navigation/stack";
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet } from 'react-native';
+import { HomeScreen } from '.';
 import type { ProfileStackParamList } from '@/types/navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
@@ -53,6 +63,7 @@ export default function ProfileNavigator() {
       <Stack.Screen name="Register" component={Register} />
       <Stack.Screen name="InFormationAccount" component={InFormationAccount} />
       <Stack.Screen name="LoggedAccount" component={LoggedAccount} />
+      <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="Home" component={HomeScreen} />
     </Stack.Navigator>
   );

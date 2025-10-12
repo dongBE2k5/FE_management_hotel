@@ -6,7 +6,7 @@ interface UserResponse {
     fullName: string;
     email: string;
     phone: string;
-     cccd: string;
+    cccd: string;
     role: Role;
 }
 export default UserResponse;

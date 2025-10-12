@@ -13,7 +13,7 @@ export default function App() {
         const checkRole = async () => {
 
             try {
-                await AsyncStorage.setItem("role", "ROLE_USER")
+                await AsyncStorage.setItem("role", "ROLE_EMPLOYEE")
                 const role = await AsyncStorage.getItem("role")
 
                 if (!role) {
@@ -37,7 +37,13 @@ export default function App() {
         checkRole();
     }, []);
 
-   
+    if (loading) {
+        return (
+            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                <ActivityIndicator size="large" />
+            </View>
+        );
+    }
 
     return null;
 }

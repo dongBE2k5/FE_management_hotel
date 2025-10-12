@@ -1,3 +1,4 @@
+import RoomZone from '@/components/roomZone';
 import Room from '@/models/Room';
 import RoomTypeImage from '@/models/RoomTypeImage';
 import { getRoomAvailableByHotel } from '@/service/RoomAPI';
@@ -9,20 +10,14 @@ import React, { useEffect, useState } from 'react';
 import { Button, Image, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RoomCard from "./roomCard";
-import RoomZone from './roomZone';
-import RoomZone from './roomZone';
 
 type RoomProps = {
     roomTypeImage: RoomTypeImage[],
     hotelId: number
 }
-    const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
 export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
-
-    const [checkIn, setCheckIn] = useState<Date>(today);      // mặc định hôm nay
-    const [checkOut, setCheckOut] = useState<Date | null>(tomorrow);
+    const [checkIn, setCheckIn] = useState<Date>(new Date());      // mặc định hôm nay
+    const [checkOut, setCheckOut] = useState<Date | null>(null);
     const [showIn, setShowIn] = useState(false);
     const [showOut, setShowOut] = useState(false);
     const [rooms, setRooms] = useState<Room[]>([]);
@@ -32,31 +27,27 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
     const phongDoi = rooms.filter(room => room.typeRoom == "DOI");
     const phongGiaDinh = rooms.filter(room => room.typeRoom == "GIA_DINH");
 
+    const tomorrow = new Date(checkIn);
+    tomorrow.setDate(checkIn.getDate() + 1);
 
     
-    // useEffect(() => {
-    //     if (checkIn) {
-    //       const nextDay = new Date(checkIn);
-    //       nextDay.setDate(nextDay.getDate() + 1); // +1 ngày
-    //       setCheckOut(nextDay);
-    //     }
-    //   }, [checkIn]);
     useEffect(() => {
-        const fetchRoomAvailableByHotel = async (id: number, checkIn: Date, checkOut: Date) => {
-            console.log("fetchRoomAvailableByHotel");
-            console.log(checkIn, checkOut);
-            
+        if (!checkOut) {
+            setCheckOut(tomorrow);
+        }
+    }, [checkIn]);
+    useEffect(() => {
+        const fetchRoomAvailableByHotel = async (id: number, checkIn: Date, tomorrow: Date) => {
+
             try {
-                const data = await getRoomAvailableByHotel(id, checkIn, checkOut);
-                const data = await getRoomAvailableByHotel(id, checkIn, checkOut);
+                const data = await getRoomAvailableByHotel(id, checkIn, tomorrow);
                 setRooms(data); 
                 setIsSearch(false);
             } catch (err) {
                 console.error(err);
             }
         };
-        fetchRoomAvailableByHotel(hotelId, checkIn, checkOut!);
-        fetchRoomAvailableByHotel(hotelId, checkIn, checkOut!);
+        fetchRoomAvailableByHotel(hotelId, checkIn, checkOut || new Date());
     }, [isSearch]);
     // console.log(rooms);
     // console.log(roomTypeImage);
@@ -120,7 +111,7 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                 <Modal
                     transparent
                     animationType="slide"
-                    visible={showIn && Platform.OS === 'ios'}
+                    visible={showIn}
                     onRequestClose={() => setShowIn(false)}
                 >
                     <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000066' }}>
@@ -132,7 +123,6 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                             justifyContent: 'center'
                         }}>
                             <DateTimePicker
-                            <DateTimePicker
                                 value={checkIn}
                                 minimumDate={checkIn}
                                 mode="date"
@@ -140,21 +130,19 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                                 onChange={(_, date) => date && setCheckIn(date)}
                                 style={{ height: 200 }}
                             />
-                            {/* <input
-                            />
-                            {/* <input
+                            <input
                                 type="date"
                                 value={checkIn?.toISOString().split('T')[0]}
                                 min={new Date().toISOString().split('T')[0]}
                                 onChange={(e) => setCheckIn(new Date(e.target.value))}
                                 style={{ fontSize: 18, padding: 8 }}
-                            /> */}
-                            {/* <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingRight: 12 }}>
+                            />
+                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingRight: 12 }}>
                                 <Button title="Chọn" onPress={() => {
                                     setShowIn(false);
                                     if (checkOut && checkIn >= checkOut) setCheckOut(null);
                                 }} />
-                            </View> */}
+                            </View>
                         </View>
                     </View>
                 </Modal>
@@ -181,7 +169,7 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                 <Modal
                     transparent
                     animationType="slide"
-                    visible={showOut && Platform.OS === 'ios'}
+                    visible={showOut}
                     onRequestClose={() => setShowOut(false)}
                 >
                     <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000066' }}>
@@ -192,8 +180,7 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                             borderTopRightRadius: 12,
                             justifyContent: 'center'
                         }}>
-                            <DateTimePicker
-                            <DateTimePicker
+                            {/* <DateTimePicker
                                 value={checkOut || new Date()}       // 👈 luôn mặc định ngày hôm nay
                                 minimumDate={new Date()}
                                 mode="date"
@@ -202,10 +189,8 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                                 textColor="black"    // màu chữ của spinner (iOS 14+)
                                 style={{ flex: 1 }}
                                 onChange={(_, date) => date && setCheckOut(date)}
-                            />
-                            {/* <input
-                            />
-                            {/* <input
+                            /> */}
+                            <input
                                 type="date"
                                 value={checkOut?.toISOString().split('T')[0]}
                                 min={(() => {
@@ -215,11 +200,11 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                                 })()}
                                 onChange={(e) => setCheckOut(new Date(e.target.value))}
                                 style={{ fontSize: 18, padding: 8 }}
-                            /> */}
-                            {/* <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 12 }}>
+                            />
+                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 12 }}>
                                 <Button title="Chọn" onPress={() => setShowOut(false)} />
 
-                            </View> */}
+                            </View>
                         </View>
                     </View>
                 </Modal>
@@ -271,7 +256,7 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                     <Image
                         tintColor="#009EDE"
                         style={{ marginLeft: 5, width: 30, height: 20, marginTop: 10 }}
-                        source={require('../../assets/images/logo.png')}
+                        source={require('../assets/images/logo.png')}
                     />
                     <Text style={{ marginLeft: 5, marginTop: 12, color: '#0046de', fontWeight: 'bold' }}>8.7</Text>
                     <Text style={{ marginLeft: 5, marginTop: 12, color: '#009EDE', fontWeight: 'bold' }}>Ấn tượng</Text>

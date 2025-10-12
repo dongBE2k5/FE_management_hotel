@@ -1,70 +1,52 @@
+import * as Linking from 'expo-linking';
 import React from "react";
 import {
+  Alert,
   Modal,
-  View,
+  ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Alert,
+  View,
 } from "react-native";
-import * as Linking from 'expo-linking';
 import PaymentAPI from "../../../service/Payment/PaymentAPI";
 
-// Hàm helper để định dạng tiền tệ cho đẹp
+// Hàm helper để định dạng tiền tệ
 const formatCurrency = (value) => {
   if (typeof value !== 'number') return value;
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 };
-const handlePayment = async () => {
-  try {
-    const paymentUrl = await PaymentAPI.createPayment(5000000,'vnpay',1 ) 
-    if (paymentUrl) {
-      await Linking.openURL(paymentUrl.toString());
-    }
-    else {
-      Alert.alert("Lỗi","Không thể tạo đơn thanh toán")
-      console.log("reponse",paymentUrl)
-    }
-  } catch (error) {
-    console.error("Error during payment:", error);
-  }
-};
-export default function CostDetailModal({ visible, onClose }) {
 
-const costData = {
-  roomDetails: {
-    name: "Phòng gia đình",
-    description: "2 đêm × 2,500,000 ₫",
-    price: 5000000,
-  },
-  services: [
-    {
-      name: "Buffet sáng",
-      description: "SL: 2 × 150,000 ₫",
-      price: 300000,
-    },
-    {
-      name: "Spa thư giãn",
-      description: "SL: 1 × 300,000 ₫",
-      price: 300000,
-    },
-    {
-      name: "Giặt ủi",
-      description: "SL: 3 × 50,000 ₫",
-      price: 150000,
-    },
-  ],
-};
+// Component nhận props và hiển thị, không chứa logic kiểm tra dữ liệu rỗng
+export default function CostDetailModal({ visible, onClose, costData }) {
 
-  // Tính toán tổng tiền dịch vụ
-  const servicesTotal = costData.services?.reduce(
+  // Luôn giả định costData có tồn tại khi modal được mở
+  // Tính tổng tiền dịch vụ
+  const servicesTotal = costData?.services?.reduce(
     (total, service) => total + service.price,
     0
   ) ?? 0;
 
   // Tính tổng cộng hóa đơn
-  const totalAmount = (costData.roomDetails?.price ?? 0) + servicesTotal;
+  const totalAmount = (costData?.roomDetails?.price ?? 0) + servicesTotal;
+
+  const handlePayment = async () => {
+    try {
+      if (!totalAmount || !costData?.bookingId) {
+        Alert.alert("Lỗi", "Không đủ thông tin để thanh toán.");
+        return;
+      }
+      const paymentUrl = await PaymentAPI.createPayment(totalAmount, 'vnpay', costData.bookingId);
+      if (paymentUrl) {
+        await Linking.openURL(paymentUrl.toString());
+      } else {
+        Alert.alert("Lỗi", "Không thể tạo đơn thanh toán");
+      }
+    } catch (error) {
+      console.error("Error during payment:", error);
+      Alert.alert("Lỗi", "Đã xảy ra sự cố khi thanh toán.");
+    }
+  };
 
   return (
     <Modal
@@ -79,7 +61,7 @@ const costData = {
 
           <ScrollView style={{ maxHeight: 400 }}>
             {/* Phần tiền phòng - Lấy từ props */}
-            {costData.roomDetails && (
+            {costData?.roomDetails && (
               <>
                 <Text style={styles.sectionTitle}>Tiền phòng</Text>
                 <View style={styles.rowBetween}>
@@ -92,8 +74,8 @@ const costData = {
               </>
             )}
 
-            {/* Phần dịch vụ đã dùng - Dùng map để render */}
-            {costData.services && costData.services.length > 0 && (
+            {/* Phần dịch vụ đã dùng */}
+            {costData?.services && costData.services.length > 0 && (
               <>
                 <Text style={styles.sectionTitle}>Dịch vụ đã dùng</Text>
                 {costData.services.map((service, index) => (
@@ -109,21 +91,19 @@ const costData = {
             )}
           </ScrollView>
 
-          {/* Divider */}
           <View style={styles.divider} />
 
-          {/* Tổng cộng - Tự động tính toán */}
           <View style={styles.rowBetween}>
             <Text style={styles.totalLabel}>Tổng cộng</Text>
             <Text style={styles.totalPrice}>{formatCurrency(totalAmount)}</Text>
           </View>
 
-          {/* Nút đóng */}
+          {/* Nút bấm giữ lại giao diện gốc của bạn */}
           <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
             <Text style={styles.closeText}>Đóng</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.closeBtn} onPress={handlePayment}>
-            <Text style={styles.closeText}>thanh toán </Text>
+            <Text style={styles.closeText}>Thanh toán</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -131,7 +111,7 @@ const costData = {
   );
 }
 
-// Styles giữ nguyên như cũ
+// Giữ nguyên styles gốc của bạn
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
@@ -187,7 +167,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   closeBtn: {
-    backgroundColor: "#1E90FF",
+    backgroundColor: "#1E90FF", // Trả lại màu xanh gốc
     paddingVertical: 10,
     borderRadius: 8,
     marginTop: 12,

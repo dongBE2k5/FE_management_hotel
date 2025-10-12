@@ -1,92 +1,173 @@
-import { useNavigation } from "@react-navigation/native";
-import { useRouter } from 'expo-router';
+import { getBookingById, getHistoryBookingsByBookingId } from "@/service/BookingAPI";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import CheckinModal from "../model/check_in";
 import MiniBarScreen from "../model/minibar";
 import SuccessModal from "../model/sucsessModal";
 
-// --- DỮ LIỆU MẪU ---
-// Trong ứng dụng thực tế, bạn sẽ nhận dữ liệu này từ API hoặc qua navigation params
-const mockBookingData = {
-    id_booking: '445454646',
-    status: 'pending_checkin', // 'pending_checkin' hoặc 'checked_in'
-    payment_status: 'paid', // 'paid' hoặc 'unpaid'
-    customer: {
-        id: '154548',
-        name: 'Nguyễn Văn A',
-        cccd: '032547458151215',
-        avatar: 'https://i.pravatar.cc/100',
-    },
-    room: {
-        name: 'Phòng đôi',
-        number: '501',
-        checkin_date: '28/01/2025',
-        checkout_date: '30/01/2025',
-        nights: 2,
-        guests: 2,
-    },
-    pricing: {
-        price_per_night: 2500000,
-        extra_hour_fee: 0,
-        room_total: 5000000,
-    },
-    services: [
-        { id: 1, name: 'Buffet buổi sáng', type: 'Thường', quantity: 1, price: 2500000 },
-        { id: 2, name: 'Xe đưa đón sân bay', type: 'VIP', quantity: 2, price: 1000000 },
-        { id: 3, name: 'Spa thư giãn', type: 'Thường', quantity: 1, price: 800000 },
-    ],
-    history: [
-        { time: '16:18:00 28/9/2025', status: 'Đã đặt phòng thành công', link: true },
-        { time: '16:18:00 28/9/2025', status: 'Đã Thanh Toán', link: true },
-        { time: '16:18:00 28/9/2025', status: 'Đã Check-in', color: 'green' },
-        { time: '16:18:00 28/9/2025', status: 'Đã Check-out', color: 'red' },
-    ]
+// HÀM BIẾN ĐỔI DỮ LIỆU BOOKING CHÍNH
+const transformApiData = (booking) => {
+    const checkInDate = booking.checkInDate ? new Date(booking.checkInDate) : null;
+    const checkOutDate = booking.checkOutDate ? new Date(booking.checkOutDate) : null;
+    let nights = 0;
+    if (checkInDate && checkOutDate) {
+        nights = Math.max(0, Math.round((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24)));
+    }
+
+    return {
+        id_booking: booking.id ?? 'N/A',
+        status: booking.status ?? 'pending_checkin',
+        payment_status: booking.paymentStatus ?? 'unpaid',
+        customer: {
+            id: booking.user?.id ?? 'N/A',
+            name: booking.user?.fullName ?? 'Khách hàng',
+            cccd: booking.user?.cccd ?? 'Chưa cung cấp',
+            avatar: booking.user?.avatar ?? 'https://i.pravatar.cc/100',
+        },
+        room: {
+            name: booking.room?.type ?? 'Loại phòng',
+            number: booking.room?.number ?? 'N/A',
+            checkin_date: checkInDate ? checkInDate.toLocaleDateString('vi-VN') : 'N/A',
+            checkout_date: checkOutDate ? checkOutDate.toLocaleDateString('vi-VN') : 'N/A',
+            nights: nights,
+            guests: booking.numberOfGuests ?? 0,
+        },
+        pricing: {
+            price_per_night: booking.room?.pricePerNight ?? (booking.totalPrice / (nights || 1)),
+            extra_hour_fee: booking.extraFee ?? 0,
+            room_total: booking.totalPrice ?? 0,
+        },
+        services: booking.services ?? [],
+        // Không cần history ở đây nữa vì ta gọi API riêng
+    };
 };
 
-// Sử dụng `props` để truyền dữ liệu vào, ví dụ: { bookingData }
-export default function BookingDetail({ route }) {
-    // Lấy dữ liệu từ navigation params, nếu không có thì dùng dữ liệu mẫu
-    const bookingData = route?.params?.bookingData || mockBookingData;
+// HÀM BIẾN ĐỔI DỮ LIỆU LỊCH SỬ - ĐÃ SỬA LẠI
+const mapHistoryData = (historyItem) => {
+    const time = new Date(historyItem.createdAt).toLocaleString('vi-VN');
+    let statusText = "Không xác định";
+    let color = 'black'; // Màu mặc định
 
+    switch (historyItem.newStatus) {
+        case "CHUA_THANH_TOAN":
+            statusText = "Chưa thanh toán";
+            break;
+        case "DA_THANH_TOAN":
+            statusText = "Đã thanh toán";
+            color = '#0077aa'; // Màu link
+            break;
+        case "DA_COC":
+            statusText = "Đã cọc";
+            color = '#0077aa'; // Màu link
+            break;
+        case "CHECK_IN":
+            statusText = "Đã check-in";
+            color = 'green';
+            break;
+        case "CHECK_OUT":
+            statusText = "Đã check-out";
+            color = 'red';
+            break;
+        case "DA_HUY":
+            statusText = "Đã hủy";
+            color = 'gray';
+            break;
+        default:
+            statusText = historyItem.newStatus; // Hiển thị trạng thái gốc nếu không khớp
+    }
+
+    // Trả về đối tượng mà UI cần
+    return {
+        time: time,
+        status: statusText,
+        color: color,
+        link: historyItem.newStatus === "DA_THANH_TOAN" || historyItem.newStatus === "DA_COC" // Ví dụ
+    };
+};
+
+
+export default function BookingDetail() {
     const navigation = useNavigation();
-    const router = useRouter(); // Giữ lại nếu bạn có dùng
+    const route = useRoute();
+    const { bookingId } = route.params;
 
-    // ----- STATE QUẢN LÝ TRẠNG THÁI UI -----
-    const [isCheckedIn, setIsCheckedIn] = useState(false);
+    const [bookingData, setBookingData] = useState(null);
+    const [history, setHistory] = useState([]); // TẠO STATE MỚI CHO LỊCH SỬ
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [showCheckInModal, setShowCheckInModal] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [showMiniBar, setShowMiniBar] = useState(false);
 
-    // Cập nhật trạng thái isCheckedIn khi dữ liệu bookingData thay đổi
     useEffect(() => {
-        if (bookingData) {
-            setIsCheckedIn(bookingData.status === 'checked_in');
-        }
-    }, [bookingData]);
+        const fetchBookingDetails = async () => {
+            if (!bookingId) {
+                setError("Không tìm thấy ID đặt phòng.");
+                setIsLoading(false);
+                return;
+            }
+            try {
+                setIsLoading(true);
+                setError(null);
 
-    // ----- CÁC HÀM XỬ LÝ SỰ KIỆN -----
-    const handleCheckInConfirm = () => {
-        // Trong thực tế, bạn sẽ gọi API để check-in ở đây
-        // Sau khi API trả về thành công, cập nhật lại state
-        setIsCheckedIn(true);
-        setShowCheckInModal(false);
-        setShowSuccess(true);
-    };
+                // Gọi đồng thời cả 2 API để tăng tốc
+                const [rawData, rawHistoryData] = await Promise.all([
+                    getBookingById(bookingId),
+                    getHistoryBookingsByBookingId(bookingId)
+                ]);
 
-    const handleNavigateToCheckout = () => {
-        navigation.navigate("checkout", { bookingId: bookingData.id_booking });
-    };
+                // Xử lý và set state cho thông tin chính
+                const formattedData = transformApiData(rawData);
+                setBookingData(formattedData);
 
-    const serviceTotal = bookingData.services.reduce((total, service) => total + service.price, 0);
+                // Xử lý và set state cho lịch sử
+                const formattedHistory = rawHistoryData.map(mapHistoryData);
+                setHistory(formattedHistory);
+
+            } catch (err) {
+                console.error("Lỗi khi lấy chi tiết đặt phòng:", err);
+                setError(err.message || "Đã xảy ra lỗi.");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchBookingDetails();
+    }, [bookingId]);
+
+    // ... Phần còn lại của component không thay đổi ...
+
+    if (isLoading) {
+        return (
+            <View style={styles.centered}>
+                <ActivityIndicator size="large" color="#007bff" />
+                <Text>Đang tải dữ liệu...</Text>
+            </View>
+        );
+    }
+
+    if (error) {
+        return (
+            <View style={styles.centered}>
+                <Text style={{ color: 'red' }}>Lỗi: {error}</Text>
+            </View>
+        );
+    }
 
     if (!bookingData) {
-        return <View><Text>Đang tải dữ liệu...</Text></View>; // Hoặc một component loading
+        return (
+            <View style={styles.centered}>
+                <Text>Không tìm thấy thông tin đặt phòng.</Text>
+            </View>
+        );
     }
-    
+
+    const isCheckedIn = bookingData?.status === 'CHECK_IN';
+    const serviceTotal = (bookingData?.services ?? []).reduce((total, service) => total + (service.price || 0), 0);
+
     return (
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-            {/* Header */}
+            {/* ... Phần JSX Header, Nút Check-in, Modals, Action buttons, Thông tin khách giữ nguyên ... */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()}>
                     <Text style={styles.back}>←</Text>
@@ -98,7 +179,7 @@ export default function BookingDetail({ route }) {
             {isCheckedIn ? (
                 <TouchableOpacity
                     style={[styles.checkinBtn, { backgroundColor: "#c02727" }]}
-                    onPress={handleNavigateToCheckout}
+                    onPress={() => navigation.navigate("checkout", { bookingId: bookingData.id_booking })}
                 >
                     <Text style={styles.checkinText}>Check-out</Text>
                 </TouchableOpacity>
@@ -112,26 +193,17 @@ export default function BookingDetail({ route }) {
             )}
 
             {/* Modals */}
-            <CheckinModal
-                visible={showCheckInModal}
-                onClose={() => setShowCheckInModal(false)}
-                onConfirm={handleCheckInConfirm}
-            />
-            <SuccessModal
-                visible={showSuccess}
-                message="Check-in thành công!"
-                onClose={() => setShowSuccess(false)}
-            />
-            <Modal visible={showMiniBar} animationType="slide">
-                <MiniBarScreen onClose={() => setShowMiniBar(false)} />
-            </Modal>
+            <CheckinModal visible={showCheckInModal} onClose={() => setShowCheckInModal(false)} onConfirm={() => {
+                setBookingData(prev => ({ ...prev, status: 'checked_in' }));
+                setShowCheckInModal(false);
+                setShowSuccess(true);
+            }} />
+            <SuccessModal visible={showSuccess} message="Check-in thành công!" onClose={() => setShowSuccess(false)} />
+            <Modal visible={showMiniBar} animationType="slide"><MiniBarScreen onClose={() => setShowMiniBar(false)} /></Modal>
 
             {/* Action buttons */}
             <View style={styles.actionRow}>
-                <TouchableOpacity
-                    style={styles.actionBtn}
-                    onPress={() => setShowMiniBar(true)}
-                >
+                <TouchableOpacity style={styles.actionBtn} onPress={() => setShowMiniBar(true)}>
                     <Text style={styles.actionText}>Thêm dịch vụ</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.actionBtn, styles.editBtn]}>
@@ -155,18 +227,15 @@ export default function BookingDetail({ route }) {
                 </View>
 
                 {bookingData.payment_status === 'paid' && (
-                    <TouchableOpacity style={styles.paidBox}>
-                        <Text style={styles.paidText}>Đã thanh toán</Text>
-                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.paidBox}><Text style={styles.paidText}>Đã thanh toán</Text></TouchableOpacity>
                 )}
                 {isCheckedIn && (
-                    <TouchableOpacity style={styles.checkinBox}>
-                        <Text style={styles.checkinBoxText}>Đã Check in</Text>
-                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.checkinBox}><Text style={styles.checkinBoxText}>Đã Check in</Text></TouchableOpacity>
                 )}
             </View>
 
-            {/* Thông tin nhận phòng */}
+
+            {/* Thông tin nhận phòng - ĐÃ CẬP NHẬT */}
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>Thông tin nhận phòng</Text>
                 <View style={styles.tableWrapper}>
@@ -174,10 +243,11 @@ export default function BookingDetail({ route }) {
                         <Text style={[styles.tableHeader, styles.timeCol]}>Thời gian</Text>
                         <Text style={[styles.tableHeader, styles.statusCol]}>Trạng thái</Text>
                     </View>
-                    {bookingData.history.map((item, index) => (
+                    {/* SỬ DỤNG STATE `history` THAY VÌ `bookingData.history` */}
+                    {history.map((item, index) => (
                         <View style={styles.tableRow} key={index}>
                             <Text style={[styles.tableText, styles.timeCol]}>{item.time}</Text>
-                            <Text style={[styles.tableText, styles.statusCol, item.link && styles.link, item.color && { color: item.color }]}>
+                            <Text style={[styles.tableText, styles.statusCol, item.link && styles.link, { color: item.color }]}>
                                 {item.status}
                             </Text>
                         </View>
@@ -185,7 +255,7 @@ export default function BookingDetail({ route }) {
                 </View>
             </View>
 
-            {/* Thông tin phòng */}
+            {/* ... Phần JSX còn lại (Thông tin phòng, giá phòng, dịch vụ) giữ nguyên ... */}
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>Thông tin phòng</Text>
                 <Text style={styles.roomName}>
@@ -201,7 +271,6 @@ export default function BookingDetail({ route }) {
                 </View>
             </View>
 
-            {/* Thông tin giá phòng */}
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>Thông tin giá phòng</Text>
                 <View style={[styles.rowBetween, styles.rowLine]}>
@@ -222,7 +291,6 @@ export default function BookingDetail({ route }) {
                 </View>
             </View>
 
-            {/* Thông tin dịch vụ */}
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>Thông tin dịch vụ</Text>
                 <View>
@@ -237,7 +305,7 @@ export default function BookingDetail({ route }) {
                             <Text style={[styles.tableText, styles.serviceNameCol]}>{service.name}</Text>
                             <Text style={[styles.tableText, styles.serviceCol]}>{service.type}</Text>
                             <Text style={[styles.tableText, styles.serviceCol]}>{service.quantity}</Text>
-                            <Text style={[styles.tableText, styles.servicePriceCol]}>{service.price.toLocaleString('vi-VN')} ₫</Text>
+                            <Text style={[styles.tableText, styles.servicePriceCol]}>{(service.price ?? 0).toLocaleString('vi-VN')} ₫</Text>
                         </View>
                     ))}
                 </View>
@@ -249,14 +317,20 @@ export default function BookingDetail({ route }) {
         </ScrollView>
     );
 }
-// Giữ nguyên phần styles của bạn
+
+// Giữ nguyên phần styles
 const styles = StyleSheet.create({
-    // ... Dán toàn bộ styles của bạn vào đây ...
+    centered: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#ffffffff',
+        padding: 20,
+    },
     container: { flex: 1, backgroundColor: "#ffffffff", padding: 16 },
     header: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
     back: { fontSize: 20, marginRight: 8 },
     headerTitle: { fontSize: 18, fontWeight: "bold" },
-
     checkinBtn: {
         backgroundColor: "#c02727ff",
         padding: 12,
@@ -265,7 +339,6 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     checkinText: { color: "#fff", fontWeight: "bold" },
-
     actionRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 12 },
     actionBtn: {
         padding: 10,
@@ -274,7 +347,6 @@ const styles = StyleSheet.create({
     },
     editBtn: { backgroundColor: "#f1f1f1" },
     actionText: { fontSize: 14, fontWeight: "500" },
-
     card: {
         backgroundColor: "#f3f3f3ff",
         borderRadius: 12,
@@ -283,13 +355,9 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: "#ddd",
     },
-
     customerRow: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
     avatar: { width: 50, height: 50, borderRadius: 25, marginRight: 12 },
-
     customerName: { fontSize: 16, fontWeight: "bold", marginBottom: 4 },
-
-    // Box Thanh toán
     paidBox: {
         marginTop: 8,
         width: 140,
@@ -304,8 +372,6 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         textAlign: "center",
     },
-
-    // Box Check-in
     checkinBox: {
         marginTop: 8,
         width: 140,
@@ -320,7 +386,6 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         textAlign: "center",
     },
-
     cardTitle: { fontWeight: "bold", marginBottom: 8, fontSize: 17 },
     rowBetween: {
         flexDirection: "row",
@@ -328,10 +393,8 @@ const styles = StyleSheet.create({
         marginBottom: 6,
     },
     link: { color: "#0077aa", fontWeight: "500" },
-
     roomName: { fontWeight: "bold", marginBottom: 6 },
     roomTag: { fontSize: 14, color: "#555" },
-
     totalRow: { borderTopWidth: 1, borderColor: "#ddd", paddingTop: 8, marginTop: 8 },
     totalLabel: { fontWeight: "bold" },
     totalPrice: { fontWeight: "bold", fontSize: 16 },
@@ -341,35 +404,29 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         overflow: "hidden",
     },
-
     tableRow: {
         flexDirection: "row",
         borderBottomWidth: 1,
         borderColor: "#000000ff",
     },
-
     tableHeaderRow: {
         backgroundColor: "#b3b2b2ff",
     },
-
     tableHeader: {
         fontWeight: "bold",
         padding: 8,
         textAlign: "center",
         fontSize: 14,
     },
-
     tableText: {
         padding: 8,
         fontSize: 13,
     },
-
     timeCol: {
         flex: 1,
         borderRightWidth: 1,
         borderColor: "#000000ff",
     },
-
     statusCol: {
         flex: 1,
     },
@@ -379,7 +436,6 @@ const styles = StyleSheet.create({
         paddingBottom: 6,
         marginBottom: 6,
     },
-
     serviceNameCol: {
         flex: 2,
         borderRightWidth: 1,
