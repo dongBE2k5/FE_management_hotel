@@ -1,8 +1,8 @@
 import * as Linking from 'expo-linking';
+import * as Network from 'expo-network';
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, StyleSheet, Text, View, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, Alert, Button, StyleSheet, Text, View } from 'react-native';
 import PaymentAPI from '../../service/Payment/PaymentAPI';
-
 export default function PaymentScreen() {
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -29,14 +29,16 @@ export default function PaymentScreen() {
 
   // Lắng nghe deep link trả về từ server
   useEffect(() => {
-    const handleDeepLink = ({ url }: { url: string }) => {
+    const handleDeepLink = async ({ url }: { url: string }) => {
       const data = Linking.parse(url);
       console.log(data);
-      
+      const ipv4 = await Network.getIpAddressAsync();
+      console.log(ipv4);
       if (data) {
         const status = data.queryParams?.status ?? 'unknown';
         setPaymentStatus(status);
-         console.log('Payment status from deep link:', status);
+
+        console.log('Payment status from deep link:', status);
         Alert.alert('Thanh toán', `Trạng thái: ${status}`);
         // TODO: Quay về màn hình trước đó hoặc cập nhật UI khác
       }
@@ -65,7 +67,7 @@ export default function PaymentScreen() {
       {isLoading ? (
         <ActivityIndicator size="large" />
       ) : (
-        <Button title="Thanh toán 5.000.000" onPress={handlePayment}  />
+        <Button title="Thanh toán 5.000.000" onPress={handlePayment} />
       )}
 
       {paymentStatus && (
