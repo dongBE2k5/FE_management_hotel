@@ -1,12 +1,12 @@
-import Header from '@/components/header';
+import Header from '@/components/userHome/header';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
-export default function Test() {
+export default function Saved() {
   
 
   return (
-    <View >
+    <View style={{ flex: 1,backgroundColor:'#fff' }}>
       <Header/>
      
     </View>
