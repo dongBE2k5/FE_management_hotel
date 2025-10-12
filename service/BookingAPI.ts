@@ -1,8 +1,15 @@
 import BookingResponse from '@/models/Booking/BookingResponse';
+import  BookingStatus from '@/enums/BookingStatus';
 import BaseUrl from '../constants/BaseURL';
 import Booking from '../models/Booking/Booking';
-import axios from 'axios';
+import History from '@/models/Booking/History';
 
+
+interface HistoryStatus {
+    bookingId: number;
+    newStatus: string;
+    changedBy?: Number;
+}
 
 
 const createBooking = async (booking: Booking): Promise<BookingResponse> => {
@@ -51,5 +58,46 @@ const getAllBookingsByHotelId = async (hotelId: number): Promise<BookingResponse
     }
 }
 
-export { createBooking, getAllBookingsByHotelId, getBookingById, getBookings, getBookingsByUserId };
+const updateBookingStatus = async (bookingId: number, status: number,
+    changedBy?: Number): Promise<HistoryStatus | null> => {
+    try {
+        const response = await fetch(`${BaseUrl}/bookings/${bookingId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                bookingId: bookingId,
+                newStatus: BookingStatus(status), // ✅ key đúng với DTO Java
+                changedBy: changedBy // nếu backend có field này
+            }),
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    } catch (error) {
+        console.error("❌ Lỗi khi cập nhật trạng thái đặt phòng:", error);
+        return null;
+    }
+}
+
+const getHistoryBookingsByBookingId = async (bookingId: number): Promise<History[]> => {
+    try {
+        const response = await fetch(`${BaseUrl}/bookings/history/${bookingId}`);
+        return response.json();
+    } catch (error) {
+        console.error("❌ Lỗi khi lấy lịch sử đặt phòng:", error);
+        return [];
+    }
+}
+export {
+    createBooking,
+    getAllBookingsByHotelId,
+    getBookingById,
+    getBookings,
+    getBookingsByUserId, 
+    getHistoryBookingsByBookingId, 
+    updateBookingStatus
+};
 
