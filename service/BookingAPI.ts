@@ -16,11 +16,14 @@ interface HistoryStatus {
 const createBooking = async (booking: Booking): Promise<BookingResponse> => {
     const response = await fetch(`${BaseUrl}/bookings`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+        },
         body: JSON.stringify(booking),
     });
     return response.json();
-};
+}
+
 
 // 🧩 Get all bookings
 const getBookings = async (): Promise<BookingResponse[]> => {
@@ -68,7 +71,7 @@ const updateBookingStatusOld = async (
     changedBy?: Number
 ): Promise<HistoryStatus | null> => {
     try {
-        const response = await fetch(`${BaseUrl}/bookings/${bookingId}`, {
+        const response = await fetch(`${BaseUrl}/bookings/update-status}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

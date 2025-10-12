@@ -4,24 +4,20 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from "@react-navigation/native";
-import React, { useState ,useCallback} from 'react';
+import React, { useCallback, useState } from 'react';
 import {
-  Pressable,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
-  Text,
-  TextInput,
   TouchableOpacity,
-  View
   View
 } from 'react-native';
 import HeaderProfile from './headerProfile';
 
 
-import { useFocusEffect } from '@react-navigation/native';
 import { useUser } from '@/context/UserContext';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function AccountInfo() {
   const [gender, setGender] = useState('Nam');

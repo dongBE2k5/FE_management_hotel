@@ -68,10 +68,10 @@ export default function BookingDetailScreen({ bookingId }: BookingDetailScreenPr
                     <Text
                         style={[
                             styles.status,
-                            { color: status === "AVAILABLE" ? "#16A34A" : "#DC2626" },
+                            { color: booking?.status === "AVAILABLE" ? "#16A34A" : "#DC2626" },
                         ]}
                     >
-                        {status === "AVAILABLE" ? "Đã xác nhận" : "Đang xử lý"}
+                        {booking?.status === "AVAILABLE" ? "Đã xác nhận" : "Đang xử lý"}
                     </Text>
                 </View>
             </View>

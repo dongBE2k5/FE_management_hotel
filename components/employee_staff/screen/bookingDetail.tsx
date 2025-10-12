@@ -1,13 +1,15 @@
-import { getBookingById, getHistoryBookingsByBookingId } from "@/service/BookingAPI";
+import { getBookingById, getHistoryBookingsByBookingId, updateBookingStatus } from "@/service/BookingAPI";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import CheckinModal from "../model/check_in";
 import MiniBarScreen from "../model/minibar";
 import SuccessModal from "../model/sucsessModal";
 
 // HÀM BIẾN ĐỔI DỮ LIỆU BOOKING CHÍNH
 const transformApiData = (booking) => {
+    //  (Phần logic API đã được chuyển vào hàm handleCheckInConfirm)
     const checkInDate = booking.checkInDate ? new Date(booking.checkInDate) : null;
     const checkOutDate = booking.checkOutDate ? new Date(booking.checkOutDate) : null;
     let nights = 0;
@@ -100,42 +102,69 @@ export default function BookingDetail() {
     const [showSuccess, setShowSuccess] = useState(false);
     const [showMiniBar, setShowMiniBar] = useState(false);
 
+    // Hàm gọi API để tải dữ liệu, có thể được gọi lại để làm mới
+    const fetchBookingDetails = async () => {
+        if (!bookingId) {
+            setError("Không tìm thấy ID đặt phòng.");
+            setIsLoading(false);
+            return;
+        }
+        try {
+            // Khi làm mới thì không cần set isLoading
+            if (!bookingData) setIsLoading(true);
+            setError(null);
+
+            // Gọi đồng thời cả 2 API để tăng tốc
+            const [rawData, rawHistoryData] = await Promise.all([
+                getBookingById(bookingId),
+                getHistoryBookingsByBookingId(bookingId)
+            ]);
+
+            // Xử lý và set state cho thông tin chính
+            const formattedData = transformApiData(rawData);
+            setBookingData(formattedData);
+
+            // Xử lý và set state cho lịch sử
+            const formattedHistory = rawHistoryData.map(mapHistoryData);
+            setHistory(formattedHistory);
+
+        } catch (err) {
+            console.error("Lỗi khi lấy chi tiết đặt phòng:", err);
+            setError(err.message || "Đã xảy ra lỗi.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchBookingDetails = async () => {
-            if (!bookingId) {
-                setError("Không tìm thấy ID đặt phòng.");
-                setIsLoading(false);
-                return;
-            }
-            try {
-                setIsLoading(true);
-                setError(null);
-
-                // Gọi đồng thời cả 2 API để tăng tốc
-                const [rawData, rawHistoryData] = await Promise.all([
-                    getBookingById(bookingId),
-                    getHistoryBookingsByBookingId(bookingId)
-                ]);
-
-                // Xử lý và set state cho thông tin chính
-                const formattedData = transformApiData(rawData);
-                setBookingData(formattedData);
-
-                // Xử lý và set state cho lịch sử
-                const formattedHistory = rawHistoryData.map(mapHistoryData);
-                setHistory(formattedHistory);
-
-            } catch (err) {
-                console.error("Lỗi khi lấy chi tiết đặt phòng:", err);
-                setError(err.message || "Đã xảy ra lỗi.");
-            } finally {
-                setIsLoading(false);
-            }
-        };
         fetchBookingDetails();
     }, [bookingId]);
 
-    // ... Phần còn lại của component không thay đổi ...
+    // HÀM XỬ LÝ KHI XÁC NHẬN CHECK-IN
+    const handleCheckInConfirm = async () => {
+        try {
+            const userId = await AsyncStorage.getItem("userId");
+            if (!userId) {
+                Alert.alert("Lỗi", "Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.");
+                return;
+            }
+
+            // Gọi API để cập nhật trạng thái
+            await updateBookingStatus(bookingId, "CHECK_IN", Number(userId));
+
+            // Đóng modal và hiển thị thông báo thành công
+            setShowCheckInModal(false);
+            setShowSuccess(true);
+            
+            // Tải lại dữ liệu để cập nhật giao diện (cả trạng thái và lịch sử)
+            await fetchBookingDetails();
+
+        } catch (err) {
+            console.error("Lỗi khi check-in:", err);
+            Alert.alert("Lỗi", "Không thể thực hiện check-in. Vui lòng thử lại.");
+            setShowCheckInModal(false);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -163,11 +192,11 @@ export default function BookingDetail() {
     }
 
     const isCheckedIn = bookingData?.status === 'CHECK_IN';
+    const isCheckedOut = bookingData?.status === 'CHECK_OUT'; // THÊM BIẾN KIỂM TRA CHECK_OUT
     const serviceTotal = (bookingData?.services ?? []).reduce((total, service) => total + (service.price || 0), 0);
 
     return (
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-            {/* ... Phần JSX Header, Nút Check-in, Modals, Action buttons, Thông tin khách giữ nguyên ... */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()}>
                     <Text style={styles.back}>←</Text>
@@ -175,8 +204,14 @@ export default function BookingDetail() {
                 <Text style={styles.headerTitle}>Chi tiết đặt phòng</Text>
             </View>
 
-            {/* Nút Check-in / Check-out */}
-            {isCheckedIn ? (
+            {/* CẬP NHẬT LOGIC HIỂN THỊ NÚT */}
+            {isCheckedOut ? (
+                // Nếu đã check-out, hiển thị box thông báo
+                <View style={[styles.checkinBtn, { backgroundColor: '#6c757d' }]}>
+                    <Text style={styles.checkinText}>Đã hoàn tất Check-out</Text>
+                </View>
+            ) : isCheckedIn ? (
+                // Nếu đã check-in, hiển thị nút Check-out
                 <TouchableOpacity
                     style={[styles.checkinBtn, { backgroundColor: "#c02727" }]}
                     onPress={() => navigation.navigate("checkout", { bookingId: bookingData.id_booking })}
@@ -184,6 +219,7 @@ export default function BookingDetail() {
                     <Text style={styles.checkinText}>Check-out</Text>
                 </TouchableOpacity>
             ) : (
+                // Nếu chưa check-in, hiển thị nút Check-in
                 <TouchableOpacity
                     style={[styles.checkinBtn, { backgroundColor: "#32d35d" }]}
                     onPress={() => setShowCheckInModal(true)}
@@ -192,16 +228,14 @@ export default function BookingDetail() {
                 </TouchableOpacity>
             )}
 
-            {/* Modals */}
-            <CheckinModal visible={showCheckInModal} onClose={() => setShowCheckInModal(false)} onConfirm={() => {
-                setBookingData(prev => ({ ...prev, status: 'checked_in' }));
-                setShowCheckInModal(false);
-                setShowSuccess(true);
-            }} />
+            <CheckinModal 
+                visible={showCheckInModal} 
+                onClose={() => setShowCheckInModal(false)} 
+                onConfirm={handleCheckInConfirm}
+            />
             <SuccessModal visible={showSuccess} message="Check-in thành công!" onClose={() => setShowSuccess(false)} />
             <Modal visible={showMiniBar} animationType="slide"><MiniBarScreen onClose={() => setShowMiniBar(false)} /></Modal>
 
-            {/* Action buttons */}
             <View style={styles.actionRow}>
                 <TouchableOpacity style={styles.actionBtn} onPress={() => setShowMiniBar(true)}>
                     <Text style={styles.actionText}>Thêm dịch vụ</Text>
@@ -211,7 +245,6 @@ export default function BookingDetail() {
                 </TouchableOpacity>
             </View>
 
-            {/* Thông tin khách */}
             <View style={styles.card}>
                 <View style={styles.customerRow}>
                     <Image
@@ -232,10 +265,12 @@ export default function BookingDetail() {
                 {isCheckedIn && (
                     <TouchableOpacity style={styles.checkinBox}><Text style={styles.checkinBoxText}>Đã Check in</Text></TouchableOpacity>
                 )}
+                {/* THÊM BADGE CHO TRẠNG THÁI CHECK_OUT */}
+                {isCheckedOut && (
+                    <TouchableOpacity style={styles.checkoutBox}><Text style={styles.checkoutBoxText}>Đã Check out</Text></TouchableOpacity>
+                )}
             </View>
 
-
-            {/* Thông tin nhận phòng - ĐÃ CẬP NHẬT */}
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>Thông tin nhận phòng</Text>
                 <View style={styles.tableWrapper}>
@@ -243,7 +278,6 @@ export default function BookingDetail() {
                         <Text style={[styles.tableHeader, styles.timeCol]}>Thời gian</Text>
                         <Text style={[styles.tableHeader, styles.statusCol]}>Trạng thái</Text>
                     </View>
-                    {/* SỬ DỤNG STATE `history` THAY VÌ `bookingData.history` */}
                     {history.map((item, index) => (
                         <View style={styles.tableRow} key={index}>
                             <Text style={[styles.tableText, styles.timeCol]}>{item.time}</Text>
@@ -255,57 +289,30 @@ export default function BookingDetail() {
                 </View>
             </View>
 
-            {/* ... Phần JSX còn lại (Thông tin phòng, giá phòng, dịch vụ) giữ nguyên ... */}
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>Thông tin phòng</Text>
-                <Text style={styles.roomName}>
-                    {bookingData.room.name} <Text style={styles.roomTag}>: {bookingData.room.number}</Text>
-                </Text>
-                <View style={styles.rowBetween}>
-                    <Text>📅 Check-in: {bookingData.room.checkin_date}</Text>
-                    <Text>📅 Check-out: {bookingData.room.checkout_date}</Text>
-                </View>
-                <View style={styles.rowBetween}>
-                    <Text>🛏️ Số đêm: {bookingData.room.nights} đêm</Text>
-                    <Text>👥 Số người: {bookingData.room.guests} người</Text>
-                </View>
+                <Text style={styles.roomName}>{bookingData.room.name} <Text style={styles.roomTag}>: {bookingData.room.number}</Text></Text>
+                <View style={styles.rowBetween}><Text>📅 Check-in: {bookingData.room.checkin_date}</Text><Text>📅 Check-out: {bookingData.room.checkout_date}</Text></View>
+                <View style={styles.rowBetween}><Text>🛏️ Số đêm: {bookingData.room.nights} đêm</Text><Text>👥 Số người: {bookingData.room.guests} người</Text></View>
             </View>
 
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>Thông tin giá phòng</Text>
-                <View style={[styles.rowBetween, styles.rowLine]}>
-                    <Text>Giá mỗi đêm</Text>
-                    <Text>{bookingData.pricing.price_per_night.toLocaleString('vi-VN')} ₫</Text>
-                </View>
-                <View style={[styles.rowBetween, styles.rowLine]}>
-                    <Text>{bookingData.room.nights} đêm</Text>
-                    <Text>{bookingData.pricing.room_total.toLocaleString('vi-VN')} ₫</Text>
-                </View>
-                <View style={[styles.rowBetween, styles.rowLine]}>
-                    <Text>Thêm giờ</Text>
-                    <Text>{bookingData.pricing.extra_hour_fee.toLocaleString('vi-VN')} ₫</Text>
-                </View>
-                <View style={[styles.rowBetween, styles.totalRow]}>
-                    <Text style={styles.totalLabel}>Tổng cộng</Text>
-                    <Text style={styles.totalPrice}>{bookingData.pricing.room_total.toLocaleString('vi-VN')} ₫</Text>
-                </View>
+                <View style={[styles.rowBetween, styles.rowLine]}><Text>Giá mỗi đêm</Text><Text>{bookingData.pricing.price_per_night.toLocaleString('vi-VN')} ₫</Text></View>
+                <View style={[styles.rowBetween, styles.rowLine]}><Text>{bookingData.room.nights} đêm</Text><Text>{bookingData.pricing.room_total.toLocaleString('vi-VN')} ₫</Text></View>
+                <View style={[styles.rowBetween, styles.rowLine]}><Text>Thêm giờ</Text><Text>{bookingData.pricing.extra_hour_fee.toLocaleString('vi-VN')} ₫</Text></View>
+                <View style={[styles.rowBetween, styles.totalRow]}><Text style={styles.totalLabel}>Tổng cộng</Text><Text style={styles.totalPrice}>{bookingData.pricing.room_total.toLocaleString('vi-VN')} ₫</Text></View>
             </View>
 
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>Thông tin dịch vụ</Text>
                 <View>
                     <View style={[styles.tableRow, styles.tableHeaderRow]}>
-                        <Text style={[styles.tableHeader, styles.serviceNameCol]}>Tên dịch vụ</Text>
-                        <Text style={[styles.tableHeader, styles.serviceCol]}>Loại</Text>
-                        <Text style={[styles.tableHeader, styles.serviceCol]}>Số lượng</Text>
-                        <Text style={[styles.tableHeader, styles.servicePriceCol]}>Giá</Text>
+                        <Text style={[styles.tableHeader, styles.serviceNameCol]}>Tên dịch vụ</Text><Text style={[styles.tableHeader, styles.serviceCol]}>Loại</Text><Text style={[styles.tableHeader, styles.serviceCol]}>Số lượng</Text><Text style={[styles.tableHeader, styles.servicePriceCol]}>Giá</Text>
                     </View>
                     {bookingData.services.map(service => (
                         <View style={styles.tableRow} key={service.id}>
-                            <Text style={[styles.tableText, styles.serviceNameCol]}>{service.name}</Text>
-                            <Text style={[styles.tableText, styles.serviceCol]}>{service.type}</Text>
-                            <Text style={[styles.tableText, styles.serviceCol]}>{service.quantity}</Text>
-                            <Text style={[styles.tableText, styles.servicePriceCol]}>{(service.price ?? 0).toLocaleString('vi-VN')} ₫</Text>
+                            <Text style={[styles.tableText, styles.serviceNameCol]}>{service.name}</Text><Text style={[styles.tableText, styles.serviceCol]}>{service.type}</Text><Text style={[styles.tableText, styles.serviceCol]}>{service.quantity}</Text><Text style={[styles.tableText, styles.servicePriceCol]}>{(service.price ?? 0).toLocaleString('vi-VN')} ₫</Text>
                         </View>
                     ))}
                 </View>
@@ -383,6 +390,21 @@ const styles = StyleSheet.create({
     },
     checkinBoxText: {
         color: "#171817ff",
+        fontWeight: "600",
+        textAlign: "center",
+    },
+    // THÊM STYLE CHO BADGE CHECKOUT
+    checkoutBox: {
+        marginTop: 8,
+        width: 140,
+        backgroundColor: "#c02727", // Màu đỏ
+        paddingVertical: 6,
+        borderRadius: 8,
+        alignSelf: "center",
+        paddingHorizontal: 12,
+    },
+    checkoutBoxText: {
+        color: "#fff", // Chữ trắng
         fontWeight: "600",
         textAlign: "center",
     },

@@ -20,6 +20,30 @@ const formatCurrency = (value) => {
 // Component nhận props và hiển thị, không chứa logic kiểm tra dữ liệu rỗng
 export default function CostDetailModal({ visible, onClose, costData }) {
 
+  // Nếu không có dữ liệu, hiển thị modal thông báo
+  if (!costData) {
+    return (
+        <Modal
+            visible={visible}
+            transparent
+            animationType="fade"
+            onRequestClose={onClose}
+        >
+            <View style={styles.overlay}>
+                <View style={styles.modalContainer}>
+                    <Text style={styles.title}>Không có thông tin</Text>
+                    <Text style={{ textAlign: 'center', marginVertical: 10 }}>
+                        Không thể tính toán chi phí. Vui lòng kiểm tra lại thông tin check-in.
+                    </Text>
+                    <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+                        <Text style={styles.closeText}>Đóng</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </Modal>
+    );
+  }
+
   // Luôn giả định costData có tồn tại khi modal được mở
   // Tính tổng tiền dịch vụ
   const servicesTotal = costData?.services?.reduce(
@@ -97,14 +121,18 @@ export default function CostDetailModal({ visible, onClose, costData }) {
             <Text style={styles.totalLabel}>Tổng cộng</Text>
             <Text style={styles.totalPrice}>{formatCurrency(totalAmount)}</Text>
           </View>
-
+          
           {/* Nút bấm giữ lại giao diện gốc của bạn */}
           <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
             <Text style={styles.closeText}>Đóng</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.closeBtn} onPress={handlePayment}>
-            <Text style={styles.closeText}>Thanh toán</Text>
-          </TouchableOpacity>
+          
+          {/* Nút thanh toán chỉ hiển thị khi chưa thanh toán */}
+          {!costData?.isPaid && (
+            <TouchableOpacity style={styles.closeBtn} onPress={handlePayment}>
+                <Text style={styles.closeText}>Thanh toán</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </Modal>
@@ -113,68 +141,68 @@ export default function CostDetailModal({ visible, onClose, costData }) {
 
 // Giữ nguyên styles gốc của bạn
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
-    width: "90%",
-  },
-  title: {
-    fontWeight: "700",
-    fontSize: 16,
-    textAlign: "center",
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontWeight: "600",
-    marginTop: 10,
-    marginBottom: 4,
-  },
-  rowBetween: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 8,
-  },
-  bold: {
-    fontWeight: "600",
-  },
-  subText: {
-    color: "#666",
-    fontSize: 12,
-  },
-  price: {
-    color: "green",
-    fontWeight: "600",
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#ddd",
-    marginVertical: 10,
-  },
-  totalLabel: {
-    fontWeight: "700",
-  },
-  totalPrice: {
-    fontWeight: "700",
-    color: "green",
-    fontSize: 16,
-  },
-  closeBtn: {
-    backgroundColor: "#1E90FF", // Trả lại màu xanh gốc
-    paddingVertical: 10,
-    borderRadius: 8,
-    marginTop: 12,
-  },
-  closeText: {
-    textAlign: "center",
-    color: "#fff",
-    fontWeight: "600",
-  },
+    overlay: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.5)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    modalContainer: {
+        backgroundColor: "#fff",
+        borderRadius: 12,
+        padding: 16,
+        width: "90%",
+    },
+    title: {
+        fontWeight: "700",
+        fontSize: 16,
+        textAlign: "center",
+        marginBottom: 12,
+    },
+    sectionTitle: {
+        fontWeight: "600",
+        marginTop: 10,
+        marginBottom: 4,
+    },
+    rowBetween: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        marginBottom: 8,
+    },
+    bold: {
+        fontWeight: "600",
+    },
+    subText: {
+        color: "#666",
+        fontSize: 12,
+    },
+    price: {
+        color: "green",
+        fontWeight: "600",
+    },
+    divider: {
+        height: 1,
+        backgroundColor: "#ddd",
+        marginVertical: 10,
+    },
+    totalLabel: {
+        fontWeight: "700",
+    },
+    totalPrice: {
+        fontWeight: "700",
+        color: "green",
+        fontSize: 16,
+    },
+    closeBtn: {
+        backgroundColor: "#1E90FF", // Trả lại màu xanh gốc
+        paddingVertical: 10,
+        borderRadius: 8,
+        marginTop: 12,
+    },
+    closeText: {
+        textAlign: "center",
+        color: "#fff",
+        fontWeight: "600",
+    },
 });

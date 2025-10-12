@@ -11,7 +11,7 @@ import type { StackNavigationProp } from '@react-navigation/stack';
 import { createStackNavigator } from "@react-navigation/stack";
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet } from 'react-native';
-import { HomeScreen } from '.';
+
 
 const Stack = createStackNavigator<ProfileStackParamList>();
 type ProfileNavProp = StackNavigationProp<ProfileStackParamList>;
@@ -53,7 +53,7 @@ export default function ProfileNavigator() {
       <Stack.Screen name="Register" component={Register} />
       <Stack.Screen name="InFormationAccount" component={InFormationAccount} />
       <Stack.Screen name="LoggedAccount" component={LoggedAccount} />
-      <Stack.Screen name="Home" component={HomeScreen} />
+
     </Stack.Navigator>
   );
 }

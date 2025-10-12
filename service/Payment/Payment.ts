@@ -1,3 +1,3 @@
-export function Payments() {
+// export function Payments() {
     
-}
+// }

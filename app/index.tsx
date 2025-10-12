@@ -2,7 +2,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
 
 export default function App() {
     // const [role, setRole] = useState("ROLE_EMPLOYEE");
@@ -13,8 +12,9 @@ export default function App() {
         const checkRole = async () => {
 
             try {
-                await AsyncStorage.setItem("role", "ROLE_EMPLOYEE")
+                // await AsyncStorage.setItem("role", "ROLE_EMPLOYEE")
                 const role = await AsyncStorage.getItem("role")
+                console.log(role);
 
                 if (!role) {
                     router.replace("/(tabs)");
@@ -37,13 +37,7 @@ export default function App() {
         checkRole();
     }, []);
 
-    if (loading) {
-        return (
-            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-                <ActivityIndicator size="large" />
-            </View>
-        );
-    }
+
 
     return null;
 }

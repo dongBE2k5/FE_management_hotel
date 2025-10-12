@@ -43,6 +43,7 @@ export default function Login() {
               onPress: async () => {
                 await AsyncStorage.setItem("userId", res.id.toString());
                 await AsyncStorage.setItem("userToken", res.accessToken);
+                await AsyncStorage.setItem("role", res.role.name);
 
                 // Sau khi bấm OK thì chuyển sang LoggedAccount
                 navigation.replace("LoggedAccount");

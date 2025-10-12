@@ -1,3 +1,4 @@
+
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
@@ -9,7 +10,7 @@ import {
     TouchableWithoutFeedback,
     View,
 } from "react-native";
-import CostDetailModal from "./CostDetailModal";
+import CostDetailModal from "./costdetailModal";
 import DamageConfirmModal from './dameconfirmmodal';
 
 export default function FeedbackModal({
@@ -149,7 +150,6 @@ export default function FeedbackModal({
                 }}
             />
 
-            {/* 💥 Modal đền bù */}
             {/* 💥 Modal đền bù */}
             <DamageConfirmModal
                 visible={showDamageModal}

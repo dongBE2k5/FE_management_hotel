@@ -10,7 +10,6 @@ import { Button, Image, Modal, Platform, ScrollView, StyleSheet, Text, Touchable
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RoomCard from "./roomCard";
 import RoomZone from './roomZone';
-import RoomZone from './roomZone';
 
 type RoomProps = {
     roomTypeImage: RoomTypeImage[],
@@ -48,14 +47,12 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
             
             try {
                 const data = await getRoomAvailableByHotel(id, checkIn, checkOut);
-                const data = await getRoomAvailableByHotel(id, checkIn, checkOut);
                 setRooms(data); 
                 setIsSearch(false);
             } catch (err) {
                 console.error(err);
             }
         };
-        fetchRoomAvailableByHotel(hotelId, checkIn, checkOut!);
         fetchRoomAvailableByHotel(hotelId, checkIn, checkOut!);
     }, [isSearch]);
     // console.log(rooms);
@@ -132,15 +129,12 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                             justifyContent: 'center'
                         }}>
                             <DateTimePicker
-                            <DateTimePicker
                                 value={checkIn}
                                 minimumDate={checkIn}
                                 mode="date"
                                 display="spinner"
                                 onChange={(_, date) => date && setCheckIn(date)}
                                 style={{ height: 200 }}
-                            />
-                            {/* <input
                             />
                             {/* <input
                                 type="date"
@@ -193,7 +187,6 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                             justifyContent: 'center'
                         }}>
                             <DateTimePicker
-                            <DateTimePicker
                                 value={checkOut || new Date()}       // 👈 luôn mặc định ngày hôm nay
                                 minimumDate={new Date()}
                                 mode="date"
@@ -202,8 +195,6 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                                 textColor="black"    // màu chữ của spinner (iOS 14+)
                                 style={{ flex: 1 }}
                                 onChange={(_, date) => date && setCheckOut(date)}
-                            />
-                            {/* <input
                             />
                             {/* <input
                                 type="date"
