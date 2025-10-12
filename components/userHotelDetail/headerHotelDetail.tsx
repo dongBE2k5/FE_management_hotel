@@ -56,7 +56,7 @@ export default function HeaderHotelDetail({ hotel }: HotelProps) {
                 </Pressable>
 
                 {/* Slide ảnh */}
-                <FlatList
+                {/* <FlatList
                     ref={flatListRef}
                     data={images}
                     keyExtractor={(_, index) => index.toString()}
@@ -67,14 +67,15 @@ export default function HeaderHotelDetail({ hotel }: HotelProps) {
                     pagingEnabled
                     showsHorizontalScrollIndicator={false}
                     onMomentumScrollEnd={handleScroll}
-                />
+                /> */}
 
                 {/* Số thứ tự ảnh */}
-                <View style={styles.counter}>
+                {/* <View style={styles.counter}>
                     <Text style={styles.counterText}>
                         {currentIndex}/{images.length}
                     </Text>
-                </View>
+                </View> */}
+                <Image source={{ uri: hotel.image }} style={styles.image} resizeMode="cover" />
 
                 {/* Tiêu đề đè trên ảnh */}
                 <Text style={styles.title}>

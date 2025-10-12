@@ -7,6 +7,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { useNavigation, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert } from "react-native";
 
 type LoginScreenNavigationProp = StackNavigationProp<
   ProfileStackParamList,
@@ -32,27 +33,30 @@ export default function Login() {
       userLogin.password = password;
       const res = await loginFunction(userLogin);
       if (res !== null) {
-        setModalType('success');
-        setModalMessage('Đăng nhập thành công!');
-        setModalVisible(true);
-        await AsyncStorage.setItem('userId', res.id.toString());
-        await AsyncStorage.setItem('userToken', res.accessToken); // lưu token nếu cần dùng cho API sau này
-        // Tự động chuyển sau 1.5s
-        setTimeout(() => {
-          setModalVisible(false);
-          // Chuyển sang màn hình LoggedAccount
-          navigation.replace('LoggedAccount'); // đổi đường dẫn theo file của bạn
-        }, 1500);
-      }
-      else {
-        setModalType('error');
-        setModalMessage('Tên đăng nhập hoặc mật khẩu không chính xác!');
-        setModalVisible(true);
+        // Hiển thị thông báo thành công
+        Alert.alert(
+          "Thành công",
+          "Đăng nhập thành công!",
+          [
+            {
+              text: "OK",
+              onPress: async () => {
+                await AsyncStorage.setItem("userId", res.id.toString());
+                await AsyncStorage.setItem("userToken", res.accessToken);
 
-        // Tự động chuyển sau 1.5s
-        setTimeout(() => {
-          setModalVisible(false);
-        }, 1500);
+                // Sau khi bấm OK thì chuyển sang LoggedAccount
+                navigation.replace("LoggedAccount");
+              },
+            },
+          ]
+        );
+      } else {
+        // Hiển thị thông báo lỗi
+        Alert.alert(
+          "Lỗi đăng nhập",
+          "Tên đăng nhập hoặc mật khẩu không chính xác!",
+          [{ text: "OK" }]
+        );
       }
 
 

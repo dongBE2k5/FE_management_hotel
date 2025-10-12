@@ -1,10 +1,10 @@
 import ConfirmBooking from '@/components/userHotelDetail/ConfirmBooking';
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { RootStackParamList } from '@/types/navigation';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { RouteProp } from '@react-navigation/native';
-import type { RootStackParamList } from '@/types/navigation';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import React, { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function HotelDetail() {
   const [showStickyHeader, setShowStickyHeader] = useState(false);
@@ -13,17 +13,10 @@ export default function HotelDetail() {
 
   // 👇 Lấy dữ liệu từ FormBooking (đã navigate sang ReviewBooking)
   const {
-    hotelName,
-    roomName,
-    checkIn,
-    checkOut,
+    room,
+    checkInDate,
+    checkOutDate,
     nights,
-    roomPrice,
-    taxFee,
-    insuranceSelected,
-    insurancePrice,
-    specialRequests,
-    specialRequestPrice,
   } = route.params;
 
   const handleScroll = (event: { nativeEvent: { contentOffset: { y: number } } }) => {
@@ -58,7 +51,7 @@ export default function HotelDetail() {
         overScrollMode="never"
       >
         {/* ✅ Truyền toàn bộ dữ liệu xuống ConfirmBooking qua props */}
-       <ConfirmBooking />
+       <ConfirmBooking room={room} checkInDate={checkInDate} checkOutDate={checkOutDate} nights={nights} />
       </ScrollView>
     </View>
   );

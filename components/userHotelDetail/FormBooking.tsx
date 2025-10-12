@@ -1,4 +1,3 @@
-import SpecialRequest from './SpecialRequest';
 import RegisterResponse from '@/models/RegisterResponse';
 import { getUserById } from '@/service/UserAPI';
 import type { RootStackParamList } from '@/types/navigation';
@@ -14,6 +13,7 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Button, Image, Modal, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from 'react-native-paper';
+import SpecialRequest from './SpecialRequest';
 
 
 export default function FormBooking() {
@@ -46,7 +46,8 @@ export default function FormBooking() {
     }, []);
     type FormBookingNavProp = NativeStackNavigationProp<RootStackParamList, 'FormBooking'>;
     const navigation = useNavigation<FormBookingNavProp>();
-
+    console.log(room);
+    
     // const hotelName = 'Khách sạn Mường Thanh Grand Đà Nẵng';
     const roomName = 'Superior Twin Room - Room with Breakfast';
     const hotelImage = require('../../assets/images/ks1.jpg');
@@ -363,7 +364,7 @@ export default function FormBooking() {
                     <TouchableOpacity
                         style={[
                             {
-                                backgroundColor: checkOut ? '#1E90FF' : '#999', // xám nếu chưa chọn
+                                backgroundColor: '#1E90FF', // xám nếu chưa chọn
                                 paddingVertical: 12,
                                 borderRadius: 8,
                                 alignItems: 'center',
@@ -372,24 +373,12 @@ export default function FormBooking() {
                         ]}
                         activeOpacity={0.8}
                         onPress={() => {
-                            // if (!checkOut) {
-                            //     Alert.alert('Thông báo !', 'Vui lòng chọn ngày trả phòng trước khi tiếp tục.');
-                            //     return;
-                            // }
-                            // navigation.navigate('ReviewBooking', {
-                            //     hotelName,
-                            //     hotelImage,
-                            //     roomName,
-                            //     checkIn,
-                            //     checkOut,
-                            //     nights,
-                            //     roomPrice,
-                            //     taxFee,
-                            //     insuranceSelected,
-                            //     insurancePrice,
-                            //     specialRequests,
-                            //     specialRequestPrice,
-                            // });
+                            navigation.navigate('ReviewBooking', {
+                                room,
+                                checkInDate,
+                                checkOutDate,
+                                nights,
+                            });
                         }}
                     >
                         <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>

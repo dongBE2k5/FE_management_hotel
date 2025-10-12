@@ -1,18 +1,34 @@
-import React from 'react';
-import BannerAccount from './accountBanner';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
-import { ScrollView } from 'react-native-gesture-handler';
-import HeaderProfile from './headerProfile';
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
+import HeaderProfile from './headerProfile';
 import type { ProfileStackParamList } from '@/types/navigation';
 import { logoutFunction } from '@/service/UserAPI';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getUserById } from '@/service/UserAPI';
+import { useRouter } from 'expo-router';
+import RegisterResponse from '@/models/RegisterResponse';
 
 const Notification = () => {
   const navigation = useNavigation<StackNavigationProp<ProfileStackParamList>>();
+  const [user, setUser] = useState<RegisterResponse | null>(null);
+  useEffect(() => {
+    const getUser = async () => {
+      const userId = await AsyncStorage.getItem('userId');
+      if (userId) {
+        const res = await getUserById(userId!);
+        console.log(res);
 
+        setUser(res);
+      } else {
+        console.log("Không tìm thấy userId");
+      }
+    };
+    getUser();
+  }, []);
   return (
     <ScrollView style={styles.container}>
       {/* Box 1: Avatar + thông tin + Đăng xuất + nút chỉnh sửa */}
@@ -23,7 +39,9 @@ const Notification = () => {
 
           {/* Tên + trạng thái đăng nhập */}
           <View style={{ marginLeft: 10, flex: 1 }}>
-            <Text style={styles.name}>Thuan nguyen</Text>
+            <Text style={{ fontWeight: 'bold', fontSize: 12, marginTop: 2, color: '#666' }}>
+              {user?.data?.fullName}
+            </Text>
             <Text style={styles.status}>Đã đăng nhập</Text>
           </View>
 
@@ -60,7 +78,7 @@ const Notification = () => {
       {/* Box 2: Thông tin cá nhân */}
       <View style={styles.box}>
         <Text style={styles.title}>Thông tin cá nhân</Text>
-        <Text style={styles.item}>Họ và tên: Nguyễn Phan Huy Thuận</Text>
+        <Text style={styles.item}>Họ và tên:{user?.data?.fullName}</Text>
         <Text style={styles.item}>Ngày sinh: 01/01/2000</Text>
         <Text style={styles.item}>Giới tính: Nam</Text>
         <Text style={styles.item}>Địa chỉ: Thành phố Thủ Đức</Text>
@@ -71,7 +89,7 @@ const Notification = () => {
         <Text style={styles.title}>Địa chỉ email</Text>
         <View style={styles.row}>
           <MaterialIcons name="email" size={20} color="#333" />
-          <Text style={[styles.item, { marginLeft: 8 }]}>Thuan@gmail.com</Text>
+          <Text style={[styles.item, { marginLeft: 8 }]}>{user?.data?.email}</Text>
         </View>
       </View>
 
@@ -80,7 +98,7 @@ const Notification = () => {
         <Text style={styles.title}>Số điện thoại</Text>
         <View style={styles.row}>
           <FontAwesome name="phone" size={20} color="#333" />
-          <Text style={[styles.item, { marginLeft: 8 }]}>09481231423</Text>
+          <Text style={[styles.item, { marginLeft: 8 }]}>{user?.data?.phone}</Text>
         </View>
       </View>
     </ScrollView>

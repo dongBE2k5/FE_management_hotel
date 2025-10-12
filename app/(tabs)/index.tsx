@@ -1,24 +1,22 @@
 // App.tsx
-import React, { useState } from 'react';
-import { StyleSheet, View, ScrollView, Text, TextInput } from 'react-native';
+import Login from '@/components/userProfile/Login';
+import FormBooking from '@/components/screens/home/formBooking';
+import HotelDetail from '@/components/screens/home/hotelDetail';
+import ReviewBooking from '@/components/screens/home/reviewBooking';
 import Header from '@/components/userHome/header';
 import VoucherZone from '@/components/userHome/voucherzone';
 import ZoneHotel from '@/components/userHome/zoneHotel';
 import ConfirmBooking from '@/components/userHotelDetail/ConfirmBooking';
-import RoomCard from '@/components/userHotelDetail/roomCard';
-import BookingDetail from '@/components//userBooking/bookingDetail';
-import HotelDetail from '@/components/screens/home/hotelDetail';
-import FormBooking from '@/components/screens/home/formBooking';
-import ReviewBooking from '@/components/screens/home/reviewBooking';
+
 import Ionicons from '@expo/vector-icons/Ionicons';
-
 import { createStackNavigator } from '@react-navigation/stack';
-import type { RootStackParamList } from '@/types/navigation';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-const Stack = createStackNavigator<RootStackParamList>();
+const Stack = createStackNavigator();
 
 
-function HomeScreen() {
+export function HomeScreen() {
   const [showStickyHeader, setShowStickyHeader] = useState(false);
 
   const handleScroll = (event: { nativeEvent: { contentOffset: { y: number } } }) => {
@@ -98,13 +96,15 @@ function HomeScreen() {
 // ❗️Không bọc NavigationContainer ở đây nữa
 export default function App() {
   return (
+
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="HotelDetail" component={HotelDetail} />
-      {/* <Stack.Screen name="RoomCard" component={RoomCard} /> */}
       <Stack.Screen name="FormBooking" component={FormBooking} />
       <Stack.Screen name="ConfirmBooking" component={ConfirmBooking} />
       <Stack.Screen name="ReviewBooking" component={ReviewBooking} />
+      <Stack.Screen name="Login" component={Login} />
+
     </Stack.Navigator>
   );
 }

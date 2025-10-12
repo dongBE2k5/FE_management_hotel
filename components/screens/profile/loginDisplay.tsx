@@ -1,11 +1,10 @@
 import Login from '@/components/userProfile/Login';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable, } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
-import Ionicons from "@expo/vector-icons/Ionicons";
+import type { RootStackParamList } from '@/types/navigation';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import type { ProfileStackParamList } from '@/types/navigation';
 
 export default function HotelDetail() {
     const [showStickyHeader, setShowStickyHeader] = useState(false);
@@ -15,7 +14,7 @@ export default function HotelDetail() {
         setShowStickyHeader(scrollY > 100); // Thay đổi giá trị nếu cần điều chỉnh
     };
 
- const navigation = useNavigation<StackNavigationProp<ProfileStackParamList>>();
+ const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
     return (
         <View style={styles.container}>

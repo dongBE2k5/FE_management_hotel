@@ -7,6 +7,7 @@ interface RegisterResponse {
     username: string;
     email: string;
     phone: string;
+    cccd: string;
     role: Role;
    }
     message?: string;

@@ -1,21 +1,23 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  Pressable
-} from 'react-native';
-import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
-import { Picker } from '@react-native-picker/picker';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import BannerAccount from './accountBanner';
-import { ScrollView } from 'react-native-gesture-handler';
-import HeaderProfile from './headerProfile';
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { useNavigation } from "@react-navigation/native";
 
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
+import Ionicons from "@expo/vector-icons/Ionicons";
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { Picker } from '@react-native-picker/picker';
+import { useNavigation } from "@react-navigation/native";
+import React, { useState ,useCallback} from 'react';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import HeaderProfile from './headerProfile';
+
+
+import { useFocusEffect } from '@react-navigation/native';
+import { useUser } from '@/context/UserContext';
 
 export default function AccountInfo() {
   const [gender, setGender] = useState('Nam');
@@ -30,7 +32,14 @@ export default function AccountInfo() {
     }
   };
 
+  const { user, refreshUser } = useUser();
 
+  // Làm mới user mỗi khi Header được focus
+  useFocusEffect(
+    useCallback(() => {
+      refreshUser();
+    }, [])
+  );
   return (
     <View style={{ backgroundColor: '#ddd' }}>
 
@@ -58,7 +67,7 @@ export default function AccountInfo() {
           <Text style={styles.label}>Họ và tên:</Text>
           <TextInput
             style={styles.input}
-            defaultValue="Nguyễn Phan Huy Thuận"
+            defaultValue={user?.data?.fullName}
           />
 
           {/* Ngày sinh */}
@@ -107,7 +116,7 @@ export default function AccountInfo() {
             <MaterialIcons name="email" size={20} color="#333" />
             <TextInput
               style={styles.textInputFlex}
-              defaultValue="thuan@gmail.com"
+              defaultValue={user?.data?.email}
             />
           </View>
         </View>
@@ -119,7 +128,7 @@ export default function AccountInfo() {
             <FontAwesome name="phone" size={20} color="#333" />
             <TextInput
               style={styles.textInputFlex}
-              defaultValue="0792413451241"
+              defaultValue={user?.data?.phone}
               keyboardType="phone-pad"
             />
           </View>
@@ -130,7 +139,7 @@ export default function AccountInfo() {
           <Text style={styles.title}>Căn cước công dân:</Text>
           <TextInput
             style={styles.input}
-            defaultValue="0792413451241"
+            defaultValue={user?.data?.cccd}
             keyboardType="numeric"
           />
         </View>
