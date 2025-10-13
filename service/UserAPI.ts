@@ -63,13 +63,13 @@ async function logoutFunction(): Promise<LogoutResponse> {
       throw new Error(errorBody);
     }
 
-    // Xóa token + userId ở client
+  
     await AsyncStorage.removeItem('userToken');
     await AsyncStorage.removeItem('userId');
 
     return { success: true, message: "Đăng xuất thành công!" };
   } catch (error: any) {
-    console.error("❌ Lỗi logout:", error);
+    console.error("Lỗi logout:", error);
     return { success: false, message: error.message };
   }
 }

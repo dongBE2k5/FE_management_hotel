@@ -11,7 +11,7 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Button, Image, Modal, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Button, Image, Modal, Platform, StyleSheet, TouchableOpacity, View, Alert } from 'react-native';
 import { Text } from 'react-native-paper';
 import SpecialRequest from './SpecialRequest';
 
@@ -33,21 +33,27 @@ export default function FormBooking() {
             if (userId) {
                 const res = await getUserById(userId!);
                 console.log(res);
-                
                 setUser(res);
-            }else {
-                console.log("Không tìm thấy userId");
-                router.replace('/(tabs)/profile');
+            } else {
+                Alert.alert(
+                    "Thông báo",
+                    "Vui lòng đăng nhập để đặt phòng",
+                    [
+                        { text: "OK", onPress: () => router.replace('/(tabs)/profile') }
+                    ]
+                );
             }
         };
+
         getUser();
         setPrice(Number(room.price) * nights);
 
     }, []);
+
     type FormBookingNavProp = NativeStackNavigationProp<RootStackParamList, 'FormBooking'>;
     const navigation = useNavigation<FormBookingNavProp>();
     console.log(room);
-    
+
     // const hotelName = 'Khách sạn Mường Thanh Grand Đà Nẵng';
     const roomName = 'Superior Twin Room - Room with Breakfast';
     const hotelImage = require('../../assets/images/ks1.jpg');
@@ -254,7 +260,7 @@ export default function FormBooking() {
                     marginTop: 10
                 }}>
                     <Text style={{ fontWeight: 'bold', fontSize: 10, marginRight: 10 }}>
-                      {user?.data?.fullName}
+                        {user?.data?.fullName}
                     </Text>
                     <Text style={{ fontWeight: 'bold', fontSize: 10, marginRight: 10 }}>
                         {user?.data?.email}

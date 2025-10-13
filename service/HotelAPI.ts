@@ -18,16 +18,29 @@ async function getAllHotel(): Promise<Hotel[]> {
 
 
 // Gọi API lấy danh sách đã xem gần đây
-export const getRecentlyViewedHotels = async (userId: number): Promise<Hotel[]> => {
+// 🔹 Thêm option reverseOrder
+export const getRecentlyViewedHotels = async (
+  userId: number,
+  options?: { reverseOrder?: boolean } // nếu true => đảo ngược
+): Promise<Hotel[]> => {
   try {
     const res = await fetch(`${BaseUrl}/viewed-hotels/${userId}`);
     if (!res.ok) throw new Error("Failed to fetch recently viewed hotels");
-    return await res.json();
+
+    let hotels: Hotel[] = await res.json();
+
+    // Nếu muốn đảo ngược thứ tự
+    if (options?.reverseOrder) {
+      hotels = hotels.reverse();
+    }
+
+    return hotels;
   } catch (err) {
     console.error("Error fetching recently viewed hotels:", err);
     return [];
   }
 };
+
 
 export const saveViewedHotelAPI = async (userId: number, hotelId: number) => {
   try {
@@ -67,5 +80,5 @@ async function find(id: Number): Promise<Hotel> {
   return data;
 }
 
-export { find, getAllHotel, getHotelByLocation };
+export { find, getAllHotel, getHotelByLocation, };
 

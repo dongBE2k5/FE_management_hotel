@@ -23,7 +23,7 @@ export default function Header() {
         <Image style={{ marginLeft: 5 }} source={Logo} />
       </View>
 
-      {/* Thông tin người dùng */}
+      {/* Thông tin ngườ  i dùng */}
       <View style={styles.profile}>
         <Image style={styles.avatar} source={Logo} />
         <View>

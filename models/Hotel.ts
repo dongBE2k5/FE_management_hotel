@@ -9,5 +9,6 @@ interface Hotel {
   locationName: string;
   minPrice: number | null;
   maxPrice: number | null;
+   locationId?: number; // ✅ thêm dòng này
 }
 export { Hotel };
