@@ -9,5 +9,6 @@ interface BookingResponse {
     checkOutDate: Date;
     status: string;
     totalPrice: number;
+    imageHotel: string;
 }
 export default BookingResponse;

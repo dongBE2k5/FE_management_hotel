@@ -9,7 +9,7 @@ import {
     TouchableWithoutFeedback,
     View,
 } from "react-native";
-import CostDetailModal from "./CostDetailModal";
+import CostDetailModal from "./costdetailModal";
 import DamageConfirmModal from './dameconfirmmodal';
 
 export default function FeedbackModal({

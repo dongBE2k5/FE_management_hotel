@@ -35,10 +35,11 @@ export default function BookingDetailScreen({ bookingId }: BookingDetailScreenPr
         <ScrollView style={styles.container}>
             <Image
                 source={{
-                    uri: "https://achi.vn/wp-content/uploads/2024/12/Thiet-ke-khach-san-hien-dai-dep-3-sao-tai-da-nang-achi-A184-01.jpg",
+                        uri: booking?.imageHotel,
                 }}
+                resizeMode="cover"
                 style={styles.image}
-            />
+            /> 
 
             {/* Tiêu đề */}
             <View style={styles.header}>

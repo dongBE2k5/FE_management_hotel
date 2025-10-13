@@ -12,7 +12,8 @@ import {
 // Giả định bạn đã có các hàm API và component Modal này
 import { getBookingById, getHistoryBookingsByBookingId } from "@/service/BookingAPI";
 // import { getServicesByBookingId } from "@/service/ServiceAPI"; // Bỏ comment khi có API dịch vụ
-import CostDetailModal from "../model/CostDetailModal";
+
+import CostDetailModal from '../model/costdetailModal';
 import StaffListModal from "../model/staffListModal";
 
 // HÀM HỢP NHẤT DỮ LIỆU CHO MÀN HÌNH CHÍNH

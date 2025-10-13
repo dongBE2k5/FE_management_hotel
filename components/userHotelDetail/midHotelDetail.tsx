@@ -15,10 +15,10 @@ type RoomProps = {
     roomTypeImage: RoomTypeImage[],
     hotelId: number
 }
-export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
-    const today = new Date();
+const today = new Date();
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1);
+export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
     const [checkIn, setCheckIn] = useState<Date>(today);      // mặc định hôm nay
     const [checkOut, setCheckOut] = useState<Date | null>(tomorrow);
     const [showIn, setShowIn] = useState(false);
@@ -32,13 +32,13 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
 
 
     
-    useEffect(() => {
-        if (checkIn) {
-          const nextDay = new Date(checkIn);
-          nextDay.setDate(nextDay.getDate() + 1); // +1 ngày
-          setCheckOut(nextDay);
-        }
-      }, [checkIn]);
+    // useEffect(() => {
+    //     if (checkIn) {
+    //       const nextDay = new Date(checkIn);
+    //       nextDay.setDate(nextDay.getDate() + 1); // +1 ngày
+    //       setCheckOut(nextDay);
+    //     }
+    //   }, [checkIn]);
     useEffect(() => {
         const fetchRoomAvailableByHotel = async (id: number, checkIn: Date, checkOut: Date) => {
             console.log("fetchRoomAvailableByHotel");

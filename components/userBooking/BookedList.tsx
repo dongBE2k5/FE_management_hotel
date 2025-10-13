@@ -53,7 +53,7 @@ export default function BookedList() {
 
 
   const renderItem = ({ item }: { item: BookingResponse }) => {
-    const { room, checkInDate, checkOutDate, totalPrice, status } = item;
+    const { room, checkInDate, checkOutDate, totalPrice, status, } = item;
 
     return (
       <>
@@ -61,8 +61,7 @@ export default function BookedList() {
           {/* Ảnh phòng */}
           <Image
             source={{
-              uri:
-                "https://achi.vn/wp-content/uploads/2024/12/Thiet-ke-khach-san-hien-dai-dep-3-sao-tai-da-nang-achi-A184-01.jpg"
+              uri: item?.imageHotel,
             }}
             style={styles.hotelImage}
           />
