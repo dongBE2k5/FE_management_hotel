@@ -1,10 +1,10 @@
+import LogoutResponse from '@/models/LogoutResponse';
 import RegisterResponse from '@/models/RegisterResponse';
 import UserLogin from '@/models/UserLogin';
 import UserLoginResponse from '@/models/UserLoginResponse';
 import UserRegister from '@/models/UserRegister';
-import BaseUrl from '../constants/BaseURL';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import LogoutResponse from '@/models/LogoutResponse';
+import BaseUrl from '../constants/BaseURL';
 
 async function register(user: UserRegister): Promise<RegisterResponse | any> {
   try {
@@ -144,5 +144,5 @@ async function getCurrentUser(token: string): Promise<any | null> {
   }
 }
 
-export { getUserById, loginFunction, register,logoutFunction ,getCurrentUser };
+export { getCurrentUser, getUserById, loginFunction, logoutFunction, register };
 

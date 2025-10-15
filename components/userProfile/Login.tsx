@@ -1,4 +1,3 @@
-import LoginBanner from './bannerLogin';
 import UserLogin from '@/models/UserLogin';
 import { loginFunction } from '@/service/UserAPI';
 import { ProfileStackParamList } from '@/types/navigation';
@@ -6,8 +5,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useNavigation, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Alert } from "react-native";
+import { Alert, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import LoginBanner from './bannerLogin';
 
 type LoginScreenNavigationProp = StackNavigationProp<
   ProfileStackParamList,
@@ -32,7 +31,11 @@ export default function Login() {
       userLogin.username = username;
       userLogin.password = password;
       const res = await loginFunction(userLogin);
-      if (res !== null) {
+      console.log("login res", res);
+      
+      if (res != null) {
+        console.log("login res 2", res);
+
         // Hiển thị thông báo thành công
         Alert.alert(
           "Thành công",
@@ -47,6 +50,7 @@ export default function Login() {
 
                 // Sau khi bấm OK thì chuyển sang LoggedAccount
                 navigation.replace("LoggedAccount");
+
               },
             },
           ]

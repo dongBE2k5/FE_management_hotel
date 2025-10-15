@@ -35,6 +35,8 @@ export default function ZoneHotel() {
         (hotel, index, self) =>
             index === self.findIndex(h => h.id === hotel.id)
     );
+    const uniqueRecentHotels2 = uniqueRecentHotels.filter(hotels => hotels.id == 2);
+    console.log("uniqueRecentHotels", uniqueRecentHotels2);
 
 
     useEffect(() => {
@@ -121,7 +123,7 @@ export default function ZoneHotel() {
 
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cardScroll}>
                             {/* lọc khách sạn trùng lặp*/}
-                            {uniqueRecentHotels.map(hotel => (
+                            {uniqueRecentHotels.filter(hotels => hotels.id == 2).map(hotel => (
                                 <HotelCard key={hotel.id} handleNavigations={handleNavigation} data={hotel}  onViewedUpdate={fetchViewedHotels}  />
                             ))}
 

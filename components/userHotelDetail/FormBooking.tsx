@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useRouter } from 'expo-router';
@@ -14,7 +14,10 @@ import React, { useEffect, useState } from 'react';
 import { Button, Image, Modal, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import SpecialRequest from './SpecialRequest';
-
+type FormBookingScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  "FormBooking"
+>;
 
 export default function FormBooking() {
     const [checkIn, setCheckIn] = useState<Date>(new Date());      // mặc định hôm nay
@@ -27,6 +30,8 @@ export default function FormBooking() {
     const [user, setUser] = useState<RegisterResponse | null>(null);
     const [price, setPrice] = useState<number>(0);
     const router = useRouter();
+    const navigation = useNavigation<FormBookingScreenNavigationProp>();
+
     useEffect(() => {
         const getUser = async () => {
             const userId = await AsyncStorage.getItem('userId');
@@ -37,15 +42,17 @@ export default function FormBooking() {
                 setUser(res);
             }else {
                 console.log("Không tìm thấy userId");
-                router.replace('/(tabs)/profile');
+                // router.replace('/(tabs)/profile');
+                navigation.navigate('Login');
+
             }
         };
         getUser();
         setPrice(Number(room.price) * nights);
 
     }, []);
-    type FormBookingNavProp = NativeStackNavigationProp<RootStackParamList, 'FormBooking'>;
-    const navigation = useNavigation<FormBookingNavProp>();
+    // type FormBookingNavProp = NativeStackNavigationProp<RootStackParamList, 'FormBooking'>;
+    // const navigation = useNavigation<FormBookingNavProp>();
     console.log(room);
     
     // const hotelName = 'Khách sạn Mường Thanh Grand Đà Nẵng';
