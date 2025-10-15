@@ -53,17 +53,19 @@ const HotelCard: React.FC<HotelCardProps> = ({ handleNavigations, data, onViewed
                         <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 10, marginLeft: 5 }}>Tiết kiệm 25%</Text>
                     </View>
                 </ImageBackground >
-                <View style={{
+                {data.status &&
+                    <View style={{
 
-                    width: 180,
-                    height: 20,
-                    overflow: 'hidden',  // để bo góc imageBackground
-                    alignItems: 'center',
-                    padding: 5,
-                    backgroundColor: '#275DE5'
-                }}>
-                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 10, marginLeft: 5 }}>Gần biển</Text>
-                </View>
+                        width: 180,
+                        height: 20,
+                        overflow: 'hidden',  // để bo góc imageBackground
+                        alignItems: 'center',
+                        padding: 5,
+                        backgroundColor: '#275DE5'
+                    }}>
+                        <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 10, marginLeft: 5 }}>{data.status}</Text>
+                    </View>
+                }
                 <View style={{
 
                     width: 180,

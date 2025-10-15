@@ -38,23 +38,21 @@ export default function FormBooking() {
             if (userId) {
                 const res = await getUserById(userId!);
                 console.log(res);
-                
                 setUser(res);
             }else {
                 console.log("Không tìm thấy userId");
-                // router.replace('/(tabs)/profile');
-                navigation.navigate('Login');
-
+                router.replace('/(tabs)/profile');
             }
         };
+
         getUser();
         setPrice(Number(room.price) * nights);
 
     }, []);
-    // type FormBookingNavProp = NativeStackNavigationProp<RootStackParamList, 'FormBooking'>;
-    // const navigation = useNavigation<FormBookingNavProp>();
+    type FormBookingNavProp = NativeStackNavigationProp<RootStackParamList, 'FormBooking'>;
+    const navigation = useNavigation<FormBookingNavProp>();
     console.log(room);
-    
+
     // const hotelName = 'Khách sạn Mường Thanh Grand Đà Nẵng';
     const roomName = 'Superior Twin Room - Room with Breakfast';
     const hotelImage = require('../../assets/images/ks1.jpg');
@@ -261,7 +259,7 @@ export default function FormBooking() {
                     marginTop: 10
                 }}>
                     <Text style={{ fontWeight: 'bold', fontSize: 10, marginRight: 10 }}>
-                      {user?.data?.fullName}
+                        {user?.data?.fullName}
                     </Text>
                     <Text style={{ fontWeight: 'bold', fontSize: 10, marginRight: 10 }}>
                         {user?.data?.email}

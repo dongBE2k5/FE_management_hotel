@@ -12,7 +12,7 @@ interface HistoryStatus {
     changedBy?: Number;
 }
 
-// 🧩 Create booking
+//  Create booking
 const createBooking = async (booking: Booking): Promise<BookingResponse> => {
     const response = await fetch(`${BaseUrl}/bookings`, {
         method: 'POST',
@@ -25,71 +25,48 @@ const createBooking = async (booking: Booking): Promise<BookingResponse> => {
 }
 
 
-// 🧩 Get all bookings
+//  Get all bookings
 const getBookings = async (): Promise<BookingResponse[]> => {
     const response = await fetch(`${BaseUrl}/bookings`);
     return response.json();
 };
 
-// 🧩 Get booking by ID
+//  Get booking by ID
 const getBookingById = async (id: number): Promise<BookingResponse | null> => {
     try {
         const response = await fetch(`${BaseUrl}/bookings/${id}`);
         return response.json();
     } catch (error) {
-        console.error("❌ Lỗi khi lấy thông tin đặt phòng:", error);
+        console.error(" Lỗi khi lấy thông tin đặt phòng:", error);
         return null;
     }
 };
 
-// 🧩 Get bookings by user
+//  Get bookings by user
 const getBookingsByUserId = async (userId: number): Promise<BookingResponse[]> => {
     try {
         const response = await fetch(`${BaseUrl}/bookings/user/${userId}`);
         return response.json();
     } catch (error) {
-        console.error("❌ Lỗi khi lấy danh sách đặt phòng:", error);
+        console.error(" Lỗi khi lấy danh sách đặt phòng:", error);
         return [];
     }
 };
 
-// 🧩 Get all bookings by hotel
+//  Get all bookings by hotel
 const getAllBookingsByHotelId = async (hotelId: number): Promise<BookingResponse[]> => {
     try {
         const response = await fetch(`${BaseUrl}/bookings/hotel/${hotelId}`);
         return response.json();
     } catch (error) {
-        console.error("❌ Lỗi khi lấy danh sách đặt phòng:", error);
+        console.error(" Lỗi khi lấy danh sách đặt phòng:", error);
         return [];
     }
 };
 
-// 🧩 Version 1: Update booking status (API cũ, không có token)
-const updateBookingStatusOld = async (
-    bookingId: number,
-    status: number,
-    changedBy?: Number
-): Promise<HistoryStatus | null> => {
-    try {
-        const response = await fetch(`${BaseUrl}/bookings/update-status}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                bookingId,
-                newStatus: BookingStatus(status),
-                changedBy,
-            }),
-        });
 
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        return response.json();
-    } catch (error) {
-        console.error("❌ Lỗi khi cập nhật trạng thái đặt phòng (phiên bản cũ):", error);
-        return null;
-    }
-};
 
-// 🧩 Version 2: Update booking status (API mới, có token)
+//  Update booking status (API mới, có token)
 const updateBookingStatus = async (
     bookingId: number,
     newStatus: string,
@@ -141,7 +118,6 @@ export {
     getBookingById,
     getBookings,
     getBookingsByUserId,
-    updateBookingStatus,        // phiên bản mới
-    updateBookingStatusOld,     // phiên bản cũ
+    updateBookingStatus,       
     getHistoryBookingsByBookingId
 };
