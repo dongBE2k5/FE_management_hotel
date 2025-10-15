@@ -49,8 +49,8 @@ export default function FormBooking() {
         setPrice(Number(room.price) * nights);
 
     }, []);
-    type FormBookingNavProp = NativeStackNavigationProp<RootStackParamList, 'FormBooking'>;
-    const navigation = useNavigation<FormBookingNavProp>();
+    // type FormBookingNavProp = NativeStackNavigationProp<RootStackParamList, 'FormBooking'>;
+    // const navigation = useNavigation<FormBookingNavProp>();
     console.log(room);
 
     // const hotelName = 'Khách sạn Mường Thanh Grand Đà Nẵng';
