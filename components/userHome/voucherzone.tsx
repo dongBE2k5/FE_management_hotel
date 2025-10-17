@@ -1,30 +1,37 @@
-import { useEffect, useState } from 'react';
-import { ScrollView, Text, View, ImageBackground, Alert } from 'react-native';
-import VoucherCard from './voucherCard';
-import { getAllVouchers } from '@/service/VoucherAPI';
-import { saveUserVoucher, getUserVouchers } from '@/service/UserVoucherAPI';
 import Voucher from '@/models/Voucher';
+import { getUserVouchers, saveUserVoucher } from '@/service/UserVoucherAPI';
+import { getAllVouchers } from '@/service/VoucherAPI';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useState } from 'react';
+import { Alert, ImageBackground, ScrollView, Text, View } from 'react-native';
 import bgVoucher from "../../assets/images/bgvoucher.png";
+import VoucherCard from './voucherCard';
 
 export default function VoucherZone() {
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [savedVouchers, setSavedVouchers] = useState<Voucher[]>([]); // 👈 danh sách đã lưu
-  const userId = 1; // tạm thời fix cứng
+  let userId: String | null
 
   useEffect(() => {
+    const getUserIdFunction = async () => {
+      userId = await AsyncStorage.getItem("userId");
+    }
+    getUserIdFunction()
     fetchData();
   }, []);
 
   const fetchData = async () => {
     const all = await getAllVouchers();
-    const saved = await getUserVouchers(userId);
+    const saved = await getUserVouchers(Number(userId));
     setVouchers(all);
     setSavedVouchers(saved);
   };
 
   const handleSaveVoucher = async (voucher: Voucher) => {
+    userId = await AsyncStorage.getItem("userId");
+
     console.log("📩 Đang lưu voucher:", voucher);
-    const res = await saveUserVoucher(userId, voucher.id!);
+    const res = await saveUserVoucher(Number(userId), voucher.id!);
     if (res) {
       Alert.alert("✅ Thành công", "Voucher đã được lưu!");
       // 👇 Cập nhật danh sách để nút đổi thành “Đã lưu”
