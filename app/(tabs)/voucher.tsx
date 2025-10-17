@@ -1,17 +1,18 @@
 import Header from '@/components/userHome/header';
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, FlatList } from 'react-native';
 import SavedVoucherCard from '@/components/userHome/SavedVoucherCard'; // 👈 dùng card riêng
 import Voucher from '@/models/Voucher';
 import { getUserVouchers } from '@/service/UserVoucherAPI';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useEffect, useState } from 'react';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 
 export default function VoucherScreen() {
   const [savedVouchers, setSavedVouchers] = useState<Voucher[]>([]);
-  const userId = 1;
 
   useEffect(() => {
     const fetchData = async () => {
-      const userVouchers = await getUserVouchers(userId);
+      const userId = await AsyncStorage.getItem("userId");
+      const userVouchers = await getUserVouchers(Number(userId));
       console.log("User vouchers từ backend:", userVouchers);
       setSavedVouchers(userVouchers);
     };

@@ -1,13 +1,15 @@
 import Booking from '@/models/Booking/Booking';
 import Room from '@/models/Room';
+import Voucher from '@/models/Voucher';
 import { createBooking } from '@/service/BookingAPI';
+import { getUserVouchers } from '@/service/UserVoucherAPI';
 import type { RootStackParamList } from '@/types/navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   FlatList,
   Modal,
@@ -52,16 +54,28 @@ export default function ConfirmBooking() {
 
   // ---------- Thêm trạng thái voucher ----------
   const [voucherModalVisible, setVoucherModalVisible] = useState(false);
-  const [selectedVoucher, setSelectedVoucher] = useState<null | { code: string; discount: number }>(
+  const [selectedVoucher, setSelectedVoucher] = useState<null | Voucher>(
     null
   );
+  const [availableVouchers, setAvailableVouchers] = useState<Voucher[]>([])
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const userId = await AsyncStorage.getItem("userId");
+      const userVouchers = await getUserVouchers(Number(userId));
+      console.log("User vouchers từ backend:", userVouchers);
+      setAvailableVouchers(userVouchers);
+    };
+    fetchData();
+  }, []);
+
 
   // Ví dụ danh sách voucher có sẵn
-  const availableVouchers = [
-    { code: 'SALE10', discount: 100000 },
-    { code: 'SUMMER5', discount: 50000 },
-    { code: 'VIP20', discount: 200000 },
-  ];
+  // const availableVouchers = [
+  //   { code: 'SALE10', discount: 100000 },
+  //   { code: 'SUMMER5', discount: 50000 },
+  //   { code: 'VIP20', discount: 200000 },
+  // ];
 
   // const specialRequestTotal = specialRequests.length * specialRequestPrice;
   // const baseTotal =
@@ -186,7 +200,7 @@ return (
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <Text style={{ color: selectedVoucher ? '#333' : '#888' }}>
             {selectedVoucher
-              ? `${selectedVoucher.code} - Giảm ${selectedVoucher.discount.toLocaleString('vi-VN')} VND`
+              ? `${selectedVoucher.code} - Giảm ${selectedVoucher.percent.toLocaleString('vi-VN')} VND`
               : 'Chọn voucher'}
           </Text>
 
@@ -259,7 +273,7 @@ return (
                 }}
               >
                 <Text style={{ fontWeight: '600' }}>{item.code}</Text>
-                <Text>Giảm {item.discount.toLocaleString('vi-VN')} VND</Text>
+                <Text>Giảm {item.percent.toLocaleString('vi-VN')} VND</Text>
               </TouchableOpacity>
             )}
           />
