@@ -73,3 +73,15 @@ export type EmployeeStackParamList = {
   bookingDetail: { bookingId: number }; // có params thì khai báo ở đây
   checkout: undefined; // có params thì khai báo ở đây
 }
+
+export type HostStackParamList = {
+  hostBookings: undefined;
+  bookingDetail: { bookingId: number }; // có params thì khai báo ở đây
+  checkout: undefined; // có params thì khai báo ở đây
+  RoomList: undefined;
+  AddRoom: undefined;
+  ManageRoomTypes: undefined;
+  ManageServices: undefined;
+  // RoomDetail:{roomId:number};
+  RoomDetail:undefined;
+}

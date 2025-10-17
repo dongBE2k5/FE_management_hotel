@@ -53,7 +53,6 @@ export default function ProfileNavigator() {
       <Stack.Screen name="Register" component={Register} />
       <Stack.Screen name="InFormationAccount" component={InFormationAccount} />
       <Stack.Screen name="LoggedAccount" component={LoggedAccount} />
-   
     </Stack.Navigator>
   );
 }

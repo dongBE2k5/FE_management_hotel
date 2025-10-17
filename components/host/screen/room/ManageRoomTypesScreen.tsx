@@ -1,0 +1,249 @@
+import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useState } from 'react';
+import { Alert, FlatList, Image, Modal, SafeAreaView, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+
+// --- DỮ LIỆU MOCKUP ---
+const mockInitialServices = [
+    { id: 'sv_laundry', name: 'Giặt ủi (theo kg)', price: 50000, category: 'INROOM' },
+    { id: 'sv_extra_bed', name: 'Giường phụ', price: 200000, category: 'INROOM' },
+    { id: 'sv_coke', name: 'Coca-cola', price: 20000, category: 'MINIBAR' },
+    { id: 'sv_tour', name: 'Tour tham quan thành phố', price: 500000, category: 'OUTROOM' },
+];
+
+const mockInitialRoomTypes = [
+    {
+        id: '1',
+        name: 'Phòng Standard',
+        imageUrls: ['https://images.unsplash.com/photo-1566665797739-1674de7a421a?q=80&w=2874'],
+        applicableServices: ['sv_laundry', 'sv_coke']
+    },
+    {
+        id: '2',
+        name: 'Phòng Deluxe',
+        imageUrls: ['https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?q=80&w=2940'],
+        applicableServices: ['sv_laundry', 'sv_extra_bed', 'sv_coke']
+    },
+    {
+        id: '3',
+        name: 'Phòng Suite',
+        imageUrls: ['https://images.unsplash.com/photo-1568495248636-6412b158929b?q=80&w=2832'],
+        applicableServices: ['sv_laundry', 'sv_extra_bed', 'sv_coke', 'sv_tour']
+    },
+];
+
+// --- NAVIGATION GIẢ ---
+const mockNavigation = {
+    goBack: () => Alert.alert("Hành động", "Đã nhấn nút quay lại!"),
+    navigate: (screenName) => Alert.alert("Điều hướng", `Chuyển đến màn hình: ${screenName}`),
+};
+
+// --- Modal đã sửa lỗi ---
+const TypeEditorModal = ({ visible, onClose, onSave, type, allServices }) => {
+    const [name, setName] = useState('');
+    const [imageUrls, setImageUrls] = useState(['']);
+    const [selectedServices, setSelectedServices] = useState([]);
+    const isEditing = !!type;
+
+    // SỬA LỖI: Xóa mảng initialServices cứng, modal nên dùng dữ liệu từ prop "allServices"
+    
+    useEffect(() => {
+        if (visible) {
+            setName(isEditing ? type.name : '');
+            setImageUrls(isEditing && type.imageUrls?.length > 0 ? type.imageUrls : ['']);
+            setSelectedServices(isEditing ? type.applicableServices || [] : []);
+        }
+    }, [type, visible]);
+
+    const handleUrlChange = (text, index) => {
+        const newUrls = [...imageUrls];
+        newUrls[index] = text;
+        setImageUrls(newUrls);
+    };
+
+    const addUrlInput = () => setImageUrls([...imageUrls, '']);
+    const removeUrlInput = (index) => {
+        if (imageUrls.length <= 1) return;
+        const newUrls = imageUrls.filter((_, i) => i !== index);
+        setImageUrls(newUrls);
+    };
+
+    const toggleServiceSelection = (serviceId) => {
+        if (selectedServices.includes(serviceId)) {
+            setSelectedServices(selectedServices.filter(id => id !== serviceId));
+        } else {
+            setSelectedServices([...selectedServices, serviceId]);
+        }
+    };
+
+    const handleSave = () => {
+        const finalUrls = imageUrls.filter(url => url && url.trim() !== '');
+        if (!name.trim() || finalUrls.length === 0) {
+            Alert.alert("Lỗi", "Vui lòng nhập tên và ít nhất một URL hình ảnh.");
+            return;
+        }
+        onSave({ id: isEditing ? type.id : Date.now().toString(), name, imageUrls: finalUrls, applicableServices: selectedServices });
+    };
+
+    return (
+        <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+            <SafeAreaView style={{ flex: 1 }}>
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={onClose} style={styles.backButton}><Ionicons name="close" size={28} /></TouchableOpacity>
+                    <Text style={styles.headerTitle}>{isEditing ? 'Chỉnh sửa Loại phòng' : 'Thêm Loại phòng'}</Text>
+                    <TouchableOpacity onPress={handleSave}><Text style={styles.saveText}>Lưu</Text></TouchableOpacity>
+                </View>
+                <ScrollView>
+                    <View style={styles.formSection}>
+                        <Text style={styles.inputLabel}>Tên loại phòng</Text>
+                        <TextInput style={styles.textInput} placeholder="vd: Deluxe" value={name} onChangeText={setName} />
+                        <Text style={styles.inputLabel}>Danh sách URL hình ảnh</Text>
+                        {imageUrls.map((url, index) => (
+                            <View key={index} style={styles.urlInputContainer}>
+                                <TextInput style={styles.urlInput} placeholder={`URL hình ảnh ${index + 1}`} value={url} onChangeText={(text) => handleUrlChange(text, index)} />
+                                {imageUrls.length > 1 && (
+                                    <TouchableOpacity onPress={() => removeUrlInput(index)} style={styles.removeButton}>
+                                        <Ionicons name="trash-outline" size={22} color="#dc3545" />
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                        ))}
+                        <TouchableOpacity style={styles.addButton} onPress={addUrlInput}>
+                            <Ionicons name="add" size={20} color="#007bff" />
+                            <Text style={styles.addButtonText}>Thêm ảnh khác</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <Text style={styles.mainSectionTitle}>Dịch vụ áp dụng</Text>
+                    <View style={styles.serviceSelectionContainer}>
+                        {(allServices || []).map(service => (
+                            <View key={service.id} style={styles.serviceToggleItem}>
+                                <View>
+                                    <Text style={styles.serviceName}>{service.name}</Text>
+                                    <Text style={styles.serviceCategory}>{service.category}</Text>
+                                </View>
+                                <Switch
+                                    value={selectedServices.includes(service.id)}
+                                    onValueChange={() => toggleServiceSelection(service.id)}
+                                    trackColor={{ false: "#ccc", true: "#81b0ff" }}
+                                    thumbColor={selectedServices.includes(service.id) ? "#007bff" : "#f4f3f4"}
+                                />
+                            </View>
+                        ))}
+                    </View>
+                </ScrollView>
+            </SafeAreaView>
+        </Modal>
+    );
+};
+
+// --- COMPONENT CHÍNH ĐÃ SỬA ---
+export default function ManageRoomTypesScreen({ route, navigation = mockNavigation }) {
+    // Tạo state nội bộ để quản lý dữ liệu giả
+    const [mockedRoomTypes, setMockedRoomTypes] = useState(mockInitialRoomTypes);
+    const [mockedServices, setMockedServices] = useState(mockInitialServices);
+
+    // Nếu có route.params thì dùng, không thì dùng state giả
+    const roomTypes = route?.params?.roomTypes || mockedRoomTypes;
+    const setRoomTypes = route?.params?.setRoomTypes || setMockedRoomTypes;
+    const services = route?.params?.services || mockedServices;
+    const setServices = route?.params?.setServices || setMockedServices;
+
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedType, setSelectedType] = useState(null);
+
+    const handleSaveType = (typeData) => {
+        const index = roomTypes.findIndex(t => t.id === typeData.id);
+        if (index > -1) {
+            const updated = [...roomTypes];
+            updated[index] = typeData;
+            setRoomTypes(updated);
+        } else {
+            setRoomTypes([...roomTypes, typeData]);
+        }
+        setModalVisible(false);
+        setSelectedType(null);
+    };
+
+    const handleDeleteType = (typeId) => {
+        Alert.alert("Xác nhận xóa", "Bạn có chắc muốn xóa loại phòng này?",
+            [{ text: "Hủy" }, { text: "Xóa", style: "destructive", onPress: () => { setRoomTypes(roomTypes.filter(t => t.id !== typeId)); } },]
+        );
+    };
+
+    return (
+        <SafeAreaView style={styles.safeArea}>
+            <View style={styles.screenHeader}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}><Ionicons name="arrow-back" size={28} color="#333" /></TouchableOpacity>
+                <Text style={styles.screenHeaderTitle}>Quản lý Loại phòng</Text>
+                <View style={{ width: 28 }} />
+            </View>
+            <TouchableOpacity style={styles.manageServiceButton} onPress={() => navigation.navigate('ManageServices', { services, setServices, roomTypes })}>
+                <Ionicons name="list-circle-outline" size={24} color="#007bff" />
+                <Text style={styles.manageServiceButtonText}>Quản lý Dịch vụ</Text>
+            </TouchableOpacity>
+            <FlatList
+                data={roomTypes}
+                keyExtractor={item => item.id}
+                ListEmptyComponent={<View style={styles.emptyContainer}><Text style={styles.emptyText}>Chưa có loại phòng nào.</Text></View>}
+                renderItem={({ item }) => (
+                    <View style={styles.typeItem}>
+                        <Image source={{ uri: (item.imageUrls && item.imageUrls.length > 0) ? item.imageUrls[0] : 'https://via.placeholder.com/100' }} style={styles.typeImage} />
+                        <View style={styles.typeNameContainer}>
+                            <Text style={styles.typeName}>{item.name}</Text>
+                            <Text style={styles.imageCount}>{item.applicableServices?.length || 0} dịch vụ áp dụng</Text>
+                        </View>
+                        <View style={styles.typeActions}>
+                            <TouchableOpacity style={styles.actionButton} onPress={() => { setSelectedType(item); setModalVisible(true); }}>
+                                <Ionicons name="pencil" size={24} color="#007bff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.actionButton} onPress={() => handleDeleteType(item.id)}>
+                                <Ionicons name="trash-outline" size={24} color="#dc3545" />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )}
+                contentContainerStyle={{ paddingBottom: 100 }}
+            />
+            <TouchableOpacity style={styles.fab} onPress={() => { setSelectedType(null); setModalVisible(true); }}>
+                <Ionicons name="add" size={30} color="#fff" />
+            </TouchableOpacity>
+            <TypeEditorModal visible={modalVisible} onClose={() => setModalVisible(false)} onSave={handleSaveType} type={selectedType} allServices={services} />
+        </SafeAreaView>
+    );
+}
+
+// --- Styles (Không thay đổi) ---
+const styles = StyleSheet.create({
+    // ... Dán toàn bộ styles của bạn vào đây ...
+    safeArea: { flex: 1, backgroundColor: '#f4f7fc' },
+    screenHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 15, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#eee' },
+    screenHeaderTitle: { fontSize: 20, fontWeight: '600' },
+    backButton: { padding: 5 },
+    manageServiceButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 15, marginHorizontal: 15, marginTop: 15, borderRadius: 10, backgroundColor: '#e7f3ff', borderWidth: 1, borderColor: '#007bff' },
+    manageServiceButtonText: { color: '#007bff', fontWeight: 'bold', marginLeft: 10, fontSize: 16 },
+    typeItem: { backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center', padding: 15, marginHorizontal: 15, marginVertical: 8, borderRadius: 12, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, },
+    typeImage: { width: 60, height: 60, borderRadius: 8, marginRight: 15 },
+    typeNameContainer: { flex: 1 },
+    typeName: { fontSize: 16, fontWeight: '500' },
+    imageCount: { fontSize: 13, color: '#6c757d', marginTop: 4 },
+    typeActions: { flexDirection: 'row' },
+    actionButton: { padding: 8, marginLeft: 8 },
+    fab: { position: 'absolute', right: 20, bottom: 30, width: 60, height: 60, borderRadius: 30, backgroundColor: '#007bff', justifyContent: 'center', alignItems: 'center', elevation: 8 },
+    emptyContainer: { alignItems: 'center', marginTop: 50 },
+    emptyText: { fontSize: 16, color: '#6c757d' },
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 15, borderBottomWidth: 1, borderBottomColor: '#eee' },
+    headerTitle: { fontSize: 20, fontWeight: '600' },
+    saveText: { color: '#007bff', fontSize: 18, fontWeight: '600' },
+    formSection: { padding: 20 },
+    inputLabel: { fontSize: 15, fontWeight: '500', color: '#333', marginBottom: 8, marginTop: 10 },
+    textInput: { backgroundColor: '#f4f7fc', padding: 12, borderRadius: 8, fontSize: 16, borderWidth: 1, borderColor: '#ddd', marginBottom: 5 },
+    urlInputContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+    urlInput: { flex: 1, backgroundColor: '#f4f7fc', padding: 12, borderRadius: 8, fontSize: 16, borderWidth: 1, borderColor: '#ddd' },
+    removeButton: { padding: 8, marginLeft: 8 },
+    addButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 10, borderWidth: 1, borderColor: '#007bff', borderStyle: 'dashed', borderRadius: 8, marginTop: 10 },
+    addButtonText: { color: '#007bff', fontWeight: 'bold', marginLeft: 8 },
+    mainSectionTitle: { fontSize: 20, fontWeight: 'bold', padding: 20, backgroundColor: '#f4f7fc', borderTopWidth: 1, borderTopColor: '#eee' },
+    serviceSelectionContainer: { paddingHorizontal: 20, paddingBottom: 20 },
+    serviceToggleItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+    serviceName: { fontSize: 16 },
+    serviceCategory: { fontSize: 12, color: '#888', textTransform: 'uppercase', marginTop: 2 },
+});

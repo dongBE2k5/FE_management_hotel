@@ -7,6 +7,7 @@ import { useNavigation, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import LoginBanner from './bannerLogin';
+import { useUser } from '@/context/UserContext';
 
 type LoginScreenNavigationProp = StackNavigationProp<
   ProfileStackParamList,
@@ -23,7 +24,7 @@ export default function Login() {
     username: '',
     password: ''
   });
-
+const { setUser } = useUser();
   const router = useRouter();
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const handleLogin = async () => {
@@ -32,7 +33,7 @@ export default function Login() {
       userLogin.password = password;
       const res = await loginFunction(userLogin);
       console.log("login res", res);
-      
+
       if (res != null) {
         console.log("login res 2", res);
 
@@ -47,9 +48,11 @@ export default function Login() {
                 await AsyncStorage.setItem("userId", res.id.toString());
                 await AsyncStorage.setItem("userToken", res.accessToken);
                 await AsyncStorage.setItem("role", res.role.name);
-
+                setUser(res);
                 // Sau khi bấm OK thì chuyển sang LoggedAccount
+                router.replace('/');
                 navigation.replace("LoggedAccount");
+                
 
               },
             },
