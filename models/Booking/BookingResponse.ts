@@ -9,6 +9,7 @@ interface BookingResponse {
     checkOutDate: Date;
     status: string;
     totalPrice: number;
+    imageHotel: string;
     createdAt: Date;   // 🕒 thêm để FE xem thời gian đặt
     updatedAt: Date;
 }
