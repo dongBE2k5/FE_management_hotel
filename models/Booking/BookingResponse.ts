@@ -9,5 +9,7 @@ interface BookingResponse {
     checkOutDate: Date;
     status: string;
     totalPrice: number;
+    createdAt: Date;   // 🕒 thêm để FE xem thời gian đặt
+    updatedAt: Date;
 }
 export default BookingResponse;
