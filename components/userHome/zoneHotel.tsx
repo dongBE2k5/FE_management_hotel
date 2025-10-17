@@ -214,20 +214,18 @@ export default function ZoneHotel() {
                             showsVerticalScrollIndicator={false}
                             style={styles.cardScroll}
                         >
-                            {/* <HotelCard />
-                            <HotelCard />
-                            <HotelCard />
-                            <HotelCard /> */}
+                              {hotels.map(hotel => (
+                                <HotelCard key={hotel.id} handleNavigations={handleNavigation} data={hotel} />
+                            ))}
                         </ScrollView>
                     </View>
                     <ScrollView
                         showsVerticalScrollIndicator={false}
                         style={styles.cardScroll}
                     >
-                        {/* <HotelCard />
-                        <HotelCard />
-                        <HotelCard />
-                        <HotelCard /> */}
+                       {hotels.map(hotel => (
+                                <HotelCard key={hotel.id} handleNavigations={handleNavigation} data={hotel} />
+                            ))}
                     </ScrollView>
                 </View>
             </View>

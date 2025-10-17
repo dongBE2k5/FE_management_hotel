@@ -40,7 +40,11 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
 
 
     const [checkIn, setCheckIn] = useState<Date>(today);      // mặc định hôm nay
+    const [tempCheckIn, setTempCheckIn] = useState<Date>(checkIn);
+
     const [checkOut, setCheckOut] = useState<Date | null>(tomorrow);
+    const [tempCheckOut, setTempCheckOut] = useState<Date | null>(checkOut);
+
     const [showIn, setShowIn] = useState(false);
     const [showOut, setShowOut] = useState(false);
     const [rooms, setRooms] = useState<Room[]>([]);
@@ -145,25 +149,57 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                     onRequestClose={() => setShowIn(false)}
                 >
                     <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000066' }}>
-                        <View style={{
-                            backgroundColor: '#fff',
-                            height: 260,
-                            borderTopLeftRadius: 12,
-                            borderTopRightRadius: 12,
-                            justifyContent: 'center'
-                        }}>
+                        <View
+                            style={{
+                                backgroundColor: '#fff',
+                                height: 300,
+                                borderTopLeftRadius: 12,
+                                borderTopRightRadius: 12,
+                                justifyContent: 'center',
+                            }}
+                        >
+                            {/* Header */}
+                            <View
+                                style={{
+                                    flexDirection: 'row',
+                                    justifyContent: 'space-between',
+                                    paddingHorizontal: 16,
+                                    paddingVertical: 10,
+                                    borderBottomWidth: 1,
+                                    borderColor: '#ddd',
+                                }}
+                            >
+                                <TouchableOpacity onPress={() => setShowIn(false)}>
+                                    <Text style={{ color: '#009EDE', fontWeight: 'bold' }}>Hủy</Text>
+                                </TouchableOpacity>
+                                <Text style={{ fontWeight: 'bold', fontSize: 16 }}>Nhận phòng</Text>
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        setCheckIn(tempCheckIn);
+                                        // nếu ngày nhận >= ngày trả thì reset ngày trả
+                                        if (checkOut && tempCheckIn >= checkOut) setCheckOut(null);
+                                        setShowIn(false);
+                                    }}
+                                >
+                                    <Text style={{ color: '#009EDE', fontWeight: 'bold' }}>OK</Text>
+                                </TouchableOpacity>
+                            </View>
+
                             <DateTimePicker
-                                value={checkIn}
-                                minimumDate={checkIn}
+                                value={tempCheckIn}
+                                minimumDate={new Date()}
                                 mode="date"
                                 display="spinner"
-                                onChange={(_, date) => date && setCheckIn(date)}
-                                style={{ height: 200 }}
+                                themeVariant="light"
+                                textColor="black"
+                                style={{ flex: 1 }}
+                                onChange={(_, date) => date && setTempCheckIn(date)}
                             />
-
                         </View>
                     </View>
                 </Modal>
+
+
 
                 {/* Android giữ nguyên */}
                 {Platform.OS === 'android' && showIn && (
@@ -191,27 +227,54 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                     onRequestClose={() => setShowOut(false)}
                 >
                     <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000066' }}>
-                        <View style={{
-                            backgroundColor: '#fff',   // trắng rõ ràng
-                            height: 260,
-                            borderTopLeftRadius: 12,
-                            borderTopRightRadius: 12,
-                            justifyContent: 'center'
-                        }}>
+                        <View
+                            style={{
+                                backgroundColor: '#fff',
+                                height: 300,
+                                borderTopLeftRadius: 12,
+                                borderTopRightRadius: 12,
+                                justifyContent: 'center',
+                            }}
+                        >
+                            {/* Header */}
+                            <View
+                                style={{
+                                    flexDirection: 'row',
+                                    justifyContent: 'space-between',
+                                    paddingHorizontal: 16,
+                                    paddingVertical: 10,
+                                    borderBottomWidth: 1,
+                                    borderColor: '#ddd',
+                                }}
+                            >
+                                <TouchableOpacity onPress={() => setShowOut(false)}>
+                                    <Text style={{ color: '#009EDE', fontWeight: 'bold' }}>Hủy</Text>
+                                </TouchableOpacity>
+                                <Text style={{ fontWeight: 'bold', fontSize: 16 }}>Trả phòng</Text>
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        if (tempCheckOut) setCheckOut(tempCheckOut);
+                                        setShowOut(false);
+                                    }}
+                                >
+                                    <Text style={{ color: '#009EDE', fontWeight: 'bold' }}>OK</Text>
+                                </TouchableOpacity>
+                            </View>
+
                             <DateTimePicker
-                                value={checkOut || new Date()}       // 👈 luôn mặc định ngày hôm nay
-                                minimumDate={new Date()}
+                                value={tempCheckOut || new Date(checkIn.getTime() + 86400000)}
+                                minimumDate={new Date(checkIn.getTime() + 86400000)}
                                 mode="date"
                                 display="spinner"
-                                themeVariant="light" // ép sáng
-                                textColor="black"    // màu chữ của spinner (iOS 14+)
+                                themeVariant="light"
+                                textColor="black"
                                 style={{ flex: 1 }}
-                                onChange={(_, date) => date && setCheckOut(date)}
+                                onChange={(_, date) => date && setTempCheckOut(date)}
                             />
-
                         </View>
                     </View>
                 </Modal>
+
 
                 {Platform.OS === 'android' && showOut && (
                     <DateTimePicker
