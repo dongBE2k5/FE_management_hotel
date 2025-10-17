@@ -33,9 +33,9 @@ export default function FormBooking() {
             if (userId) {
                 const res = await getUserById(userId!);
                 console.log(res);
-                
+
                 setUser(res);
-            }else {
+            } else {
                 console.log("Không tìm thấy userId");
                 router.replace('/(tabs)/profile');
             }
@@ -47,7 +47,7 @@ export default function FormBooking() {
     type FormBookingNavProp = NativeStackNavigationProp<RootStackParamList, 'FormBooking'>;
     const navigation = useNavigation<FormBookingNavProp>();
     console.log(room);
-    
+
     // const hotelName = 'Khách sạn Mường Thanh Grand Đà Nẵng';
     const roomName = 'Superior Twin Room - Room with Breakfast';
     const hotelImage = require('../../assets/images/ks1.jpg');
@@ -245,24 +245,32 @@ export default function FormBooking() {
             <View style={styles.container}>
                 <Text style={{ fontWeight: 'bold', }}>Thông tin liên hệ (nhận vé/ phiếu thanh toán)</Text>
                 <View style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
+        
                     borderBottomWidth: StyleSheet.hairlineWidth,
                     borderBottomColor: '#ccc',
                     paddingBottom: 4,
                     marginHorizontal: 15,
                     marginTop: 10
                 }}>
-                    <Text style={{ fontWeight: 'bold', fontSize: 10, marginRight: 10 }}>
-                      {user?.data?.fullName}
-                    </Text>
-                    <Text style={{ fontWeight: 'bold', fontSize: 10, marginRight: 10 }}>
-                        {user?.data?.email}
-                    </Text>
-                    <Text style={{ fontWeight: 'bold', fontSize: 10, marginRight: 10 }}>
-                        {user?.data?.phone}
-                    </Text>
-                    <Ionicons name="checkmark" size={15} color="green" />
+                    <View style={{
+                        flexDirection: 'row',
+                    }}>
+                        <Text style={{ fontWeight: 'bold', fontSize: 10, marginRight: 10 }}>
+                            {user?.data?.fullName}
+                        </Text>
+                        <Text style={{ fontWeight: 'bold', fontSize: 10, marginRight: 10 }}>
+                            {user?.data?.email}
+                        </Text>
+
+                    </View >
+                    <View style={{
+                        flexDirection: 'row',     marginTop: 10
+                    }}>
+                        <Text style={{ fontWeight: 'bold', fontSize: 10, marginRight: 10 }}>
+                            {user?.data?.phone}
+                        </Text>
+                        <Ionicons name="checkmark" size={15} color="green" />
+                    </View>
                 </View>
                 <View>
                     <Text style={{ fontWeight: 'bold', marginTop: 10 }}>Yêu cầu đặc biệt</Text>
@@ -491,4 +499,5 @@ const styles = StyleSheet.create({
     },
 
 });
+
 

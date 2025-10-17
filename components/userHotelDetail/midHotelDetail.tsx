@@ -10,15 +10,34 @@ import { Button, Image, Modal, Platform, ScrollView, StyleSheet, Text, Touchable
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RoomCard from "./roomCard";
 import RoomZone from './roomZone';
+import { getRatesByHotel, getAverageRate } from '@/service/RateAPI';
+import Rate from '@/models/Rate';
 
 type RoomProps = {
     roomTypeImage: RoomTypeImage[],
     hotelId: number
 }
-    const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
+
+
+const today = new Date();
+const tomorrow = new Date(today);
+tomorrow.setDate(today.getDate() + 1);
 export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
+    const [rates, setRates] = useState<Rate[]>([]);
+    const [averageRate, setAverageRate] = useState<number>(0);
+    // Những điều khách thích nhất
+    const defaultTags = ['Phòng sạch', 'Nội thất đẹp', 'Nhân viên thân thiện', 'Dịch vụ tốt'];
+    const tagCounts: Record<string, number> = {};
+    defaultTags.forEach(tag => (tagCounts[tag] = 0));
+
+    rates.forEach(rate => {
+        rate.likedPoints?.forEach(point => {
+            if (tagCounts[point] !== undefined) tagCounts[point]++;
+        });
+    });
+
+    const tagDisplayList = Object.entries(tagCounts);
+
 
     const [checkIn, setCheckIn] = useState<Date>(today);      // mặc định hôm nay
     const [checkOut, setCheckOut] = useState<Date | null>(tomorrow);
@@ -31,23 +50,14 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
     const phongDoi = rooms.filter(room => room.typeRoom == "DOI");
     const phongGiaDinh = rooms.filter(room => room.typeRoom == "GIA_DINH");
 
-
-    
-    // useEffect(() => {
-    //     if (checkIn) {
-    //       const nextDay = new Date(checkIn);
-    //       nextDay.setDate(nextDay.getDate() + 1); // +1 ngày
-    //       setCheckOut(nextDay);
-    //     }
-    //   }, [checkIn]);
     useEffect(() => {
         const fetchRoomAvailableByHotel = async (id: number, checkIn: Date, checkOut: Date) => {
             console.log("fetchRoomAvailableByHotel");
             console.log(checkIn, checkOut);
-            
+
             try {
                 const data = await getRoomAvailableByHotel(id, checkIn, checkOut);
-                setRooms(data); 
+                setRooms(data);
                 setIsSearch(false);
             } catch (err) {
                 console.error(err);
@@ -55,6 +65,20 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
         };
         fetchRoomAvailableByHotel(hotelId, checkIn, checkOut!);
     }, [isSearch]);
+    useEffect(() => {
+        const fetchRates = async () => {
+            try {
+                const rateData = await getRatesByHotel(hotelId);
+                const avg = await getAverageRate(hotelId);
+                setRates(rateData);
+                setAverageRate(avg);
+            } catch (error) {
+                console.error("❌ Lỗi khi tải đánh giá:", error);
+            }
+        };
+        fetchRates();
+    }, [hotelId]);
+
     // console.log(rooms);
     // console.log(roomTypeImage);
     const taxFee = 124182;
@@ -136,19 +160,7 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                                 onChange={(_, date) => date && setCheckIn(date)}
                                 style={{ height: 200 }}
                             />
-                            {/* <input
-                                type="date"
-                                value={checkIn?.toISOString().split('T')[0]}
-                                min={new Date().toISOString().split('T')[0]}
-                                onChange={(e) => setCheckIn(new Date(e.target.value))}
-                                style={{ fontSize: 18, padding: 8 }}
-                            /> */}
-                            {/* <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingRight: 12 }}>
-                                <Button title="Chọn" onPress={() => {
-                                    setShowIn(false);
-                                    if (checkOut && checkIn >= checkOut) setCheckOut(null);
-                                }} />
-                            </View> */}
+
                         </View>
                     </View>
                 </Modal>
@@ -196,21 +208,7 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                                 style={{ flex: 1 }}
                                 onChange={(_, date) => date && setCheckOut(date)}
                             />
-                            {/* <input
-                                type="date"
-                                value={checkOut?.toISOString().split('T')[0]}
-                                min={(() => {
-                                    const tomorrow = new Date(checkIn);
-                                    tomorrow.setDate(tomorrow.getDate() + 1);
-                                    return tomorrow.toISOString().split('T')[0];
-                                })()}
-                                onChange={(e) => setCheckOut(new Date(e.target.value))}
-                                style={{ fontSize: 18, padding: 8 }}
-                            /> */}
-                            {/* <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 12 }}>
-                                <Button title="Chọn" onPress={() => setShowOut(false)} />
 
-                            </View> */}
                         </View>
                     </View>
                 </Modal>
@@ -228,10 +226,10 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                     />
                 )}
                 <View style={{ marginTop: 10 }}>
-                <Button title='Tìm kiếm' onPress={() => {
-                    // fetchRoomAvailableByHotel(hotelId, checkIn, checkOut);
-                    setIsSearch(true);
-                   }} />
+                    <Button title='Tìm kiếm' onPress={() => {
+                        // fetchRoomAvailableByHotel(hotelId, checkIn, checkOut);
+                        setIsSearch(true);
+                    }} />
                 </View>
 
 
@@ -264,8 +262,13 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                         style={{ marginLeft: 5, width: 30, height: 20, marginTop: 10 }}
                         source={require('../../assets/images/logo.png')}
                     />
-                    <Text style={{ marginLeft: 5, marginTop: 12, color: '#0046de', fontWeight: 'bold' }}>8.7</Text>
-                    <Text style={{ marginLeft: 5, marginTop: 12, color: '#009EDE', fontWeight: 'bold' }}>Ấn tượng</Text>
+                    <Text style={{ marginLeft: 5, marginTop: 12, color: '#0046de', fontWeight: 'bold' }}>
+                        {averageRate.toFixed(1)}
+                    </Text>
+                    <Text style={{ marginLeft: 5, marginTop: 12, color: '#009EDE', fontWeight: 'bold' }}>
+                        {averageRate >= 5 ? 'Tuyệt vời' : averageRate >= 4 ? 'Ấn tượng' : 'Tốt'}
+                    </Text>
+
                 </View>
             </View>
 
@@ -274,34 +277,32 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                 <Text style={styles.title}>Những điều khách thích nhất</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
                     <View style={styles.row}>
-                        {[
-                            ['Phòng sạch', '(4)'],
-                            ['Nội thất sạch', '(9)'],
-                            ['Nhân viên thân thiện', '(12)'],
-                            ['Dịch vụ tốt', '(4)'],
-                        ].map(([label, count], idx) => (
+                        {tagDisplayList.map(([tag, count], idx) => (
                             <View key={idx} style={styles.chip}>
-                                <Text style={styles.chipText}>{label}</Text>
-                                <Text style={[styles.chipText, { marginLeft: 5 }]}>{count}</Text>
+                                <Text style={styles.chipText}>{tag}</Text>
+                                <Text style={[styles.chipText, { marginLeft: 5 }]}>({count})</Text>
                             </View>
                         ))}
                     </View>
                 </ScrollView>
             </View>
 
+
+
             {/* Đánh giá hàng đầu */}
             <View style={styles.section}>
                 <Text style={styles.title}>Đánh giá hàng đầu</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ padding: 10 }}>
                     <View style={styles.row}>
-                        {Array.from({ length: 3 }).map((_, idx) => (
+                        {rates.slice(0, 10).map((r, idx) => (
                             <Text key={idx} style={styles.reviewText}>
-                                “Phòng đẹp tuyệt vời mới lung linh lấp la lấp lánh lắm hahahahahahahaa”
+                                “{r.comment}”
                             </Text>
                         ))}
                     </View>
                 </ScrollView>
             </View>
+
 
             {/* Zone phòng */}
             {phongDon.length > 0 && (
@@ -326,14 +327,9 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
 
                     <RoomCard checkInDate={checkIn} checkOutDate={checkOut} rooms={rooms.filter(room => room.typeRoom == "GIA_DINH")} />
                 </>
-                )}
+            )}
 
-            {/* Zone phòng
-            <RoomZone />
-            <RoomCard />
-            <RoomCard />
-            <RoomCard />
-            <RoomCard /> */}
+
 
         </View>
     );
@@ -408,7 +404,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#EFEFEF',
         borderRadius: 20,
         padding: 10,
-        width: 200,
         color: '#999494',
         fontWeight: 'bold',
         fontSize: 11,
