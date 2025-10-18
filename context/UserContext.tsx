@@ -16,10 +16,10 @@ type UserContextType = {
 
 const UserContext = createContext<UserContextType>({
   user: null,
-  refreshUser: async () => {},
-  setUser: () => {},
+  refreshUser: async () => { },
+  setUser: () => { },
   // Thêm giá trị mặc định
-  isLoading: true, 
+  isLoading: true,
 });
 
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
@@ -33,17 +33,17 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const userId = await AsyncStorage.getItem('userId');
       // const role = await AsyncStorage.getItem("role");
-      const role = "ROLE_HOST";
-
+      const role = "ROLE_CLEANINGSTAFF";
+      
       if (userId && role) {
         const res = await getUserById(userId);
         if (res) { // Kiểm tra nếu API trả về dữ liệu hợp lệ
-            setUser({ ...res, role });
+          setUser({ ...res, role });
         } else { // Xử lý trường hợp API không tìm thấy user
-            setUser(null);
-            // Xóa storage nếu thông tin không còn hợp lệ
-            await AsyncStorage.removeItem('userId');
-            await AsyncStorage.removeItem('role');
+          setUser(null);
+          // Xóa storage nếu thông tin không còn hợp lệ
+          await AsyncStorage.removeItem('userId');
+          await AsyncStorage.removeItem('role');
         }
       } else {
         setUser(null);
@@ -51,7 +51,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error) {
       // Nếu có bất kỳ lỗi nào (mất mạng, server lỗi), set user về null để đăng xuất
       console.error("Lỗi khi làm mới người dùng:", error);
-      setUser(null); 
+      setUser(null);
     } finally {
       // Luôn set isLoading về false sau khi hoàn tất (dù thành công hay thất bại)
       setIsLoading(false);
@@ -65,6 +65,8 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Khi user thay đổi → redirect tự động. Logic này vẫn giữ nguyên và rất tốt.
   useEffect(() => {
+    console.log(user?.role);
+    
     // Không cần điều hướng khi đang trong quá trình tải ban đầu
     if (isLoading || !user || !user.role) return;
 
@@ -72,7 +74,11 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       router.replace('/(employee)');
     } else if (user.role === 'ROLE_HOST') {
       router.replace('/(host)');
-    } else {
+    } else if (user.role === 'ROLE_CLEANINGSTAFF') {
+      router.replace('/(cleaningStaff)');
+    }
+
+    else {
       router.replace('/(tabs)');
     }
   }, [user, isLoading]); // Thêm isLoading vào dependency
