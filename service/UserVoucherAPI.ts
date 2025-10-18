@@ -20,6 +20,19 @@ export async function getUserVouchers(userId: number): Promise<Voucher[]> {  // 
     return [];
   }
 }
+// 🔍 Lấy danh sách voucher theo hotelId (dùng khi hiển thị trong trang khách sạn)
+export async function getUserVouchersByHotel(hotelId: number): Promise<Voucher[]> {
+  try {
+    const res = await fetch(`${BaseUrl}/user-vouchers/hotel/${hotelId}`);
+    if (!res.ok) throw new Error("Không thể lấy danh sách voucher theo khách sạn");
+    const data = await res.json();
+    console.log("🏨 Voucher theo hotel:", data);
+    return data;
+  } catch (err) {
+    console.error("Lỗi khi lấy voucher theo khách sạn:", err);
+    return [];
+  }
+}
 
 // 💾 Lưu voucher cho user
 export async function saveUserVoucher(userId: number, voucherId: number): Promise<UserVoucher | null> {

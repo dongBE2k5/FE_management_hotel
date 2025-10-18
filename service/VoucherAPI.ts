@@ -44,3 +44,22 @@ export const createVoucher = async (voucher: Voucher): Promise<Voucher | null> =
         return null;
     }
 };
+
+//gọi hàm tăng used giảm sl khi dùng voucher
+export async function useVoucher(voucherId: number, originalPrice: number) {
+  const res = await fetch(`${BaseUrl}/vouchers/use/${voucherId}?originalPrice=${originalPrice}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  const text = await res.text(); // lấy nội dung gốc
+
+  if (!res.ok) throw new Error(text);
+
+  // Nếu trả về JSON thật thì parse, còn không thì trả text
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}

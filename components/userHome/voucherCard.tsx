@@ -5,11 +5,12 @@ import Voucher from '@/models/Voucher';
 interface VoucherCardProps {
   voucher: Voucher;
   onSave?: (voucher: Voucher) => void;
-  isSaved?: boolean; // 👈 thêm prop này
+  isSaved?: boolean;
 }
 
 export default function VoucherCard({ voucher, onSave, isSaved }: VoucherCardProps) {
-  const usedPercent = ((voucher.used || 0) / voucher.quantity) * 100;
+  const usedPercent = ((voucher.used || 0) / voucher.initialQuantity) * 100;
+  const isOutOfStock = (voucher.used || 0) >= voucher.initialQuantity; // 👈 Kiểm tra hết lượt
 
   return (
     <View style={styles.vouchercard}>
@@ -23,7 +24,7 @@ export default function VoucherCard({ voucher, onSave, isSaved }: VoucherCardPro
 
       <View style={styles.bottomCard}>
         <Text style={{ fontSize: 10, marginBottom: 2 }}>
-          Đã dùng {voucher.used || 0}/{voucher.quantity} ({usedPercent.toFixed(0)}%)
+          Đã dùng {voucher.used || 0}/{voucher.initialQuantity} ({usedPercent.toFixed(0)}%)
         </Text>
 
         <View style={styles.iconRow}>
@@ -34,7 +35,12 @@ export default function VoucherCard({ voucher, onSave, isSaved }: VoucherCardPro
             </View>
           </View>
 
-          {isSaved ? (
+          {/* ✅ Nếu hết lượt thì hiển thị "Đã hết" */}
+          {isOutOfStock ? (
+            <View style={[styles.saveBtn, { backgroundColor: '#F6B8B8' }]}>
+              <Text style={{ fontSize: 8, color: 'red', fontWeight: 'bold' }}>Đã hết</Text>
+            </View>
+          ) : isSaved ? (
             <View style={[styles.saveBtn, { backgroundColor: '#B8F6BE' }]}>
               <Text style={{ fontSize: 8, color: 'green', fontWeight: 'bold' }}>Đã lưu</Text>
             </View>
@@ -42,7 +48,7 @@ export default function VoucherCard({ voucher, onSave, isSaved }: VoucherCardPro
             <View style={styles.saveBtn}>
               <Text
                 style={{ fontSize: 10 }}
-                onPress={() => onSave && onSave(voucher)}
+                onPress={() => !isOutOfStock && onSave && onSave(voucher)} // 👈 Không cho lưu nếu hết
               >
                 Lưu
               </Text>
