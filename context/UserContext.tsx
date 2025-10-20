@@ -31,12 +31,18 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const refreshUser = async () => {
     // Không cần setIsLoading(true) ở đây vì nó đã là true từ đầu
     try {
+      await AsyncStorage.setItem("userId", "3");
       const userId = await AsyncStorage.getItem('userId');
+
       // const role = await AsyncStorage.getItem("role");
-      const role = "ROLE_CLEANINGSTAFF";
-      
-      if (userId && role) {
+
+      await AsyncStorage.setItem("role", "ROLE_CLEANINGSTAFF")
+      const role = await AsyncStorage.getItem("role");
+
+      if (role) {
+
         const res = await getUserById(userId);
+
         if (res) { // Kiểm tra nếu API trả về dữ liệu hợp lệ
           setUser({ ...res, role });
         } else { // Xử lý trường hợp API không tìm thấy user
@@ -65,16 +71,25 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Khi user thay đổi → redirect tự động. Logic này vẫn giữ nguyên và rất tốt.
   useEffect(() => {
-    console.log(user?.role);
-    
-    // Không cần điều hướng khi đang trong quá trình tải ban đầu
-    if (isLoading || !user || !user.role) return;
+    // console.log(user?.role);
 
-    if (user.role === 'ROLE_EMPLOYEE' || user.role === 'ROLE_ADMIN') {
+
+    // Không cần điều hướng khi đang trong quá trình tải ban đầu
+    // if (isLoading || !user || !user.role) return;
+
+    // if (role == 'ROLE_EMPLOYEE' || role == 'ROLE_ADMIN') {
+    //   router.replace('/(employee)');
+    // } else if (role === 'ROLE_HOST') {
+    //   router.replace('/(host)');
+    // } else if (role === 'ROLE_CLEANINGSTAFF') {
+    //   router.replace('/(cleaningStaff)');
+    // }
+
+    if (user?.role === 'ROLE_EMPLOYEE' || user?.role === 'ROLE_ADMIN') {
       router.replace('/(employee)');
-    } else if (user.role === 'ROLE_HOST') {
+    } else if (user?.role === 'ROLE_HOST') {
       router.replace('/(host)');
-    } else if (user.role === 'ROLE_CLEANINGSTAFF') {
+    } else if (user?.role === 'ROLE_CLEANINGSTAFF') {
       router.replace('/(cleaningStaff)');
     }
 
