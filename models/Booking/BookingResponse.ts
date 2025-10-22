@@ -11,5 +11,6 @@ interface BookingResponse {
     totalPrice: number;
     createdAt: Date;   // 🕒 thêm để FE xem thời gian đặt
     updatedAt: Date;
+      voucherId?: number;
 }
 export default BookingResponse;

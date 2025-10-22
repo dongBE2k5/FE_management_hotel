@@ -28,6 +28,29 @@ export const getRecentlyViewedHotels = async (userId: number): Promise<Hotel[]> 
     return [];
   }
 };
+// Lấy danh sách khách sạn đã xem theo user + location
+export const getRecentlyViewedHotelsByLocation = async (
+  userId: number,
+  locationId?: number
+): Promise<Hotel[]> => {
+  try {
+    let url = `${BaseUrl}/viewed-hotels/recently-viewed?userId=${userId}`;
+    if (locationId) {
+      url += `&locationId=${locationId}`;
+    }
+
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch recently viewed hotels by location`);
+    }
+
+    const data: Hotel[] = await res.json();
+    return data;
+  } catch (err) {
+    console.error("Error fetching viewed hotels by location:", err);
+    return [];
+  }
+};
 
 export const saveViewedHotelAPI = async (userId: number, hotelId: number) => {
   try {
@@ -67,5 +90,40 @@ async function find(id: Number): Promise<Hotel> {
   return data;
 }
 
+//  Hàm tìm kiếm khách sạn theo nhiều tiêu chí
+export async function searchHotels(
+  name?: string,
+  city?: string,
+  status?: string,
+  minPrice?: number,
+  maxPrice?: number
+): Promise<Hotel[]> {
+  try {
+    const params = new URLSearchParams();
+    // Chỉ append khi có giá trị thực
+    if (name && name.trim() !== "") params.append("name", name);
+    if (city && city.trim() !== "") params.append("city", city);
+    if (status && status.trim() !== "") params.append("status", status);
+
+    if (minPrice != null) params.append("minPrice", minPrice.toString());
+    if (maxPrice != null) params.append("maxPrice", maxPrice.toString());
+
+    const url = `${BaseUrl}/hotels/search?${params.toString()}`;
+    console.log("🔍 Search URL:", url);
+
+    const res = await fetch(url);
+    console.log("API status:", res.status);
+
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+    const data: Hotel[] = await res.json();
+    console.log("✅ Search result:", data);
+
+    return data;
+  } catch (error) {
+    console.error("❌ Error fetching search hotels:", error);
+    return [];
+  }
+}
 export { find, getAllHotel, getHotelByLocation };
 

@@ -4,5 +4,6 @@ interface Booking {
     checkInDate: Date;
     checkOutDate: Date;
     totalPrice: number;
+      voucherId?: number;
 }
 export default Booking;

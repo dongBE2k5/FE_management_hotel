@@ -96,6 +96,8 @@ export default function ConfirmBooking() {
       checkInDate: new Date(checkInDate),
       checkOutDate: new Date(checkOutDate!),
       totalPrice: finalPrice,
+      //lưu voucher id vào booking
+       voucherId: selectedVoucher?.id ?? undefined,
     };
 
     try {
