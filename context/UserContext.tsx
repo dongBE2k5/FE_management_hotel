@@ -36,7 +36,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
       // const role = await AsyncStorage.getItem("role");
 
-      await AsyncStorage.setItem("role", "ROLE_CLEANINGSTAFF")
+      await AsyncStorage.setItem("role", "ROLE_HOST")
       const role = await AsyncStorage.getItem("role");
 
       if (role) {
@@ -75,7 +75,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
 
     // Không cần điều hướng khi đang trong quá trình tải ban đầu
-    // if (isLoading || !user || !user.role) return;
+    if (isLoading || !user || !user.role) return;
 
     // if (role == 'ROLE_EMPLOYEE' || role == 'ROLE_ADMIN') {
     //   router.replace('/(employee)');

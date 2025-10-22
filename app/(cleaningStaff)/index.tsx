@@ -1,16 +1,16 @@
 // App.js
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+// import { NavigationContainer } from '@react-navigation/native';
 import CleaningStaffScreen from '@/components/cleaningStaff/screen/CleaningStaffScreen';
+import { Ionicons } from '@expo/vector-icons';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 
 const Tab = createBottomTabNavigator();
 
 export default function App() {
   return (
-    <NavigationContainer>
+    // <NavigationContainer>
       <Tab.Navigator
         screenOptions={({ route }) => ({
           headerShown: false,
@@ -44,6 +44,6 @@ export default function App() {
         <Tab.Screen name="Hoàn thành" component={CleaningStaffScreen} />
         <Tab.Screen name="Thêm" component={CleaningStaffScreen} />
       </Tab.Navigator>
-    </NavigationContainer>
+    // </NavigationContainer>
   );
 }
