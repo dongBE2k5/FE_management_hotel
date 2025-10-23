@@ -12,7 +12,7 @@ import type { RootStackParamList } from '../../types/navigation';
 import Slide from "../userHotelDetail/slideImage";
 import HotelCard from "./hotelCard";
 import LocationSelector from "./location";
-
+import { getBestChoiceHotels } from '@/service/BookingAPI';
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
 
@@ -36,7 +36,19 @@ export default function ZoneHotel() {
             index === self.findIndex(h => h.id === hotel.id)
     );
 
-
+    //bestchoice 
+    const [bestChoiceHotels, setBestChoiceHotels] = useState<Hotel[]>([]);
+    useEffect(() => {
+        const fetchBestChoiceHotels = async () => {
+            try {
+                const data = await getBestChoiceHotels();
+                setBestChoiceHotels(data);
+            } catch (err) {
+                console.error("Lỗi khi lấy Best Choice Hotels:", err);
+            }
+        };
+        fetchBestChoiceHotels();
+    }, []);
     useEffect(() => {
         const fetchHotels = async () => {
             try {
@@ -95,15 +107,23 @@ export default function ZoneHotel() {
     const changeLocation = async (id: Number) => {
         try {
             if (id === 0) {
-                // 0 nghĩa là “Tất cả”
-                const data = await getAllHotel();
-                setHotels(data);
+                // 0 = “Tất cả”
+                const [allHotels, allBestChoices] = await Promise.all([
+                    getAllHotel(),
+                    getBestChoiceHotels()
+                ]);
+                setHotels(allHotels);
+                setBestChoiceHotels(allBestChoices);
             } else {
-                const data = await getHotelByLocation(id);
-                setHotels(data);
+                const [filteredHotels, filteredBestChoices] = await Promise.all([
+                    getHotelByLocation(id),
+                    getBestChoiceHotels(Number(id))
+                ]);
+                setHotels(filteredHotels);
+                setBestChoiceHotels(filteredBestChoices);
             }
 
-            // 🔥 Cập nhật danh sách đã xem tương ứng location
+            // 🔥 Cập nhật danh sách đã xem theo location
             await fetchViewedHotelsByLocation(Number(id));
 
         } catch (error) {
@@ -149,40 +169,25 @@ export default function ZoneHotel() {
                     <Image source={require("../../assets/images/fire.png")} />
                 </View>
 
-
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.cardScroll}
-                >
-                    <Pressable
-                        // onPress={() => navigation.navigate('HotelDetail', {hotelId: 1})}
-                        pressRetentionOffset={{ left: 20, right: 20, top: 20, bottom: 20 }}
-                    >
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10, }}>
-                            {hotels.map(hotel => (
-                                <HotelCard key={hotel.id} handleNavigations={handleNavigation} data={hotel} />
-                            ))}
-                        </ScrollView>
-                    </Pressable>
-                </ScrollView>
-
-
+                {bestChoiceHotels.length > 0 ? (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cardScroll}>
+                        {bestChoiceHotels.map(hotel => (
+                            <HotelCard
+                                key={hotel.id}
+                                handleNavigations={handleNavigation}
+                                data={hotel}
+                            />
+                        ))}
+                    </ScrollView>
+                ) : (
+                    <Text style={{ marginLeft: 15, color: '#888' }}>Đang tải danh sách...</Text>
+                )}
                 <View style={{
                     flexDirection: 'row',
                     alignItems: 'center',
                     marginHorizontal: 10,
                 }}>
                     <Text style={styles.text}>Khách sạn nội địa</Text>
-                    <View style={styles.searchInputContainer}>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Tìm kiếm khách sạn phù hợp?"
-                            placeholderTextColor="#000000"
-                        />
-                        <Ionicons name="search" size={15} color="#73c5fcff" />
-
-                    </View>
                 </View>
 
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>

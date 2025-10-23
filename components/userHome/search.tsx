@@ -8,6 +8,7 @@ import {
   Image,
   TouchableOpacity,
   Modal,
+  ScrollView ,
   ActivityIndicator,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -18,6 +19,8 @@ import { Hotel } from "@/models/Hotel";
 import type { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "@/types/navigation";
 import MultiSlider from "@ptomasroos/react-native-multi-slider";
+import { getAllLocation } from "@/service/LocationAPI";
+import LocationSelector from "./location";
 
 type NavigationProp = StackNavigationProp<RootStackParamList, "HotelDetail">;
 
@@ -29,6 +32,9 @@ export default function Search() {
   const [keyword, setKeyword] = useState("");
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Đổ location vào modal
+  const [locations, setLocations] = useState<{ id: number; name: string }[]>([]);
 
   // Bộ lọc
   const [minPrice, setMinPrice] = useState(0);
@@ -42,6 +48,24 @@ export default function Search() {
     }, [])
   );
 
+  useEffect(() => {
+    (async () => {
+      const data = await getAllLocation();
+      setLocations(data);
+    })();
+  }, []);
+
+  // Hàm đổi location khi chọn
+  const changeLocation = (id: number) => {
+    if (id === 0) {
+      setCity(""); // “Tất cả” → không lọc
+    } else {
+      const selected = locations.find((loc) => loc.id === id);
+      setCity(selected?.name || "");
+    }
+  };
+
+  // Gọi API tìm kiếm
   useEffect(() => {
     const delayDebounce = setTimeout(async () => {
       setLoading(true);
@@ -87,8 +111,7 @@ export default function Search() {
             <Ionicons name="search" size={22} color="#0077c7" />
           </View>
 
-          {/* ----- Bộ lọc giá theo mốc ----- */}
-          {/* ----- Bộ lọc giá theo thanh kéo ----- */}
+          {/* ----- Bộ lọc giá ----- */}
           <Text style={styles.filterTitle}>Chọn khoảng giá (VND)</Text>
 
           <View style={styles.sliderContainer}>
@@ -107,38 +130,36 @@ export default function Search() {
               markerStyle={{ backgroundColor: "#0077c7" }}
             />
 
-            {/* Hiển thị giá được chọn */}
             <View style={styles.priceLabels}>
               <Text style={styles.priceText}>{minPrice.toLocaleString()} đ</Text>
               <Text style={styles.priceText}>{maxPrice.toLocaleString()} đ</Text>
             </View>
 
-          
+            <View style={styles.tickMarks}>
+              {[0, 100000, 200000, 500000, 1000000, 5000000, 10000000].map(
+                (value, index) => (
+                  <View key={index} style={styles.tickContainer}>
+                    <View style={styles.tick} />
+                    <Text style={styles.tickLabel}>
+                      {value >= 1000000
+                        ? `${value / 1000000}tr`
+                        : value >= 1000
+                          ? `${value / 1000}k`
+                          : value}
+                    </Text>
+                  </View>
+                )
+              )}
+            </View>
           </View>
 
           {/* ----- Thành phố ----- */}
           <Text style={styles.filterTitle}>Thành phố</Text>
-          <View style={styles.filterRow}>
-            {["Hà Nội", "Đà Nẵng", "TP.HCM", "Nha Trang"].map((c) => (
-              <TouchableOpacity
-                key={c}
-                style={[
-                  styles.filterButton,
-                  city === c && styles.filterButtonActive,
-                ]}
-                onPress={() => setCity(city === c ? "" : c)}
-              >
-                <Text
-                  style={[
-                    styles.filterButtonText,
-                    city === c && styles.filterButtonTextActive,
-                  ]}
-                >
-                  {c}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+
+          <LocationSelector
+            locations={[{ id: 0, name: "Tất cả" }, ...locations]}
+            changeLocation={changeLocation}
+          />
 
           {/* ----- Khu vực ----- */}
           <Text style={styles.filterTitle}>Khu vực</Text>
@@ -158,7 +179,7 @@ export default function Search() {
                     status === s && styles.filterButtonTextActive,
                   ]}
                 >
-                  {s === "Gần trung tâm" ? "Gần trung tâm" : "Gần biển"}
+                  {s}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -271,37 +292,36 @@ const styles = StyleSheet.create({
   city: { color: "#555", marginTop: 3 },
   status: { color: "#009EDE", marginTop: 3, fontStyle: "italic" },
   sliderContainer: {
-  alignItems: "center",
-  marginVertical: 10,
-},
-priceLabels: {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  width: 300,
-  marginTop: 5,
-},
-priceText: {
-  fontWeight: "600",
-  color: "#0077c7",
-},
-tickMarks: {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  width: 300,
-  marginTop: 15,
-},
-tickContainer: {
-  alignItems: "center",
-},
-tick: {
-  width: 2,
-  height: 8,
-  backgroundColor: "#aaa",
-  marginBottom: 2,
-},
-tickLabel: {
-  fontSize: 11,
-  color: "#555",
-},
-
+    alignItems: "center",
+    marginVertical: 10,
+  },
+  priceLabels: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: 300,
+    marginTop: 5,
+  },
+  priceText: {
+    fontWeight: "600",
+    color: "#0077c7",
+  },
+  tickMarks: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: 300,
+    marginTop: 15,
+  },
+  tickContainer: {
+    alignItems: "center",
+  },
+  tick: {
+    width: 2,
+    height: 8,
+    backgroundColor: "#aaa",
+    marginBottom: 2,
+  },
+  tickLabel: {
+    fontSize: 11,
+    color: "#555",
+  },
 });
