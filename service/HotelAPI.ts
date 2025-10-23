@@ -16,7 +16,12 @@ async function getAllHotel(): Promise<Hotel[]> {
   return data;
 }
 
-
+//lấy tên ks
+export async function getHotelById(hotelId: number): Promise<Hotel | null> {
+  const res = await fetch(`${BaseUrl}/hotels/${hotelId}`);
+  if (!res.ok) return null;
+  return await res.json();
+}
 // Gọi API lấy danh sách đã xem gần đây
 export const getRecentlyViewedHotels = async (userId: number): Promise<Hotel[]> => {
   try {

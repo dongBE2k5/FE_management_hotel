@@ -8,7 +8,9 @@ import bgVoucher from "../../assets/images/bgvoucher.png";
 import VoucherCard from './voucherCard';
 
 export default function VoucherZone() {
-  const [vouchers, setVouchers] = useState<Voucher[]>([]);
+  const [appVouchers, setAppVouchers] = useState<Voucher[]>([]);
+  const [hotelVouchers, setHotelVouchers] = useState<Voucher[]>([]);
+
   const [savedVouchers, setSavedVouchers] = useState<Voucher[]>([]); // 👈 danh sách đã lưu
   let userId: String | null
 
@@ -23,9 +25,16 @@ export default function VoucherZone() {
   const fetchData = async () => {
     const all = await getAllVouchers();
     const saved = await getUserVouchers(Number(userId));
-    setVouchers(all);
+
+    // Chia ra 2 loại
+    const app = all.filter(v => !v.hotelId);
+    const hotel = all.filter(v => v.hotelId);
+
+    setAppVouchers(app);
+    setHotelVouchers(hotel);
     setSavedVouchers(saved);
   };
+
 
   const handleSaveVoucher = async (voucher: Voucher) => {
     userId = await AsyncStorage.getItem("userId");
@@ -55,14 +64,13 @@ export default function VoucherZone() {
         <Text style={{ margin: 10, color: '#534F4F', fontWeight: '700', fontSize: 20 }}>
           Coupon EPIC tri ân
         </Text>
-
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
-          {vouchers.map(v => (
+          {appVouchers.map(v => (
             <VoucherCard
               key={v.id}
               voucher={v}
               onSave={handleSaveVoucher}
-              isSaved={isVoucherSaved(v.id!)} // ✅ giờ không lỗi nữa
+              isSaved={isVoucherSaved(v.id!)}
             />
           ))}
         </ScrollView>

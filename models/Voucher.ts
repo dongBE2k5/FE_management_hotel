@@ -4,7 +4,7 @@ interface Voucher {
     description: string;
     priceCondition: number;
     initialQuantity:number;
-    hotelId: number;
+    hotelId?: number | null; 
     quantity: number;  // Tổng số voucher
     percent: number;
     used?: number;     // Số voucher đã dùng

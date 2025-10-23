@@ -19,7 +19,10 @@ const createBooking = async (booking: Booking): Promise<BookingResponse> => {
         headers: {
             'Content-Type': 'application/json',
         },
+        
         body: JSON.stringify(booking),
+        
+        
     });
     return response.json();
 }

@@ -12,6 +12,11 @@ export default function VoucherCard({ voucher, onSave, isSaved }: VoucherCardPro
   const usedPercent = ((voucher.used || 0) / voucher.initialQuantity) * 100;
   const isOutOfStock = (voucher.used || 0) >= voucher.initialQuantity; // 👈 Kiểm tra hết lượt
 
+  // ✅ Thêm điều kiện này: Nếu hết lượt thì không render gì cả (ẩn)
+  if (isOutOfStock) {
+    return null;
+  }
+
   return (
     <View style={styles.vouchercard}>
       <View style={styles.card}>
@@ -35,12 +40,8 @@ export default function VoucherCard({ voucher, onSave, isSaved }: VoucherCardPro
             </View>
           </View>
 
-          {/* ✅ Nếu hết lượt thì hiển thị "Đã hết" */}
-          {isOutOfStock ? (
-            <View style={[styles.saveBtn, { backgroundColor: '#F6B8B8' }]}>
-              <Text style={{ fontSize: 8, color: 'red', fontWeight: 'bold' }}>Đã hết</Text>
-            </View>
-          ) : isSaved ? (
+          {/* Logic hiển thị nút "Đã hết" đã được loại bỏ vì component đã được ẩn */}
+          {isSaved ? (
             <View style={[styles.saveBtn, { backgroundColor: '#B8F6BE' }]}>
               <Text style={{ fontSize: 8, color: 'green', fontWeight: 'bold' }}>Đã lưu</Text>
             </View>
@@ -48,7 +49,7 @@ export default function VoucherCard({ voucher, onSave, isSaved }: VoucherCardPro
             <View style={styles.saveBtn}>
               <Text
                 style={{ fontSize: 10 }}
-                onPress={() => !isOutOfStock && onSave && onSave(voucher)} // 👈 Không cho lưu nếu hết
+                onPress={() => onSave && onSave(voucher)} // 👈 Không cần kiểm tra isOutOfStock nữa
               >
                 Lưu
               </Text>
@@ -61,7 +62,17 @@ export default function VoucherCard({ voucher, onSave, isSaved }: VoucherCardPro
 }
 
 const styles = StyleSheet.create({
-  vouchercard: { marginTop: 10, marginLeft: 10 },
+  vouchercard: { marginTop: 10, marginLeft: 10 
+    ,
+    // 🌟 Đổ bóng cho iOS
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+
+    // 🌟 Đổ bóng cho Android
+    elevation: 4,
+  },
   card: {
     borderBottomWidth: 1,
     borderStyle: 'dashed',

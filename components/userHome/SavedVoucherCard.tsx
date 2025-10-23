@@ -1,6 +1,8 @@
+import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Voucher from "@/models/Voucher";
+import { getHotelById } from "@/service/HotelAPI";
 
 interface SavedVoucherCardProps {
   voucher: Voucher;
@@ -11,6 +13,15 @@ export default function SavedVoucherCard({ voucher, onSelect }: SavedVoucherCard
   const usedPercent = ((voucher.used || 0) / voucher.initialQuantity) * 100;
   const isOutOfStock = (voucher.used || 0) >= voucher.initialQuantity; // 👈 Kiểm tra hết lượt
 
+  //lấy tên ks thông qua hotel_id
+  const [hotelName, setHotelName] = useState<string | null>(null);
+  useEffect(() => {
+    if (voucher.hotelId) {
+      getHotelById(voucher.hotelId)
+        .then(hotel => setHotelName(hotel?.name || "Khách sạn"))
+        .catch(() => setHotelName("Không xác định"));
+    }
+  }, [voucher.hotelId]);
   return (
     <View style={styles.shadowWrapper}>
       <TouchableOpacity
@@ -21,11 +32,25 @@ export default function SavedVoucherCard({ voucher, onSelect }: SavedVoucherCard
         {/* Dải màu bên trái */}
         <View style={[styles.leftBar, isOutOfStock && { backgroundColor: "#A0A0A0" }]}>
           <Ionicons name="gift-outline" size={22} color="#fff" />
-          <Text style={styles.leftText}>{voucher.name || "Ưu đãi đặc biệt"}</Text>
+          <Text style={styles.leftText}>{voucher.code || "Ưu đãi đặc biệt"}</Text>
         </View>
 
         {/* Phần nội dung bên phải */}
         <View style={styles.rightContent}>
+          {/* ⚙️ Nhãn loại voucher */}
+          <Text
+            style={[
+              styles.voucherType,
+              !voucher.hotelId ? styles.appVoucher : styles.hotelVoucher,
+            ]}
+          >
+            {!voucher.hotelId
+              ? "🎁 Toàn hệ thống"
+              : hotelName
+                ? `🏨 ${hotelName}`
+                : "Đang tải..."}
+          </Text>
+
           <Text style={styles.percentText}>Giảm {voucher.percent}% đặt khách sạn</Text>
           <Text style={styles.desc}>
             Đơn Tối Thiểu {voucher.priceCondition?.toLocaleString()} VND
@@ -38,12 +63,12 @@ export default function SavedVoucherCard({ voucher, onSelect }: SavedVoucherCard
               Đã dùng {voucher.used || 0}/{voucher.initialQuantity} ({usedPercent.toFixed(0)}%)
             </Text>
 
-            {/* ✅ Hiển thị thông báo nếu đã hết */}
             {isOutOfStock && (
               <Text style={styles.outOfStockText}>Đã hết lượt</Text>
             )}
           </View>
         </View>
+
       </TouchableOpacity>
     </View>
   );
@@ -118,4 +143,23 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "red",
   },
+  voucherType: {
+    fontSize: 11,
+    fontWeight: "bold",
+    alignSelf: "flex-start",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    overflow: "hidden",
+    marginBottom: 4,
+  },
+  appVoucher: {
+    backgroundColor: "#FFB300",
+    color: "#fff",
+  },
+  hotelVoucher: {
+    backgroundColor: "#00BCD4",
+    color: "#fff",
+  },
+
 });
