@@ -2,182 +2,291 @@ import { Hotel } from '@/models/Hotel';
 import { saveViewedHotelAPI } from '@/service/HotelAPI';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import React, { useRef, useState, useEffect } from "react";
+import { Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
 import Rate from "@/models/Rate";
-import { getRatesByHotel, getAverageRate } from "@/service/RateAPI";
-
+import { getRatesByHotel } from "@/service/RateAPI";
+import { saveHotel, removeSavedHotel, isHotelSaved } from '@/service/SavedHotelAPI';
 
 interface HotelCardProps {
-    handleNavigations: (id: number) => void
+    handleNavigations: (id: number) => void;
     data: Hotel;
     onViewedUpdate?: () => void;
 }
 
-
 const HotelCard: React.FC<HotelCardProps> = ({ handleNavigations, data, onViewedUpdate }) => {
-
-    {/* tính tổng đânhs gia     */ }
     const [rateCount, setRateCount] = useState<number>(0);
-
-    {/* tính sao     */ }
-    const [rates, setRates] = useState<Rate[]>([]);
     const [averageRate, setAverageRate] = useState<number>(0);
+    const [isSaved, setIsSaved] = useState<boolean>(false);
+    const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
     useEffect(() => {
-        const fetchRates = async () => {
+        let mounted = true;
+
+        const fetchData = async () => {
             try {
-                const res = await getRatesByHotel(data.id);
-                setRates(res);
+                const [ratesRes, userId] = await Promise.all([
+                    getRatesByHotel(data.id),
+                    AsyncStorage.getItem('userId')
+                ]);
 
-                // ✅ Tổng số rate
-                setRateCount(res.length);
+                if (!mounted) return;
 
-                // ✅ Tính trung bình sao
-                if (res.length > 0) {
-                    const avg =
-                        res.reduce((sum: number, r: Rate) => sum + r.rateNumber, 0) / res.length;
+                setRateCount(ratesRes.length);
+                if (ratesRes.length > 0) {
+                    const avg = ratesRes.reduce((sum, r) => sum + r.rateNumber, 0) / ratesRes.length;
                     setAverageRate(parseFloat(avg.toFixed(1)));
                 } else {
                     setAverageRate(0);
                 }
+
+                if (userId) {
+                    const saved = await isHotelSaved(Number(userId), data.id);
+                    if (mounted) setIsSaved(saved);
+                }
             } catch (error) {
-                console.error("Lỗi khi lấy đánh giá:", error);
+                console.error("❌ Lỗi khi tải dữ liệu:", error);
             }
         };
 
-        if (data?.id) {
-            fetchRates();
-        }
-    }, [data]);
+        fetchData();
+        return () => { mounted = false };
+    }, [data.id]);
+
 
     const handlePress = async () => {
         try {
             const userId = await AsyncStorage.getItem('userId');
             if (userId) {
-                // ✅ Gọi API lưu lịch sử đã xem gần đây
                 await saveViewedHotelAPI(Number(userId), data.id);
                 onViewedUpdate?.();
             }
         } catch (err) {
             console.error("Error saving viewed hotel:", err);
         } finally {
-            // ✅ Sau khi lưu, chuyển sang trang chi tiết
             handleNavigations(data.id);
-
         }
     };
 
+    const handleToggleSave = async () => {
+        if (isProcessing) return;
+        setIsProcessing(true);
+
+        try {
+            const userId = await AsyncStorage.getItem('userId');
+            if (!userId) return;
+
+            //  Nếu đang lưu -> hỏi xác nhận bỏ lưu
+            if (isSaved) {
+                Alert.alert(
+                    "Xác nhận",
+                    "Bạn có chắc muốn hủy lưu khách sạn này không?",
+                    [
+                        { text: "Hủy", style: "cancel" },
+                        {
+                            text: "Đồng ý",
+                            onPress: async () => {
+                                try {
+                                    setIsSaved(false);
+                                    await removeSavedHotel(Number(userId), data.id);
+                                    Alert.alert("Thành công", "Đã bỏ lưu khách sạn.");
+                                } catch (err) {
+                                    console.error(" Lỗi khi bỏ lưu:", err);
+                                    setIsSaved(true); // khôi phục nếu lỗi
+                                } finally {
+                                    setIsProcessing(false);
+                                }
+                            },
+                        },
+                    ],
+                    { cancelable: true }
+                );
+            } else {
+                //  Nếu chưa lưu -> lưu ngay
+                setIsSaved(true);
+                await saveHotel(Number(userId), data.id);
+                Alert.alert("Thành công", "Đã lưu khách sạn vào danh sách yêu thích!");
+            }
+        } catch (err) {
+            console.error(" Lỗi khi toggle lưu:", err);
+            setIsSaved((prev) => !prev);
+        } finally {
+            // chỉ kết thúc khi không có confirm đang mở
+            if (!isSaved) setIsProcessing(false);
+        }
+    };
+
+
     return (
         <View style={styles.cardWrapper}>
-            <TouchableOpacity
-                onPress={handlePress}
-            // style={{ backgroundColor: "blue", padding: 10, borderRadius: 5 }}
-            >
+            <View>
+                <TouchableOpacity onPress={handlePress} activeOpacity={0.8}>
+                    <ImageBackground source={{ uri: data.image }} style={styles.container}>
+                        <View style={{ flexDirection: 'row' }}>
+                            <View style={styles.locationTag}>
+                                <Image
+                                    style={{ width: 10, height: 10 }}
+                                    source={require("../../assets/images/gps.png")}
+                                />
+                                <Text style={styles.locationText}>{data.locationName}</Text>
+                            </View>
 
-                <ImageBackground
-                    source={{ uri: `${data.image}` }}
-                    style={styles.container}
-
-                >
-                    <View style={{ flexDirection: 'row' }}>
-                        <View style={{ backgroundColor: '#0E0E14', width: 80, padding: 5, borderRadius: 5, flexDirection: 'row' }}>
-                            <Image style={{ width: 10, height: 10 }} source={require("../../assets/images/gps.png")} />
-                            <Text style={{ color: 'white', fontSize: 10, marginLeft: 5 }}>{data.locationName}</Text>
+                            {/* 🔖 Nút lưu */}
+                            <TouchableOpacity
+                                onPress={handleToggleSave}
+                                disabled={isProcessing}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons
+                                    style={styles.bookmarkIcon}
+                                    name={isSaved ? "bookmark" : "bookmark-outline"}
+                                    size={22}
+                                    color={isProcessing ? "#ccc" : (isSaved ? "#FFD700" : "white")}
+                                />
+                            </TouchableOpacity>
 
                         </View>
-                        <Ionicons style={{ left: 70, marginTop: 2 }} name="bookmark-outline" size={20} color="white" />
+
+                        <View style={styles.discountTag}>
+                            <Text style={styles.discountText}>Tiết kiệm 25%</Text>
+                        </View>
+                    </ImageBackground>
+
+                    {/* 👇 Phần nhấn để đi vào chi tiết khách sạn */}
+
+                    <View style={styles.statusBox}>
+                        <Text style={styles.statusText}>{data.status}</Text>
                     </View>
-                    <View style={{ backgroundColor: '#FF6210', width: 90, padding: 2, top: 50, left: 90 }}>
-                        <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 10, marginLeft: 5 }}>Tiết kiệm 25%</Text>
+
+                    <View style={styles.infoBox}>
+                        <Text style={styles.hotelName}>{data.name}</Text>
+
+                        {/* ⭐ Đánh giá */}
+                        <View style={{ flexDirection: 'row', marginLeft: 2, marginTop: 2 }}>
+                            {[1, 2, 3, 4, 5].map((i) => (
+                                <Ionicons
+                                    key={i}
+                                    name={
+                                        averageRate >= i
+                                            ? "star"
+                                            : averageRate >= i - 0.5
+                                                ? "star-half"
+                                                : "star-outline"
+                                    }
+                                    size={14}
+                                    color="#FFD700"
+                                    style={{ marginHorizontal: 1 }}
+                                />
+                            ))}
+                            <Text style={styles.rateText}>
+                                {averageRate > 0 ? averageRate.toFixed(1) : "Chưa có đánh giá"}
+                            </Text>
+                        </View>
+
+                        {/* 💰 Giá */}
+                        <View style={{ flexDirection: 'row', marginTop: 'auto', marginBottom: 5 }}>
+                            <Text style={styles.priceText}>
+                                {data?.minPrice && data?.maxPrice
+                                    ? `${data.minPrice.toLocaleString('vi-VN')} VNĐ - ${data.maxPrice.toLocaleString('vi-VN')} VNĐ`
+                                    : ''}
+                            </Text>
+                        </View>
                     </View>
-                </ImageBackground >
-                <View style={{
-
-                    width: 180,
-                    height: 25,
-                    overflow: 'hidden',  // để bo góc imageBackground
-                    alignItems: 'center',
-                    padding: 5,
-                    backgroundColor: '#275DE5'
-                }}>
-                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12, marginLeft: 5 }}>{data.status}</Text>
-                </View>
-                <View style={{
-
-                    width: 180,
-                    height: 100,
-                    overflow: 'hidden',  // để bo góc imageBackground
-                    padding: 5,
-                    backgroundColor: 'white',
-                    borderBottomLeftRadius: 5,
-                    borderBottomRightRadius: 5,
-
-                }}>
-                    <Text style={{ color: '#534F4F', fontWeight: 'bold', fontSize: 11, marginLeft: 5, marginTop: 10 }}>{data.name}</Text>
-
-                    {/* tính sao     */}
-                    <View style={{ flexDirection: 'row', marginLeft: 2, marginTop: 2 }}>
-
-                        {[1, 2, 3, 4, 5].map((i) => (
-                            <Ionicons
-                                key={i}
-                                name={
-                                    averageRate >= i
-                                        ? "star"
-                                        : averageRate >= i - 0.5
-                                            ? "star-half"
-                                            : "star-outline"
-                                }
-                                size={14}
-                                color="#FFD700"
-                                style={{ marginHorizontal: 1 }}
-                            />
-                        ))}
-                        <Text style={{ color: "gray", marginLeft: 6, fontWeight: "bold", fontSize: 9 }}>
-                            {averageRate > 0 ? averageRate.toFixed(1) : "Chưa có đánh giá"}
-                        </Text>
-
-                    </View>
-                    <View style={{ flexDirection: 'row', marginLeft: 5, marginTop: 5 }}>
-                        <Image style={{ width: 10, height: 10, tintColor: '#009EDE' }} source={require("../../assets/images/logo.png")} />
-                        <Text style={{ fontSize: 9, marginLeft: 5, color: '#009EDE', fontWeight: 'bold' }}>{averageRate.toFixed(1)}/5</Text>
-                        <Text style={{ fontSize: 9, marginLeft: 5, color: '#009EDE', fontWeight: 'bold'}}>
-                            ({rateCount})
-                        </Text>
-
-                    </View>
-                    <View style={{ flexDirection: 'row', marginTop: 'auto', marginBottom: 5 }}>
-                        <Text style={{ fontSize: 10, marginTop: 5, marginLeft: 5, color: '#FF6210', fontWeight: 'bold' }}>{data?.minPrice && data?.maxPrice ? `${data?.minPrice?.toLocaleString('vi-VN')} VNĐ - ${data?.maxPrice?.toLocaleString('vi-VN')} VNĐ` : ''}</Text>
-
-                    </View>
-                </View>
-            </TouchableOpacity>
+                </TouchableOpacity>
+            </View>
         </View>
     );
-}
+
+};
 
 const styles = StyleSheet.create({
-    container: {
-
-        width: 180,
-        height: 100,
-        borderTopLeftRadius: 5,
-        borderTopRightRadius: 5,
-        overflow: 'hidden',  // để bo góc imageBackground
-        backgroundColor: 'white', // fallback khi ảnh chưa load
-    },
     cardWrapper: {
         margin: 10,
         borderRadius: 8,
-        // iOS
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 4,
-        // Android
         elevation: 4,
-    }
-
+    },
+    container: {
+        width: 180,
+        height: 100,
+        borderTopLeftRadius: 5,
+        borderTopRightRadius: 5,
+        overflow: 'hidden',
+        backgroundColor: 'white',
+    },
+    locationTag: {
+        backgroundColor: '#0E0E14',
+        width: 80,
+        padding: 5,
+        borderRadius: 5,
+        flexDirection: 'row',
+    },
+    locationText: {
+        color: 'white',
+        fontSize: 10,
+        marginLeft: 5,
+    },
+    bookmarkIcon: {
+        left: 70,
+        marginTop: 2,
+    },
+    discountTag: {
+        backgroundColor: '#FF6210',
+        width: 90,
+        padding: 2,
+        top: 50,
+        left: 90,
+    },
+    discountText: {
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: 10,
+        marginLeft: 5,
+    },
+    statusBox: {
+        width: 180,
+        height: 25,
+        alignItems: 'center',
+        padding: 5,
+        backgroundColor: '#275DE5',
+    },
+    statusText: {
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: 12,
+    },
+    infoBox: {
+        width: 180,
+        height: 100,
+        overflow: 'hidden',
+        padding: 5,
+        backgroundColor: 'white',
+        borderBottomLeftRadius: 5,
+        borderBottomRightRadius: 5,
+    },
+    hotelName: {
+        color: '#534F4F',
+        fontWeight: 'bold',
+        fontSize: 11,
+        marginLeft: 5,
+        marginTop: 10,
+    },
+    rateText: {
+        color: "gray",
+        marginLeft: 6,
+        fontWeight: "bold",
+        fontSize: 9,
+    },
+    priceText: {
+        fontSize: 10,
+        marginTop: 5,
+        marginLeft: 5,
+        color: '#FF6210',
+        fontWeight: 'bold',
+    },
 });
+
 export default HotelCard;
