@@ -12,7 +12,7 @@ export type RootStackParamList = {
     checkInDate: string;
     checkOutDate: string;
     nights: number;
-    
+
   };
   ReviewBooking: {
     room: Room,
@@ -68,6 +68,9 @@ export type ProfileStackParamList = {
   InFormationAccount: undefined;
   LoggedAccount: undefined;
   Home: undefined;
+  ForgotPassword: undefined;
+  ResetPassword: { email: string };
+    ChangePassword: undefined;
 };
 
 export type EmployeeStackParamList = {

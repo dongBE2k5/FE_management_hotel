@@ -23,30 +23,33 @@ function Saved() {
   const [userId, setUserId] = useState<number | null>(null);
   const [selectedLocationId, setSelectedLocationId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [locations, setLocations] = useState<LocationModel[]>([]); // ✅ mảng địa điểm
+  const [locations, setLocations] = useState<LocationModel[]>([]);
+  const [hasAnySaved, setHasAnySaved] = useState<boolean>(false); // ✅ Thêm state này
 
-  //  Lấy danh sách khách sạn đã lưu ban đầu + danh sách địa điểm
+  //  Lấy danh sách khách sạn đã lưu ban đầu + danh sách địa điểm
   useEffect(() => {
     const fetchData = async () => {
       try {
         const storedUserId = await AsyncStorage.getItem('userId');
         if (storedUserId) {
-          setUserId(Number(storedUserId));
-          const hotels = await getSavedHotels(Number(storedUserId));
+          const id = Number(storedUserId);
+          setUserId(id);
+
+          // Lấy danh sách khách sạn đã lưu ban đầu
+          const hotels = await getSavedHotels(id);
           setSavedHotels(hotels);
+          if (hotels && hotels.length > 0) setHasAnySaved(true); // ✅ Ghi nhớ người dùng có KS đã lưu
         }
 
         // Lấy danh sách địa điểm
         const locs = await getAllLocation();
-
-        //  Thêm tùy chọn "Tất cả" vào đầu mảng locations
         const allLocations = [
-          { id: 0, name: 'Tất cả' } as LocationModel, // Dùng id = 0 hoặc null, nhưng 0 an toàn hơn nếu component LocationSelector yêu cầu number
+          { id: 0, name: 'Tất cả' } as LocationModel,
           ...locs,
         ];
         setLocations(allLocations);
       } catch (err) {
-        console.error(' Lỗi khi load dữ liệu:', err);
+        console.error('Lỗi khi load dữ liệu:', err);
       } finally {
         setLoading(false);
       }
@@ -59,22 +62,26 @@ function Saved() {
     if (!userId) return;
     setLoading(true);
     try {
-      // 🆕 Thay đổi điều kiện: Kiểm tra locationId là null HOẶC 0 (Tất cả)
+      let hotels: Hotel[] = [];
+
       if (locationId === null || locationId === 0) {
-        const hotels = await getSavedHotels(userId);
-        setSavedHotels(hotels);
+        hotels = await getSavedHotels(userId);
       } else {
-        // ✅ Nếu locationId > 0, gọi API lọc theo địa điểm
-        const hotels = await getSavedHotelsByLocation(userId, locationId);
-        setSavedHotels(hotels);
+        hotels = await getSavedHotelsByLocation(userId, locationId);
       }
+
+      setSavedHotels(hotels);
       setSelectedLocationId(locationId);
+
+      // 🧠 Nếu user chọn location khác mà không có KS, hasAnySaved vẫn TRUE (vì đã từng có)
+      if (hotels.length > 0) setHasAnySaved(true);
     } catch (err) {
-      console.error(' Lỗi khi lọc khách sạn theo địa điểm:', err);
+      console.error('Lỗi khi lọc khách sạn theo địa điểm:', err);
     } finally {
       setLoading(false);
     }
   };
+
   const handleNavigation = (hotelId: number) => {
     navigation.navigate('HotelDetail', { hotelId });
   };
@@ -93,13 +100,15 @@ function Saved() {
         Khách sạn đã lưu
       </Text>
 
-      {/* Bộ lọc theo địa điểm */}
-      <LocationSelector
-        locations={locations}
-        changeLocation={handleLocationChange}
-      />
+      {/* ✅ Bộ lọc theo địa điểm — chỉ hiện khi người dùng đã từng lưu ít nhất 1 khách sạn */}
+      {hasAnySaved && (
+        <LocationSelector
+          locations={locations}
+          changeLocation={handleLocationChange}
+        />
+      )}
 
-      {/*  Hiển thị danh sách */}
+      {/* Hiển thị danh sách */}
       {loading ? (
         <ActivityIndicator size="large" color="#007bff" style={{ marginTop: 40 }} />
       ) : (

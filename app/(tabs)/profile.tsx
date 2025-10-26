@@ -1,5 +1,8 @@
 import Account from '@/components/screens/profile/account';
 import InFormationAccount from '@/components/screens/profile/informationDisplay';
+import ForgotPasswordScreen from '@/components/screens/profile/ForgotPasswordScreen';
+import ResetPasswordScreen from '@/components/screens/profile/ResetPasswordScreen';
+import ChangePasswordScreen from '@/components/screens/profile/ChangePasswordScreen';
 import LoggedAccount from '@/components/screens/profile/logged';
 import Login from '@/components/screens/profile/loginDisplay';
 import Register from '@/components/screens/profile/registerDisplay';
@@ -54,6 +57,9 @@ export default function ProfileNavigator() {
       <Stack.Screen name="InFormationAccount" component={InFormationAccount} />
       <Stack.Screen name="LoggedAccount" component={LoggedAccount} />
       <Stack.Screen name="Home" component={HomeScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+           <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
     </Stack.Navigator>
   );
 }
