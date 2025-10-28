@@ -2,16 +2,29 @@ import BookingResponse from "@/models/Booking/BookingResponse";
 import { getBookingById } from "@/service/BookingAPI";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
-import HotelReviewForm from "./HotelReviewForm";
-
+import { Image, StyleSheet, Text, TouchableOpacity, View, Pressable } from "react-native";
+import { ScrollView, GestureHandlerRootView } from "react-native-gesture-handler";
+import RoomReviewForm from "./RoomReviewForm";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { useNavigation } from "@react-navigation/native";
 
 type BookingDetailScreenProps = {
     bookingId: number;
 }
 export default function BookingDetailScreen({ bookingId }: BookingDetailScreenProps) {
     const [booking, setBooking] = useState<BookingResponse>();
+    const navigation = useNavigation();
+    const getStatusLabel = (status: string) => {
+        const statusData = {
+            CHUA_THANH_TOAN: "Chờ thanh toán",
+            DA_THANH_TOAN: "Đã thanh toán",
+            CHECK_IN: "Check-in",
+            CHECK_OUT: "Check-out",
+            DA_COC: "Đã cọc",
+            DA_HUY: "Đã hủy",
+        };
+        return statusData[status as keyof typeof statusData] || "Không xác định";
+    };
 
     useEffect(() => {
         const getBookingDetail = async () => {
@@ -31,89 +44,113 @@ export default function BookingDetailScreen({ bookingId }: BookingDetailScreenPr
         getBookingDetail();
     }, [bookingId]);
     return (
-        // <Text>BookedDetail</Text>
-        <ScrollView style={styles.container}>
-            <Image
-                source={{
-                    uri: "https://achi.vn/wp-content/uploads/2024/12/Thiet-ke-khach-san-hien-dai-dep-3-sao-tai-da-nang-achi-A184-01.jpg",
-                }}
-                style={styles.image}
-            />
+        <GestureHandlerRootView style={{ flex: 1 }}>
+            <ScrollView style={styles.container}>
+                <Image
+                    source={{
+                        uri: "https://achi.vn/wp-content/uploads/2024/12/Thiet-ke-khach-san-hien-dai-dep-3-sao-tai-da-nang-achi-A184-01.jpg",
+                    }}
+                    style={styles.image}
+                />
+                {/* nút mũi tên*/}
+                <View style={styles.arrowContainer}>
+                    <Pressable onPress={() => router.replace("/(tabs)/booking")} hitSlop={10}>
+                        <Ionicons name="arrow-back" size={20} color="#009EDE" />
+                    </Pressable>
 
-            {/* Tiêu đề */}
-            <View style={styles.header}>
-                <Text style={styles.roomType}>{booking?.room?.typeRoom == "DON" ? "Phòng đơn" : booking?.room?.typeRoom == "DOI" ? "Phòng đôi" : "Phòng gia đình"}</Text>
-                <Text style={styles.roomNumber}>Phòng số {booking?.room?.roomNumber}</Text>
-            </View>
+                </View>
+                {/* Tiêu đề */}
+                <View style={styles.header}>
+                    <Text style={styles.roomType}>{booking?.room?.typeRoom == "DON" ? "Phòng đơn" : booking?.room?.typeRoom == "DOI" ? "Phòng đôi" : "Phòng gia đình"}</Text>
+                    <Text style={styles.roomNumber}>Phòng số {booking?.room?.roomNumber}</Text>
+                </View>
 
-            {/* Thông tin đặt phòng */}
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Thông tin đặt phòng</Text>
-                <View style={styles.infoRow}>
-                    <Text style={styles.label}>Ngày nhận phòng:</Text>
-                    <Text style={styles.value}>{booking?.checkInDate.toString()}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                    <Text style={styles.label}>Ngày trả phòng:</Text>
-                    <Text style={styles.value}>{booking?.checkOutDate.toString()}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                    <Text style={styles.label}>Tổng tiền:</Text>
-                    <Text style={[styles.value, styles.price]}>
-                        {booking?.totalPrice.toLocaleString("vi-VN")} ₫
-                    </Text>
-                </View>
-                <View style={styles.infoRow}>
-                    <Text style={styles.label}>Trạng thái:</Text>
-                    <Text
-                        style={[
-                            styles.status,
-                            { color: booking?.status === "AVAILABLE" ? "#16A34A" : "#DC2626" },
-                        ]}
-                    >
-                        {booking?.status === "AVAILABLE" ? "Đã xác nhận" : "Đang xử lý"}
-                    </Text>
-                </View>
-            </View>
+                {/* Thông tin đặt phòng */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Thông tin đặt phòng</Text>
+                    <View style={styles.infoRow}>
+                        <Text style={styles.label}>Ngày nhận phòng:</Text>
+                        <Text style={styles.value}>{booking?.checkInDate.toString()}</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                        <Text style={styles.label}>Ngày trả phòng:</Text>
+                        <Text style={styles.value}>{booking?.checkOutDate.toString()}</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                        <Text style={styles.label}>Tổng tiền:</Text>
+                        <Text style={[styles.value, styles.price]}>
+                            {booking?.totalPrice.toLocaleString("vi-VN")} ₫
+                        </Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                        <Text style={styles.label}>Trạng thái:</Text>
+                        <Text
+                            style={[
+                                styles.status,
+                                { color: booking?.status === "AVAILABLE" ? "#16A34A" : "#DC2626" },
+                            ]}
+                        >
+                            {getStatusLabel(booking?.status!)}
+                        </Text>
+                        <Text>
+                            {booking?.updatedAt && (
+                                <Text style={styles.timeText}>
+                                    {new Date(booking.updatedAt).toLocaleTimeString("vi-VN", {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                    })}{" "}
+                                    ngày{" "}
+                                    {new Date(booking.updatedAt).toLocaleDateString("vi-VN")}
+                                </Text>
+                            )}
 
-            {/* Thông tin người đặt */}
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Thông tin người đặt</Text>
-                <View style={styles.infoRow}>
-                    <Text style={styles.label}>Họ tên:</Text>
-                    <Text style={styles.value}>{booking?.user?.fullName}</Text>
+                        </Text>
+                    </View>
                 </View>
-                <View style={styles.infoRow}>
-                    <Text style={styles.label}>Email:</Text>
-                    <Text style={styles.value}>{booking?.user?.email}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                    <Text style={styles.label}>Số điện thoại:</Text>
-                    <Text style={styles.value}>{booking?.user?.phone}</Text>
-                </View>
-            </View>
 
-            {/* Mô tả phòng */}
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Mô tả phòng</Text>
-                <Text style={styles.description}>{booking?.room?.description}</Text>
-            </View>
-            <View style={styles.section}>
-                <HotelReviewForm />
-            </View>
+                {/* Thông tin người đặt */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Thông tin người đặt</Text>
+                    <View style={styles.infoRow}>
+                        <Text style={styles.label}>Họ tên:</Text>
+                        <Text style={styles.value}>{booking?.user?.fullName}</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                        <Text style={styles.label}>Email:</Text>
+                        <Text style={styles.value}>{booking?.user?.email}</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                        <Text style={styles.label}>Số điện thoại:</Text>
+                        <Text style={styles.value}>{booking?.user?.phone}</Text>
+                    </View>
+                </View>
 
-            {/* Nút quay lại */}
-            <TouchableOpacity style={styles.button} onPress={() => router.back()}>
-                <Text style={styles.buttonText}>Quay lại</Text>
-            </TouchableOpacity>
+                {/* Mô tả phòng */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Mô tả phòng</Text>
+                    <Text style={styles.description}>{booking?.room?.description}</Text>
+                </View>
+
+                {/* Đánh giá khách sạn */}
             
-        </ScrollView>
+                <View style={styles.section}>
+                    {booking?.status === "DA_THANH_TOAN" ? (
+                        <RoomReviewForm
+                            roomId={booking.room.id}
+                            hotelName={booking.room.hotelName}
+                        />
+                    ) : (
+                        <Text style={{ textAlign: "center", color: "#777", fontStyle: "italic" }}>
+                            Bạn chỉ có thể đánh giá sau khi đã thanh toán phòng.
+                        </Text>
+                    )}
+                </View>
+
+            </ScrollView>
+        </GestureHandlerRootView>
+
     );
-    // return (
-    //     <View>
-    //         <Text>BookedDetail</Text>
-    //     </View>
-    // )
+
 }
 
 const styles = StyleSheet.create({
@@ -203,4 +240,16 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
     },
+    arrowContainer: {
+        alignItems: "flex-start",
+        marginTop: 10,
+        paddingHorizontal: 10,
+    },
+    timeText: {
+        fontSize: 12,
+        color: "#64748B",
+        marginTop: 5,
+        fontStyle: "italic",
+    },
+
 });

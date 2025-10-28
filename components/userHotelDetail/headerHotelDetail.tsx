@@ -1,7 +1,11 @@
 import { Hotel } from "@/models/Hotel";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
+import Rate from "@/models/Rate";
+import { getRatesByHotel } from "@/service/RateAPI";
+
+
 import {
     Dimensions,
     FlatList,
@@ -31,6 +35,33 @@ export default function HeaderHotelDetail({ hotel }: HotelProps) {
     const flatListRef = useRef<FlatList<any>>(null);
     const [currentIndex, setCurrentIndex] = useState(1);
 
+    {/* tính sao     */ }
+    const [rates, setRates] = useState<Rate[]>([]);
+    const [averageRate, setAverageRate] = useState<number>(0);
+
+    useEffect(() => {
+        const fetchRates = async () => {
+            try {
+                const res = await getRatesByHotel(hotel.id);
+                setRates(res);
+
+                // ✅ Tính trung bình sao
+                if (res.length > 0) {
+                    const avg =
+                        res.reduce((sum: number, r: Rate) => sum + r.rateNumber, 0) / res.length;
+                    setAverageRate(parseFloat(avg.toFixed(1))); // ví dụ: 4.3
+                } else {
+                    setAverageRate(0);
+                }
+            } catch (error) {
+                console.error("Lỗi khi lấy đánh giá:", error);
+            }
+        };
+
+        if (hotel?.id) {
+            fetchRates();
+        }
+    }, [hotel]);
 
     const navigation = useNavigation();
     if (!hotel) {
@@ -55,26 +86,7 @@ export default function HeaderHotelDetail({ hotel }: HotelProps) {
                     <Ionicons name="arrow-back" size={20} color="white" />
                 </Pressable>
 
-                {/* Slide ảnh */}
-                {/* <FlatList
-                    ref={flatListRef}
-                    data={images}
-                    keyExtractor={(_, index) => index.toString()}
-                    renderItem={({ item }) => (
-                        <Image source={item} style={styles.image} resizeMode="cover" />
-                    )}
-                    horizontal
-                    pagingEnabled
-                    showsHorizontalScrollIndicator={false}
-                    onMomentumScrollEnd={handleScroll}
-                /> */}
 
-                {/* Số thứ tự ảnh */}
-                {/* <View style={styles.counter}>
-                    <Text style={styles.counterText}>
-                        {currentIndex}/{images.length}
-                    </Text>
-                </View> */}
                 <Image source={{ uri: hotel.image }} style={styles.image} resizeMode="cover" />
 
                 {/* Tiêu đề đè trên ảnh */}
@@ -88,11 +100,35 @@ export default function HeaderHotelDetail({ hotel }: HotelProps) {
                     left: 10,
                     right: 15,
                 }}>
-                    <Ionicons name="star" size={13} color="#FFD700" />
-                    <Ionicons name="star" size={13} color="#FFD700" />
-                    <Ionicons name="star" size={13} color="#FFD700" />
-                    <Ionicons name="star-half" size={13} color="#FFD700" />
-                    <Ionicons name="star-outline" size={13} color="#FFD700" />
+                    <View
+                        style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            position: "absolute",
+                            bottom: 0,
+                            left: 10,
+                        }}
+                    >
+                        {[1, 2, 3, 4, 5].map((i) => (
+                            <Ionicons
+                                key={i}
+                                name={
+                                    averageRate >= i
+                                        ? "star"
+                                        : averageRate >= i - 0.5
+                                            ? "star-half"
+                                            : "star-outline"
+                                }
+                                size={14}
+                                color="#FFD700"
+                                style={{ marginHorizontal: 1 }}
+                            />
+                        ))}
+                        <Text style={{ color: "white", marginLeft: 6, fontWeight: "bold" }}>
+                            {averageRate > 0 ? averageRate.toFixed(1) : "Chưa có đánh giá"}
+                        </Text>
+                    </View>
+
                 </View>
             </View>
             {/* Thông tin khách sạn */}

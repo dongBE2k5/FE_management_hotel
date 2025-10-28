@@ -46,24 +46,33 @@ const Notification = () => {
           </View>
 
           {/* Nút đăng xuất */}
-          <TouchableOpacity onPress={async () => {
-            const result = await logoutFunction();
-            if (result.success) {
-              // Hiển thị thông báo
-              alert(result.message);
-              // Điều hướng về màn hình Login
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'Account' }], // đổi 'Login' thành tên route màn hình login của bạn
-              });
-            } else {
-              alert('Đăng xuất thất bại: ' + result.message);
-            }
-          }}>
-            <View style={styles.logoutBtn}>
-              <Text style={styles.logoutText}>Đăng xuất</Text>
+          <View>
+            <TouchableOpacity onPress={async () => {
+              const result = await logoutFunction();
+              if (result.success) {
+                // Hiển thị thông báo
+                alert(result.message);
+                // Điều hướng về màn hình Login
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'Account' }], // đổi 'Login' thành tên route màn hình login của bạn
+                });
+              } else {
+                alert('Đăng xuất thất bại: ' + result.message);
+              }
+            }}>
+              <View>
+                <Text style={styles.logoutText}>Đăng xuất</Text>
+              </View>
+            </TouchableOpacity>
+            <View style={{ alignItems: "flex-end", marginRight: 20 }}>
+              <TouchableOpacity onPress={() => navigation.navigate("ChangePassword")}>
+                <Text style={{ color: "#007BFF", fontWeight: "600", marginTop: 5 }}>
+                  Đổi mật khẩu
+                </Text>
+              </TouchableOpacity>
             </View>
-          </TouchableOpacity>
+          </View>
 
         </View>
 
@@ -162,14 +171,9 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   // Nút đăng xuất (màu đỏ)
-  logoutBtn: {
-    backgroundColor: 'red',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-  },
+
   logoutText: {
-    color: '#fff',
+    color: 'red',
     fontSize: 12,
     fontWeight: 'bold',
   },

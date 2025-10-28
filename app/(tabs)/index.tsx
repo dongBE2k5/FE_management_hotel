@@ -3,6 +3,7 @@ import FormBooking from '@/components/screens/home/formBooking';
 import HotelDetail from '@/components/screens/home/hotelDetail';
 import ReviewBooking from '@/components/screens/home/reviewBooking';
 import Header from '@/components/userHome/header';
+import Search from '@/components/userHome/search';
 import VoucherZone from '@/components/userHome/voucherzone';
 import ZoneHotel from '@/components/userHome/zoneHotel';
 import ConfirmBooking from '@/components/userHotelDetail/ConfirmBooking';
@@ -41,51 +42,12 @@ export function HomeScreen() {
         bounces={false}
         overScrollMode="never"
       >
-        
         <Header />
-        
-        <View style={styles.search}>
-          <View style={styles.searchInputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Bạn muốn tìm khách sạn?"
-              placeholderTextColor="#000000"
-            />
-            <Ionicons name="search" size={20} color="#0077c7ff" />
-
-          </View>
-          <View style={styles.searchOptions}>
-            <View style={styles.optionContainer}>
-              <View style={[styles.ItemSearch, { backgroundColor: colors.khachsan }]}>
-                <Ionicons name="bed" size={24} color="#000" />
-              </View>
-              <Text style={styles.itemText}>Khách sạn</Text>
-            </View>
-
-            <View style={styles.optionContainer}>
-              <View style={[styles.ItemSearch, { backgroundColor: colors.tienich }]}>
-                <Ionicons name="settings" size={24} color="#000" />
-              </View>
-              <Text style={styles.itemText}>Tiện ích</Text>
-            </View>
-
-            <View style={styles.optionContainer}>
-              <View style={[styles.ItemSearch, { backgroundColor: colors.khuyenmai }]}>
-                <Ionicons name="pricetag" size={24} color="#000" />
-              </View>
-              <Text style={styles.itemText}>Khuyến mãi</Text>
-            </View>
-
-            <View style={styles.optionContainer}>
-              <View style={[styles.ItemSearch, { backgroundColor: colors.noibat }]}>
-                <Ionicons name="star" size={24} color="#000" />
-              </View>
-              <Text style={styles.itemText}>Nổi bật</Text>
-            </View>
-          </View>
-
+        <View style={{
+          transform: [{ translateY: -40 }],
+        }}>
+          <Search />
         </View>
-
         <VoucherZone />
         <ZoneHotel />
       </ScrollView>
