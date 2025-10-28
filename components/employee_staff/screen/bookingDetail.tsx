@@ -28,7 +28,7 @@ const transformApiData = (booking) => {
             avatar: booking.user?.avatar ?? 'https://i.pravatar.cc/100',
         },
         room: {
-            name: booking.room?.type ?? 'Loại phòng',
+            name: booking.room?.typeRoom ?? 'Loại phòng',
             number: booking.room?.number ?? 'N/A',
             checkin_date: checkInDate ? checkInDate.toLocaleDateString('vi-VN') : 'N/A',
             checkout_date: checkOutDate ? checkOutDate.toLocaleDateString('vi-VN') : 'N/A',

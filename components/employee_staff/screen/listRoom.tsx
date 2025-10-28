@@ -1,17 +1,17 @@
+import { getAllBookingsByHotelId } from '@/service/BookingAPI';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
     FlatList,
+    SafeAreaView,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
     View,
-    SafeAreaView,
-    ScrollView,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { getAllBookingsByHotelId } from '@/service/BookingAPI';
 
 // Cấu hình cho các trạng thái
 const statusConfig = {
@@ -33,7 +33,7 @@ export default function ListRoom() {
     // --- LOGIC GỌI API VÀ XỬ LÝ DỮ LIỆU ---
     const mapBookingData = (booking) => ({
         id_booking: booking.id,
-        roomInfo: `P${booking.room?.number || 'N/A'} – ${booking.room?.type || 'N/A'}`,
+        roomInfo: `P${booking.room?.roomNumber || 'N/A'} – ${booking.room?.typeRoom || 'N/A'}`,
         name: booking.user?.fullName || 'Khách vãng lai',
         cccd: booking.user?.cccd || 'N/A', // Thêm trường CCCD
         dateInfo: `Check-in: ${formatDate(booking.checkInDate)} – Check-out: ${formatDate(booking.checkOutDate)}`,
@@ -46,14 +46,20 @@ export default function ListRoom() {
     useEffect(() => {
         const fetchBookings = async () => {
             try {
-                // Giả lập dữ liệu API với cccd
-                 const mockApiResponse = [
-                    { id: 1, checkInDate: '2025-10-20', checkOutDate: '2025-10-22', status: 'DA_THANH_TOAN', user: { fullName: 'Nguyễn Văn A', cccd: '012345678910' }, room: { type: 'Deluxe Twin', number: '302' }, totalPrice: 3200000, amountPaid: 3200000 },
-                    { id: 2, checkInDate: '2025-10-18', checkOutDate: '2025-10-19', status: 'CHUA_THANH_TOAN', user: { fullName: 'Lê Thị B', cccd: '112233445566' }, room: { type: 'Standard', number: '102' }, totalPrice: 950000, amountPaid: 0 },
-                    { id: 3, checkInDate: '2025-10-15', checkOutDate: '2025-10-16', status: 'CHECK_IN', user: { fullName: 'Trần Hoàng C', cccd: '998877665544' }, room: { type: 'Suite', number: '501' }, totalPrice: 5000000, amountPaid: 5000000 },
-                    { id: 4, checkInDate: '2025-10-19', checkOutDate: '2025-10-21', status: 'DA_COC', user: { fullName: 'Phạm Thị D', cccd: '001122334455' }, room: { type: 'Superior', number: '205' }, totalPrice: 2100000, amountPaid: 1000000 },
-                ];
-                setData(mockApiResponse.map(mapBookingData));
+                // // Giả lập dữ liệu API với cccd
+                //  const mockApiResponse = [
+                //     { id: 1, checkInDate: '2025-10-20', checkOutDate: '2025-10-22', status: 'DA_THANH_TOAN', user: { fullName: 'Nguyễn Văn A', cccd: '012345678910' }, room: { type: 'Deluxe Twin', number: '302' }, totalPrice: 3200000, amountPaid: 3200000 },
+                //     { id: 2, checkInDate: '2025-10-18', checkOutDate: '2025-10-19', status: 'CHUA_THANH_TOAN', user: { fullName: 'Lê Thị B', cccd: '112233445566' }, room: { type: 'Standard', number: '102' }, totalPrice: 950000, amountPaid: 0 },
+                //     { id: 3, checkInDate: '2025-10-15', checkOutDate: '2025-10-16', status: 'CHECK_IN', user: { fullName: 'Trần Hoàng C', cccd: '998877665544' }, room: { type: 'Suite', number: '501' }, totalPrice: 5000000, amountPaid: 5000000 },
+                //     { id: 4, checkInDate: '2025-10-19', checkOutDate: '2025-10-21', status: 'DA_COC', user: { fullName: 'Phạm Thị D', cccd: '001122334455' }, room: { type: 'Superior', number: '205' }, totalPrice: 2100000, amountPaid: 1000000 },
+                // ];
+                // setData(mockApiResponse.map(mapBookingData));
+
+                const [rawData] = await Promise.all([getAllBookingsByHotelId(1)]);
+                console.log("data", rawData);
+                const formattedData = rawData.map(mapBookingData);
+                setData(formattedData);
+
             } catch (error) {
                 console.error("Lỗi:", error);
             }
@@ -73,7 +79,7 @@ export default function ListRoom() {
             CHECK_IN: data.filter(b => b.status === 'CHECK_IN').length,
             COMPLETED_GROUP: data.filter(b => b.status === 'CHECK_OUT' || b.status === 'DA_HUY').length,
         };
-        
+
         let list = data;
         // Lọc theo tab
         switch (activeFilter) {
@@ -91,7 +97,7 @@ export default function ListRoom() {
         // Lọc tiếp theo từ khóa tìm kiếm
         if (searchQuery.trim()) {
             const keyword = searchQuery.toLowerCase();
-            list = list.filter(b => 
+            list = list.filter(b =>
                 b.name.toLowerCase().includes(keyword) ||
                 b.cccd.toLowerCase().includes(keyword) ||
                 b.roomInfo.toLowerCase().includes(keyword)
@@ -103,7 +109,7 @@ export default function ListRoom() {
 
 
     // --- GIAO DIỆN MỚI ---
-    
+
     const FilterButton = ({ title, filterKey, count }) => (
         <TouchableOpacity
             style={[styles.filterButton, activeFilter === filterKey && styles.filterButtonActive]}
@@ -144,7 +150,7 @@ export default function ListRoom() {
                         <Ionicons name="person-outline" size={20} color="#666" style={styles.infoIcon} />
                         <View>
                             <Text style={styles.guestName}>{item.name}</Text>
-                            <Text style={styles.cccdInfo}>CCCD: {item.cccd}</Text> 
+                            <Text style={styles.cccdInfo}>CCCD: {item.cccd}</Text>
                         </View>
                     </View>
                     <View style={styles.infoRow}><Ionicons name="calendar-outline" size={20} color="#666" style={styles.infoIcon} /><Text style={styles.dateInfo}>{item.dateInfo}</Text></View>
@@ -271,9 +277,9 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#eef0f3',
         elevation: 3,
-        shadowColor: '#a7b0c0', 
-        shadowOffset: { width: 0, height: 4 }, 
-        shadowOpacity: 0.1, 
+        shadowColor: '#a7b0c0',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
         shadowRadius: 12,
     },
     cardBody: {

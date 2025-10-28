@@ -25,7 +25,7 @@ import {
 // Giả sử bạn đã đăng nhập và có thông tin user
 // Đây sẽ là User A (id: 1) hoặc User B (id: 2)
 // const currentUser = { id: 1, name: 'User A' };
-const currentUser = { id: 1, name: 'User 1' };
+const currentUser = { id: 2, name: 'User B' };
 // -------------------------------------------------------------
 
 export default function App() {

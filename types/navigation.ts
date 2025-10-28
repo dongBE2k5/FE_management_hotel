@@ -85,3 +85,7 @@ export type HostStackParamList = {
   // RoomDetail:{roomId:number};
   RoomDetail:undefined;
 }
+export type CleningEmployee ={
+  CleaningStaffScreen:undefined
+  CheckRoomScreen:{id:number,priority:String,status :String}
+}
