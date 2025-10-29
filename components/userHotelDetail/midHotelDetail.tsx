@@ -6,19 +6,27 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import React, { useEffect, useState } from 'react';
-import { Button, Image, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, Image, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RoomCard from "./roomCard";
 import RoomZone from './roomZone';
 import { getRatesByHotel, getAverageRate } from '@/service/RateAPI';
 import Rate from '@/models/Rate';
+import { getVouchersByHotel } from "@/service/VoucherAPI";
+import Voucher from "@/models/Voucher";
+import VoucherCard from "@/components/userHome/voucherCard";
+import { getUserVouchers, saveUserVoucher } from '@/service/UserVoucherAPI';
+import { getAllVouchers } from '@/service/VoucherAPI';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type RoomProps = {
     roomTypeImage: RoomTypeImage[],
     hotelId: number
 }
 
-
+interface Props {
+    hotelId: number;
+}
 const today = new Date();
 const tomorrow = new Date(today);
 tomorrow.setDate(today.getDate() + 1);
@@ -297,6 +305,7 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
 
 
             </View>
+            <HotelVoucherSection hotelId={hotelId} />
             {/* Tiện ích */}
             <View style={styles.section}>
                 <Text style={styles.title}>Tiện ích</Text>
@@ -398,6 +407,78 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
     );
 }
 
+//hiển thị voucher ks
+function HotelVoucherSection({ hotelId }: Props) {
+  const [hotelVouchers, setHotelVouchers] = useState<Voucher[]>([]);
+  const [savedVouchers, setSavedVouchers] = useState<Voucher[]>([]);
+  const [userId, setUserId] = useState<number | null>(null);
+
+  // ✅ Lấy userId trước
+  useEffect(() => {
+    const fetchUserAndVouchers = async () => {
+      try {
+        const idStr = await AsyncStorage.getItem("userId");
+        if (!idStr) return;
+
+        const id = Number(idStr);
+        setUserId(id);
+
+        // 🔹 Load voucher khách sạn hiện tại
+        const allVouchers = await getAllVouchers();
+        const hotelVs = allVouchers.filter(v => v.hotelId === hotelId);
+        setHotelVouchers(hotelVs);
+
+        // 🔹 Load voucher đã lưu của user
+        const saved = await getUserVouchers(id);
+        setSavedVouchers(saved);
+      } catch (error) {
+        console.error("❌ Lỗi khi tải dữ liệu voucher:", error);
+      }
+    };
+
+    fetchUserAndVouchers();
+  }, [hotelId]); // reload khi đổi khách sạn
+
+  const handleSaveVoucher = async (voucher: Voucher) => {
+    if (!userId) return;
+
+    const res = await saveUserVoucher(userId, voucher.id!);
+    if (res) {
+      Alert.alert("✅ Thành công", "Voucher đã được lưu!");
+      setSavedVouchers((prev) => [...prev, voucher]);
+    } else {
+      Alert.alert("❌ Lỗi", "Voucher này đã được lưu trước đó!");
+    }
+  };
+
+  const isVoucherSaved = (voucherId: number) =>
+    savedVouchers.some((v) => v.id === voucherId);
+
+  if (hotelVouchers.length === 0) return null;
+
+  return (
+    <View style={styles.section}>
+      <Text style={styles.title}>🎟 Ưu đãi của khách sạn</Text>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ marginTop: 10 }}
+      >
+        {hotelVouchers.map((v) => (
+          <View key={v.id} style={{ marginRight: 10,marginBottom:5 }}>
+            <VoucherCard
+              voucher={v}
+              onSave={() => handleSaveVoucher(v)}
+              isSaved={isVoucherSaved(v.id!)} // ✅ Giờ sẽ nhận đúng trạng thái
+            />
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
     container: {
         borderRadius: 10,
@@ -436,7 +517,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#000',
     },
-    section: { margin: 15 },
+    section: { margin: 15 ,},
     row: { flexDirection: 'row', alignItems: 'center' },
     title: { color: 'black', fontWeight: 'bold', fontSize: 15 },
     subTitle: { color: '#999494', fontWeight: 'bold', fontSize: 12, marginLeft: 5, marginTop: 5 },

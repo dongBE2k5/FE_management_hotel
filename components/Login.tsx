@@ -8,12 +8,14 @@ import { useNavigation, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import LoginBanner from './userProfile/bannerLogin';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 type LoginScreenNavigationProp = StackNavigationProp<
   ProfileStackParamList,
   "Login"
 >;
 export default function Login() {
+  const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
@@ -78,21 +80,28 @@ export default function Login() {
   };
 
   // Ô nhập mật khẩu
-  const PassInput = () => {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.label}>Mật Khẩu:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Nhập mật khẩu"
-          placeholderTextColor="#999"
-          secureTextEntry={true}   // ẩn ký tự mật khẩu
-          value={password}
-          onChangeText={setPassword}
-        />
-      </View>
-    );
-  };
+ <View style={styles.container}>
+  <Text style={styles.label}>Mật Khẩu:</Text>
+  <View style={styles.passwordContainer}>
+    <TextInput
+      style={[styles.input, { flex: 1 }]}
+      placeholder="Nhập mật khẩu"
+      placeholderTextColor="#999"
+      secureTextEntry={!showPassword}   // 👈 đổi theo state
+      value={password}
+      onChangeText={setPassword}
+    />
+    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+      <Ionicons
+        name={showPassword ? 'eye-off' : 'eye'}
+        size={22}
+        color="#666"
+        style={{ marginLeft: 8 }}
+      />
+    </TouchableOpacity>
+  </View>
+</View>
+
 
   // Nút đăng nhập
   const LoginButton = () => (
@@ -263,5 +272,12 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     textAlign: 'center',
   },
-  
+  passwordContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  borderBottomWidth: 1,
+  borderBottomColor: '#aaa',
+  paddingVertical: 5,
+},
+
 });
