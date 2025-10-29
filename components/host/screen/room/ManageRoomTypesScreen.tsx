@@ -1,8 +1,12 @@
-import ImageRoom from '@/models/ImageRoom';
+import { useHost } from '@/context/HostContext';
+import TypeOfRoomRequest from '@/models/TypeOfRoom/TypeOfRoomRequest';
 import TypeOfRoomResponse from '@/models/TypeOfRoom/TypeOfRoomResponse';
-import { getTypeOfRoomByHotel } from '@/service/TypeOfRoomService';
+import Utility from '@/models/Utility/Utility';
+import { getAllUtilityByType } from '@/service/HotelUtilityAPI';
+import { addTypeOfRoom, deleteTypeOfRoom, getTypeOfRoomByHotel, updateTypeOfRoom } from '@/service/TypeOfRoomService';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, FlatList, Image, Modal, SafeAreaView, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 // --- DỮ LIỆU MOCKUP ---
@@ -42,61 +46,92 @@ const mockNavigation = {
 
 const RoomTypeDefault = [
     {
-        id: '1',
+        id: 1,
         name: 'Phòng Đơn',
     },
     {
-        id: '2',
+        id: 2,
         name: 'Phòng Đôi',
     },
     {
-        id: '3',
+        id: 3,
         name: 'Phòng Gia Đình',
     },
 ]
 // --- Modal đã sửa lỗi ---
-const TypeEditorModal = ({ visible, onClose, onSave, type, allServices }) => {
+const TypeEditorModal = ({ visible, onClose, onSave, type, allServices, onAdd}) => {
     const [name, setName] = useState('');
-    const [imageUrls, setImageUrls] = useState<ImageRoom[]>([]);
+    const [imageUrls, setImageUrls] = useState<string[]>([]);
     const [selectedServices, setSelectedServices] = useState([]);
     const [roomTypes, setRoomTypes] = useState<TypeOfRoomResponse>();
-    const [selectedType, setSelectedType] = useState(null);
+    const [selectedType, setSelectedType] = useState(type);
+    const [utilities, setUtilities] = useState<Utility>();
+    const [servicePrices, setServicePrices] = useState<{ [key: number]: string }>({});
     const isEditing = !!type;
+    const { hotelId } = useHost();
 
     // SỬA LỖI: Xóa mảng initialServices cứng, modal nên dùng dữ liệu từ prop "allServices"
 
-    useEffect(() => {
-        console.log(isEditing);
+    useFocusEffect(
+        useCallback(() => {
 
-        if (visible && isEditing) {
+
+            console.log(isEditing);
             console.log("type", type);
-            setName(type.room === "DON"
-                ? "Phòng Đơn"
-                : type.room === "DOI"
-                    ? "Phòng Đôi"
-                    : "Phòng Gia Đình");
-            console.log("type.imageRooms", type.imageRooms);
-            setImageUrls(isEditing && type.imageRooms?.length > 0 ? type.imageRooms : [] as ImageRoom[]);
-            setSelectedServices(isEditing ? type.applicableServices || [] : []);
-        }
-    }, [type, visible]);
+            setSelectedType(type!);
+            if (visible && isEditing) {
+                setName(type.room === "DON"
+                    ? "Phòng Đơn"
+                    : type.room === "DOI"
+                        ? "Phòng Đôi"
+                        : "Phòng Gia Đình");
+                console.log("type.imageRooms", type.imageRooms);
+                setImageUrls(isEditing && type.imageRooms?.length > 0 ? type.imageRooms.map((i) => i.image) : [] as string[]);
+                
+                // setSelectedServices(isEditing ? type.applicableServices || [] : []);
+            }else {
+                setImageUrls([]);
+            }
+        }, [type,visible])
+    )
+   
 
-    const hotelId = 2;
-    useEffect(() => {
-        const fetchRoomTypes = async () => {
+    // const hotelId = 1;
+
+    useFocusEffect(
+        useCallback(() => {
+            if (!hotelId) return;
+            const fetchRoomTypes = async () => {
+    
+                const typeOfRoom = await getTypeOfRoomByHotel(hotelId);
+                console.log(typeOfRoom);
+                setRoomTypes(typeOfRoom);
+    
+            };
+    
+            const fetchUtilities = async () => {
+                const utilities = await getAllUtilityByType("OUTROOM");
+                console.log(utilities.data);
+                setUtilities(utilities);
+            };
+            fetchRoomTypes();
+            fetchUtilities();
            
-            const typeOfRoom = await getTypeOfRoomByHotel(hotelId);
-            console.log(typeOfRoom);
-            setRoomTypes(typeOfRoom);
-        };
-        fetchRoomTypes();
-    }, []);
-
-    const handleUrlChange = (text, index) => {
+    
+        }, [])
+    );
+    const handlePriceChange = (serviceId: number, value: string) => {
+        setServicePrices(prev => ({
+            ...prev,
+            [serviceId]: value
+        }));
+    };
+     const handleUrlChange = (text, index) => {
         const newUrls = [...imageUrls];
         newUrls[index] = text;
         setImageUrls(newUrls);
     };
+
 
     const addUrlInput = () => setImageUrls([...imageUrls, '']);
     const removeUrlInput = (index) => {
@@ -105,7 +140,7 @@ const TypeEditorModal = ({ visible, onClose, onSave, type, allServices }) => {
         setImageUrls(newUrls);
     };
 
-    const toggleServiceSelection = (serviceId) => {
+    const toggleServiceSelection = (serviceId: number) => {
         if (selectedServices.includes(serviceId)) {
             setSelectedServices(selectedServices.filter(id => id !== serviceId));
         } else {
@@ -114,13 +149,38 @@ const TypeEditorModal = ({ visible, onClose, onSave, type, allServices }) => {
     };
 
     const handleSave = () => {
-        const finalUrls = imageUrls.filter(url => url && url.trim() !== '');
-        if (!name.trim() || finalUrls.length === 0) {
+
+        console.log("hotelId", hotelId);
+        const finalUrls = imageUrls.filter(url => url && String(url).trim() !== '');
+        console.log("finalUrls", finalUrls);
+        if (!selectedType || finalUrls.length === 0) {
             Alert.alert("Lỗi", "Vui lòng nhập tên và ít nhất một URL hình ảnh.");
             return;
         }
-        onSave({ id: isEditing ? type.id : Date.now().toString(), name, imageUrls: finalUrls, applicableServices: selectedServices });
+        console.log("Lưu loại phòng");
+        const dataTypeRoom  = {
+            hotelId: hotelId!,
+            roomTypeId: selectedType.id,
+            image: finalUrls,
+        }
+        console.log("dataTypeRoom", dataTypeRoom);
+        onSave(dataTypeRoom);
     };
+    const handleAdd = async () => {
+        console.log("Thêm loại phòng");
+        const finalUrls = imageUrls.filter(url => url && String(url).trim() !== '');
+        if (!selectedType || finalUrls.length === 0) {
+            Alert.alert("Lỗi", "Vui lòng nhập tên và ít nhất một URL hình ảnh.");
+            return;
+        }
+        const dataTypeRoom : TypeOfRoomRequest = {
+            hotelId: hotelId!,
+            roomTypeId: selectedType.id, 
+            image: finalUrls,
+        }
+        console.log("dataTypeRoom", dataTypeRoom);
+        onAdd(dataTypeRoom);
+    }
 
     return (
         <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -128,26 +188,28 @@ const TypeEditorModal = ({ visible, onClose, onSave, type, allServices }) => {
                 <View style={styles.header}>
                     <TouchableOpacity onPress={onClose} style={styles.backButton}><Ionicons name="close" size={28} /></TouchableOpacity>
                     <Text style={styles.headerTitle}>{isEditing ? 'Chỉnh sửa Loại phòng' : 'Thêm Loại phòng'}</Text>
-                    <TouchableOpacity onPress={handleSave}><Text style={styles.saveText}>Lưu</Text></TouchableOpacity>
+                    <TouchableOpacity onPress={isEditing ? handleSave : handleAdd}><Text style={styles.saveText}>Lưu</Text></TouchableOpacity>
                 </View>
                 <ScrollView>
                     <View style={styles.formSection}>
                         <Text style={styles.inputLabel}>Tên loại phòng</Text>
                         <View style={styles.typeSelector}>
-                            {RoomTypeDefault?.map(type => (
+                            {RoomTypeDefault.map(rt => (
                                 <TouchableOpacity
-                                    key={type.id}
-                                    style={[styles.typeButton, selectedType?.id === type.id && styles.typeButtonSelected]}
-                                    onPress={() => setSelectedType(type)}
+                                    key={rt.id}
+                                    style={[styles.typeButton, (selectedType?.id ?? type?.id) === rt.id && styles.typeButtonSelected]}
+                                    onPress={() => setSelectedType(rt)}
                                 >
-                                    <Text style={[styles.typeButtonText, selectedType?.id === type.id && styles.typeButtonTextSelected]}>{type.name}</Text>
+                                    <Text style={[styles.typeButtonText, (selectedType?.id ?? type?.id) === rt.id && styles.typeButtonTextSelected]}>
+                                        {rt.name}
+                                    </Text>
                                 </TouchableOpacity>
                             ))}
                         </View>
                         <Text style={styles.inputLabel}>Danh sách URL hình ảnh</Text>
                         {imageUrls?.map((url, index) => (
                             <View key={index} style={styles.urlInputContainer}>
-                                <TextInput style={styles.urlInput} placeholder={`URL hình ảnh ${index + 1}`} value={url.image} onChangeText={(text) => handleUrlChange(text, index)} />
+                                <TextInput style={styles.urlInput} placeholder={`URL hình ảnh ${index + 1}`} value={url} onChangeText={(text) => handleUrlChange(text, index)} />
                                 {imageUrls?.length > 1 && (
                                     <TouchableOpacity onPress={() => removeUrlInput(index)} style={styles.removeButton}>
                                         <Ionicons name="trash-outline" size={22} color="#dc3545" />
@@ -162,20 +224,35 @@ const TypeEditorModal = ({ visible, onClose, onSave, type, allServices }) => {
                     </View>
                     <Text style={styles.mainSectionTitle}>Dịch vụ áp dụng</Text>
                     <View style={styles.serviceSelectionContainer}>
-                        {(allServices || []).map(service => (
-                            <View key={service.id} style={styles.serviceToggleItem}>
-                                <View>
-                                    <Text style={styles.serviceName}>{service.name}</Text>
-                                    <Text style={styles.serviceCategory}>{service.category}</Text>
+
+                        {(utilities?.data || []).map(service => {
+                            const isSelected = selectedServices.includes(service.id);
+                            return (
+                                <View key={service.id} style={styles.serviceToggleItem}>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.serviceName}>{service.name}</Text>
+
+                                        {isSelected && (
+                                            <TextInput
+                                                style={styles.priceInput}
+                                                placeholder="Nhập giá dịch vụ..."
+                                                keyboardType="numeric"
+                                                value={servicePrices[service.id] || ""}
+                                                onChangeText={(text) => handlePriceChange(service.id, text)}
+                                            />
+                                        )}
+                                    </View>
+
+                                    <Switch
+                                        value={isSelected}
+                                        onValueChange={() => toggleServiceSelection(service.id)}
+                                        trackColor={{ false: "#ccc", true: "#81b0ff" }}
+                                        thumbColor={isSelected ? "#007bff" : "#f4f3f4"}
+                                    />
                                 </View>
-                                <Switch
-                                    value={selectedServices.includes(service.id)}
-                                    onValueChange={() => toggleServiceSelection(service.id)}
-                                    trackColor={{ false: "#ccc", true: "#81b0ff" }}
-                                    thumbColor={selectedServices.includes(service.id) ? "#007bff" : "#f4f3f4"}
-                                />
-                            </View>
-                        ))}
+                            );
+                        })}
+
                     </View>
                 </ScrollView>
             </SafeAreaView>
@@ -194,37 +271,57 @@ export default function ManageRoomTypesScreen({ route, navigation = mockNavigati
     const setRoomTypes = route?.params?.setRoomTypes || setMockedRoomTypes;
     const services = route?.params?.services || mockedServices;
     const setServices = route?.params?.setServices || setMockedServices;
-
+    const [refreshing, setRefreshing] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedType, setSelectedType] = useState(null);
 
-    const handleSaveType = (typeData) => {
-        const index = roomTypes.findIndex(t => t.id === typeData.id);
-        if (index > -1) {
-            const updated = [...roomTypes];
-            updated[index] = typeData;
-            setRoomTypes(updated);
-        } else {
-            setRoomTypes([...roomTypes, typeData]);
-        }
+    const { hotelId } = useHost();
+    console.log("hotelId", hotelId);
+
+    const handleSaveType = async (typeData: TypeOfRoomRequest) => {
+        if (!hotelId) return;
+        console.log("typeData", typeData);
+        const response = await updateTypeOfRoom(hotelId, typeData);
+        console.log("response", response);
         setModalVisible(false);
         setSelectedType(null);
+        setRefreshing(prev => !prev);
+        Alert.alert("Thành công", "Đã cập nhật loại phòng thành công");
     };
 
-    useEffect(() => {
+    const handleAddType = async (typeData: TypeOfRoomRequest) => {
+        try {
+            const response = await addTypeOfRoom(typeData);
+            console.log("response", response);
+            setModalVisible(false);
+            setSelectedType(null);
+            setRefreshing(prev => !prev);
+            Alert.alert("Thành công", "Đã thêm loại phòng thành công");
+        } catch (error) {
+            console.error("Lỗi khi thêm loại phòng", error);
+            Alert.alert("Lỗi", "Đã xảy ra lỗi khi thêm loại phòng");
+        }
+    };
+
+        useEffect(() => {
         const fetchRoomTypes = async () => {
-            const hotelId = 2;
+            if (!hotelId) return;
+            console.log("hotelId", hotelId);
             const typeOfRoom = await getTypeOfRoomByHotel(hotelId);
             console.log(typeOfRoom.data);
             setRoomTypes(typeOfRoom.data);
         };
         fetchRoomTypes();
-    }, []);
+    }, [selectedType, refreshing])
 
-    const handleDeleteType = (typeId) => {
-        Alert.alert("Xác nhận xóa", "Bạn có chắc muốn xóa loại phòng này?",
-            [{ text: "Hủy" }, { text: "Xóa", style: "destructive", onPress: () => { setRoomTypes(roomTypes.filter(t => t.id !== typeId)); } },]
-        );
+    const handleDeleteType = async (typeId: number, hotelId: number) => {
+        const response = await deleteTypeOfRoom(typeId, hotelId);
+        console.log("response", response);
+        setRefreshing(prev => !prev);
+        Alert.alert("Thành công", "Đã xóa loại phòng thành công");
+        // Alert.alert("Xác nhận xóa", "Bạn có chắc muốn xóa loại phòng này?",
+        //     [{ text: "Hủy" }, { text: "Xóa", style: "destructive", onPress: () => { deleteTypeOfRoom(hotelId, typeId); } },]
+        // );
     };
 
     return (
@@ -239,7 +336,7 @@ export default function ManageRoomTypesScreen({ route, navigation = mockNavigati
                 <Text style={styles.manageServiceButtonText}>Quản lý Dịch vụ</Text>
             </TouchableOpacity>
             <FlatList
-                data={roomTypes}
+                data={roomTypes.sort((a, b) => a.id - b.id)}
                 keyExtractor={item => item.id}
                 ListEmptyComponent={<View style={styles.emptyContainer}><Text style={styles.emptyText}>Chưa có loại phòng nào.</Text></View>}
                 renderItem={({ item }) => (
@@ -253,7 +350,7 @@ export default function ManageRoomTypesScreen({ route, navigation = mockNavigati
                             <TouchableOpacity style={styles.actionButton} onPress={() => { setSelectedType(item); setModalVisible(true); }}>
                                 <Ionicons name="pencil" size={24} color="#007bff" />
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.actionButton} onPress={() => handleDeleteType(item.id)}>
+                            <TouchableOpacity style={styles.actionButton} onPress={() => handleDeleteType(item.id, hotelId!)}>
                                 <Ionicons name="trash-outline" size={24} color="#dc3545" />
                             </TouchableOpacity>
                         </View>
@@ -264,7 +361,7 @@ export default function ManageRoomTypesScreen({ route, navigation = mockNavigati
             <TouchableOpacity style={styles.fab} onPress={() => { setSelectedType(null); setModalVisible(true); }}>
                 <Ionicons name="add" size={30} color="#fff" />
             </TouchableOpacity>
-            <TypeEditorModal visible={modalVisible} onClose={() => setModalVisible(false)} onSave={handleSaveType} type={selectedType} allServices={services} />
+            <TypeEditorModal visible={modalVisible} onClose={() => setModalVisible(false)} onSave={handleSaveType} type={selectedType} allServices={services} onAdd={handleAddType} />
         </SafeAreaView>
     );
 }
@@ -328,5 +425,15 @@ const styles = StyleSheet.create({
     },
     typeButtonTextSelected: {
         color: '#fff',
+    },
+    priceInput: {
+        marginTop: 6,
+        borderWidth: 1,
+        borderColor: "#ccc",
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        fontSize: 15,
+        width: 150,
     },
 });

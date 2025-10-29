@@ -1,5 +1,7 @@
 import Room from '@/models/Room';
 import RoomTypeImage from '@/models/RoomTypeImage';
+import { TypeOfRoomUtility } from '@/models/TypeOfRoomUtility/TypeOfRoomUtilityResponse';
+import { getTypeOfRoomUtilityOfHotelByHotelIdAndType } from '@/service/HotelUtilityAPI';
 import { getRoomAvailableByHotel } from '@/service/RoomAPI';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -27,9 +29,18 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
     const [rooms, setRooms] = useState<Room[]>([]);
     const [insuranceSelected, setInsuranceSelected] = useState(false);
     const [isSearch, setIsSearch] = useState(false);
+    const [utility, setUtility] = useState<TypeOfRoomUtility[]>([]);
     const phongDon = rooms.filter(room => room.typeRoom == "DON");
     const phongDoi = rooms.filter(room => room.typeRoom == "DOI");
     const phongGiaDinh = rooms.filter(room => room.typeRoom == "GIA_DINH");
+
+    const utilityOfTypeRoom1 = utility!.filter((utility: TypeOfRoomUtility) => utility.typeOfRoomId
+    == 1);
+    const utilityOfTypeRoom2 = utility!.filter((utility: TypeOfRoomUtility) => utility.typeOfRoomId
+    == 2);
+    const utilityOfTypeRoom3 = utility!.filter((utility: TypeOfRoomUtility) => utility.typeOfRoomId
+    == 3);
+
 
 
     
@@ -53,6 +64,23 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                 console.error(err);
             }
         };
+
+        const fetchUtilityOfHotel = async (id: number) => {
+            console.log("fetchUtilityOfHotel");
+            
+            try {
+                const data = await getTypeOfRoomUtilityOfHotelByHotelIdAndType(id, "INROOM");
+                    console.log("data", data.data.utilities);
+                setUtility(data.data.utilities as TypeOfRoomUtility[]); 
+                console.log("utility 1: ", utility!.filter((utility: TypeOfRoomUtility) => utility.typeOfRoomId
+                == 1));
+                
+
+            } catch (err) {
+                console.error(err);
+            }
+        }; 
+        fetchUtilityOfHotel(hotelId);
         fetchRoomAvailableByHotel(hotelId, checkIn, checkOut!);
     }, [isSearch]);
     // console.log(rooms);
@@ -306,7 +334,9 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
             {/* Zone phòng */}
             {phongDon.length > 0 && (
                 <>
-                    <RoomZone roomTypeImage={roomTypeImage.filter(image => image.roomTypeId == 1)} />
+                    <RoomZone
+                     utilityOfTypeRoom={utilityOfTypeRoom1} 
+                    roomTypeImage={roomTypeImage.filter(image => image.roomTypeId == 1)} />
 
                     <RoomCard checkInDate={checkIn} checkOutDate={checkOut} rooms={rooms.filter(room => room.typeRoom == "DON")} />
                 </>
@@ -314,7 +344,7 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
 
             {phongDoi.length > 0 && (
                 <>
-                    <RoomZone roomTypeImage={roomTypeImage.filter(image => image.roomTypeId == 2)} />
+                    <RoomZone utilityOfTypeRoom={utilityOfTypeRoom2} roomTypeImage={roomTypeImage.filter(image => image.roomTypeId == 2)} />
 
                     <RoomCard checkInDate={checkIn} checkOutDate={checkOut} rooms={rooms.filter(room => room.typeRoom == "DOI")} />
                 </>
@@ -322,7 +352,7 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
 
             {phongGiaDinh.length > 0 && (
                 <>
-                    <RoomZone roomTypeImage={roomTypeImage.filter(image => image.roomTypeId == 3)} />
+                    <RoomZone utilityOfTypeRoom={utilityOfTypeRoom3} roomTypeImage={roomTypeImage.filter(image => image.roomTypeId == 3)} />
 
                     <RoomCard checkInDate={checkIn} checkOutDate={checkOut} rooms={rooms.filter(room => room.typeRoom == "GIA_DINH")} />
                 </>

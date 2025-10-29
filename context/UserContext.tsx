@@ -31,12 +31,12 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const refreshUser = async () => {
     // Không cần setIsLoading(true) ở đây vì nó đã là true từ đầu
     try {
-      await AsyncStorage.setItem("userId", "3");
+      // await AsyncStorage.setItem("userId", "3");
       const userId = await AsyncStorage.getItem('userId');
 
       // const role = await AsyncStorage.getItem("role");
 
-      await AsyncStorage.setItem("role", "ROLE_HOST")
+      // await AsyncStorage.setItem("role", "ROLE_HOST")
       const role = await AsyncStorage.getItem("role");
 
       if (role) {
@@ -85,9 +85,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     //   router.replace('/(cleaningStaff)');
     // }
 
-    if (user?.role === 'ROLE_EMPLOYEE' || user?.role === 'ROLE_ADMIN') {
+    if (user?.role === 'ROLE_EMPLOYEE') {
       router.replace('/(employee)');
-    } else if (user?.role === 'ROLE_HOST') {
+    } else if (user?.role === 'ROLE_ADMIN') {
       router.replace('/(host)');
     } else if (user?.role === 'ROLE_CLEANINGSTAFF') {
       router.replace('/(cleaningStaff)');

@@ -1,3 +1,4 @@
+import { useUser } from '@/context/UserContext';
 import UserLogin from '@/models/UserLogin';
 import { loginFunction } from '@/service/UserAPI';
 import { ProfileStackParamList } from '@/types/navigation';
@@ -7,7 +8,6 @@ import { useNavigation, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import LoginBanner from './bannerLogin';
-import { useUser } from '@/context/UserContext';
 
 type LoginScreenNavigationProp = StackNavigationProp<
   ProfileStackParamList,
@@ -35,29 +35,38 @@ const { setUser } = useUser();
       console.log("login res", res);
 
       if (res != null) {
-        console.log("login res 2", res);
 
         // Hiển thị thông báo thành công
-        Alert.alert(
-          "Thành công",
-          "Đăng nhập thành công!",
-          [
-            {
-              text: "OK",
-              onPress: async () => {
-                await AsyncStorage.setItem("userId", res.id.toString());
+        // Alert.alert(
+        //   "Thành công",
+        //   "Đăng nhập thành công!",
+        //   [
+        //     {
+        //       text: "OK",
+        //       onPress: async () => {
+                await AsyncStorage.setItem("userId", (res.id).toString());
                 await AsyncStorage.setItem("userToken", res.accessToken);
                 await AsyncStorage.setItem("role", res.role.name);
+                console.log("login res 2", res);
+
                 setUser(res);
                 // Sau khi bấm OK thì chuyển sang LoggedAccount
-                router.replace('/');
-                navigation.replace("LoggedAccount");
+                if(res.role.name === 'ROLE_EMPLOYEE') {
+                  router.replace('/(employee)');
+                } else if(res.role.name === 'ROLE_ADMIN') {
+                  router.replace('/(host)');
+                } else if(res.role.name === 'ROLE_CLEANINGSTAFF') {
+                  router.replace('/(cleaningStaff)');
+                } else {
+                  router.replace('/(tabs)');
+                }
+                // navigation.replace("LoggedAccount");
                 
 
-              },
-            },
-          ]
-        );
+        //       },
+        //     },
+        //   ]
+        // );
       } else {
         // Hiển thị thông báo lỗi
         Alert.alert(

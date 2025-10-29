@@ -5,10 +5,15 @@ interface Room {
     description: string,
     status: string,
     typeRoom: string,
-    hotelName: string,
+    hotel: HotelItem,
     imageRoom: ImageRoom[],
     price: BigInt
 
+}
+
+interface HotelItem {
+    id: number,
+    name: string,
 }
 
 export default Room

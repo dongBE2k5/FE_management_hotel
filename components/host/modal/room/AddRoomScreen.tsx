@@ -1,3 +1,4 @@
+import { useHost } from '@/context/HostContext';
 import RoomRequest from '@/models/Room/RoomRequest';
 import TypeOfRoomResponse from '@/models/TypeOfRoom/TypeOfRoomResponse';
 import { addRoom } from '@/service/RoomAPI';
@@ -40,14 +41,18 @@ export default function AddRoomScreen({ route, navigation = mockNavigation }) {
     const [price, setPrice] = useState('');
     const [description, setDescription] = useState('');
     const [roomNumbers, setRoomNumbers] = useState('');
-    const hotelId = 2;
+    const { hotelId } = useHost();
+    console.log("hotelId", hotelId);
     useEffect(() => {
+        if (!hotelId) return;
         const fetchRoomTypes = async () => {
            
             const typeOfRoom = await getTypeOfRoomByHotel(hotelId);
             console.log(typeOfRoom);
             setRoomTypes(typeOfRoom);
         };
+       
+        
         fetchRoomTypes();
     }, []);
 

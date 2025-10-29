@@ -16,15 +16,13 @@ export default function RoomNavigator() {
     return (
         <>
             <View style={styles.container}>
-                <Stack.Navigator screenOptions={{ headerShown: false }}>
-                    <Stack.Screen name="RoomList" component={RoomListScreen} />
-                    <Stack.Screen name="AddRoom" component={AddRoomScreen} />
-                    <Stack.Screen name="ManageRoomTypes" component={ManageRoomTypesScreen} />
-                    <Stack.Screen name="ManageServices" component={ManageServicesScreen} />
-                    <Stack.Screen name="RoomDetail" component={RoomDetailScreen} />
-                 
-                    
-                </Stack.Navigator>
+                    <Stack.Navigator screenOptions={{ headerShown: false }}>
+                        <Stack.Screen name="RoomList" component={RoomListScreen} />
+                        <Stack.Screen name="AddRoom" component={AddRoomScreen} />
+                        <Stack.Screen name="ManageRoomTypes" component={ManageRoomTypesScreen} />
+                        <Stack.Screen name="ManageServices" component={ManageServicesScreen} />
+                        <Stack.Screen name="RoomDetail" component={RoomDetailScreen} />
+                    </Stack.Navigator>
             </View>
         </>
 

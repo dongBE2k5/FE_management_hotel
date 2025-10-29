@@ -52,5 +52,14 @@ async function addRoom(rooms: Room[]): Promise<Room[]> {
   }
 }
 
-export { addRoom, getRoomAvailableByHotel, getRoomByHotel };
+async function getRoomById(id: number): Promise<Room> {
+  const res = await fetch(`${BaseUrl}/rooms/${id}`);
+  if (!res.ok) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+  const data: Room = await res.json();
+  return data;
+}
+
+export { addRoom, getRoomAvailableByHotel, getRoomByHotel, getRoomById };
 

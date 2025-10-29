@@ -2,7 +2,7 @@ import HeaderHotelDetail from '@/components/userHotelDetail/headerHotelDetail';
 import MidHotelDetail from '@/components/userHotelDetail/midHotelDetail';
 import { Hotel } from '@/models/Hotel';
 import RoomTypeImage from '@/models/RoomTypeImage';
-import { find } from '@/service/HotelAPI';
+import { findHotelById } from '@/service/HotelAPI';
 import { getRoomTypeImageByHotel } from '@/service/RoomTypeImageAPI';
 import { RootStackParamList } from '@/types/navigation';
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -26,7 +26,7 @@ export default function HotelDetail() {
         
         const getHotelById = async (id: number) => {
             try {
-                const data = await find(id);
+                const data = await findHotelById(id);
                 console.log(data);
                 sethotel(data);
             } catch (err) {

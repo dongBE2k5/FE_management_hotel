@@ -1,6 +1,7 @@
+import { HotelRequest } from '@/models/Hotel/HotelRequest';
+import axios from 'axios';
 import BaseUrl from '../constants/BaseURL';
 import { Hotel } from '../models/Hotel';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const VIEWED_HOTELS_KEY = 'viewed_hotels';
 
@@ -68,9 +69,9 @@ async function getHotelByLocation(id: Number): Promise<Hotel[]> {
   return data;
 }
 
-async function find(id: Number): Promise<Hotel> {
+async function findHotelById(id: Number): Promise<Hotel> {
+  console.log(`${BaseUrl}/hotels/${id}`);
   const res = await fetch(`${BaseUrl}/hotels/${id}`);
-
   if (!res.ok) {
     throw new Error(`HTTP error! status: ${res.status}`);
   }
@@ -80,5 +81,33 @@ async function find(id: Number): Promise<Hotel> {
   return data;
 }
 
-export { find, getAllHotel, getHotelByLocation, };
+async function getAllHotelsByUser(userId: number): Promise<Hotel[]> {
+  const res = await axios.get(`${BaseUrl}/hotels/user/${userId}`);
+  if (res.status !== 201) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+  console.log(res.data);
+  return res.data;
+}
+
+async function updateHotel(id: number, hotel: HotelRequest): Promise<Hotel> {
+  const res = await axios.put(`${BaseUrl}/hotels/${id}`, hotel);
+  console.log(res.data);
+  if (res.status !== 201) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+  console.log(res.data);
+  return res.data;
+}
+
+async function createHotel(hotel: HotelRequest): Promise<Hotel> {
+  const res = await axios.post(`${BaseUrl}/hotels`, hotel);
+  console.log(res.data);
+  if (res.status !== 200) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+  return res.data;
+}
+
+export { createHotel, findHotelById, getAllHotel, getAllHotelsByUser, getHotelByLocation, updateHotel };
 

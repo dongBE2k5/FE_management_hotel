@@ -1,4 +1,5 @@
 import Room from "@/models/Room";
+import { UtilityItem } from "@/models/Utility/Utility";
 
 // src/types/navigation.ts
 export type RootStackParamList = {
@@ -11,12 +12,16 @@ export type RootStackParamList = {
     checkInDate: string;
     checkOutDate: string;
     nights: number;
+    specialRequests: UtilityItem[],
+    price: number,
   };
   ReviewBooking: {
     room: Room,
     checkInDate: Date,
     checkOutDate: Date | null,
     nights: number,
+    specialRequests: UtilityItem[],
+    price: number,
   };
   Booking: {
     hotelName: string;
@@ -69,6 +74,10 @@ export type ProfileStackParamList = {
 };
 
 export type EmployeeStackParamList = {
+  hotelEdit: { id: number },
+  CreateHotel: undefined,
+  hotelList: undefined,
+  hostBookings: undefined;
   listRoom: undefined;
   bookingDetail: { bookingId: number }; // có params thì khai báo ở đây
   checkout: undefined; // có params thì khai báo ở đây
