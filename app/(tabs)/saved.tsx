@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, Text, ActivityIndicator } from 'react-native';
 import Header from '@/components/userHome/header';
-import { getSavedHotels, getSavedHotelsByLocation } from '@/service/SavedHotelAPI';
+import { getSavedHotels, getSavedHotelsByLocation, removeSavedHotel } from '@/service/SavedHotelAPI';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Hotel } from '@/models/Hotel';
 import HotelCard from '@/components/userHome/hotelCard';
@@ -24,62 +24,63 @@ function Saved() {
   const [selectedLocationId, setSelectedLocationId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [locations, setLocations] = useState<LocationModel[]>([]);
-  const [hasAnySaved, setHasAnySaved] = useState<boolean>(false); // ✅ Thêm state này
+  const [hasAnySaved, setHasAnySaved] = useState<boolean>(false);
 
-  //  Lấy danh sách khách sạn đã lưu ban đầu + danh sách địa điểm
+  // Hàm load lại danh sách khách sạn đã lưu
+  const loadSavedHotels = async (userId: number, locationId: number | null = selectedLocationId) => {
+    setLoading(true);
+    try {
+      let hotels: Hotel[] = [];
+      if (!locationId || locationId === 0) {
+        hotels = await getSavedHotels(userId);
+      } else {
+        hotels = await getSavedHotelsByLocation(userId, locationId);
+      }
+      setSavedHotels(hotels);
+      if (hotels.length > 0) setHasAnySaved(true);
+    } catch (err) {
+      console.error('❌ Lỗi khi load lại khách sạn:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load dữ liệu ban đầu
   useEffect(() => {
     const fetchData = async () => {
       try {
         const storedUserId = await AsyncStorage.getItem('userId');
-        if (storedUserId) {
-          const id = Number(storedUserId);
-          setUserId(id);
+        if (!storedUserId) return;
+        const id = Number(storedUserId);
+        setUserId(id);
+        await loadSavedHotels(id);
 
-          // Lấy danh sách khách sạn đã lưu ban đầu
-          const hotels = await getSavedHotels(id);
-          setSavedHotels(hotels);
-          if (hotels && hotels.length > 0) setHasAnySaved(true); // ✅ Ghi nhớ người dùng có KS đã lưu
-        }
-
-        // Lấy danh sách địa điểm
         const locs = await getAllLocation();
-        const allLocations = [
-          { id: 0, name: 'Tất cả' } as LocationModel,
-          ...locs,
-        ];
-        setLocations(allLocations);
+        setLocations([{ id: 0, name: 'Tất cả' } as LocationModel, ...locs]);
       } catch (err) {
-        console.error('Lỗi khi load dữ liệu:', err);
-      } finally {
-        setLoading(false);
+        console.error(err);
       }
     };
     fetchData();
   }, []);
 
-  // Khi chọn địa điểm => lọc danh sách khách sạn đã lưu
+  // Hủy lưu khách sạn
+  const handleUnsave = async (hotelId: number) => {
+    if (!userId) return;
+    try {
+      await removeSavedHotel(userId, hotelId);
+      await loadSavedHotels(userId); // reload danh sách
+    } catch (err) {
+      console.error(' Lỗi khi hủy lưu khách sạn:', err);
+    }
+  };
+
+//ghaweawwt auuhawrjbtg hjt
+  // Filter theo location
   const handleLocationChange = async (locationId: number | null) => {
     if (!userId) return;
-    setLoading(true);
-    try {
-      let hotels: Hotel[] = [];
-
-      if (locationId === null || locationId === 0) {
-        hotels = await getSavedHotels(userId);
-      } else {
-        hotels = await getSavedHotelsByLocation(userId, locationId);
-      }
-
-      setSavedHotels(hotels);
-      setSelectedLocationId(locationId);
-
-      // 🧠 Nếu user chọn location khác mà không có KS, hasAnySaved vẫn TRUE (vì đã từng có)
-      if (hotels.length > 0) setHasAnySaved(true);
-    } catch (err) {
-      console.error('Lỗi khi lọc khách sạn theo địa điểm:', err);
-    } finally {
-      setLoading(false);
-    }
+    setSelectedLocationId(locationId);
+    await loadSavedHotels(userId, locationId);
   };
 
   const handleNavigation = (hotelId: number) => {
@@ -89,39 +90,26 @@ function Saved() {
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <Header />
-      <Text
-        style={{
-          margin: 10,
-          fontSize: 18,
-          fontWeight: 'bold',
-          color: '#333',
-        }}
-      >
+      <Text style={{ margin: 10, fontSize: 18, fontWeight: 'bold', color: '#333' }}>
         Khách sạn đã lưu
       </Text>
 
-      {/* ✅ Bộ lọc theo địa điểm — chỉ hiện khi người dùng đã từng lưu ít nhất 1 khách sạn */}
       {hasAnySaved && (
-        <LocationSelector
-          locations={locations}
-          changeLocation={handleLocationChange}
-        />
+        <LocationSelector locations={locations} changeLocation={handleLocationChange} />
       )}
 
-      {/* Hiển thị danh sách */}
       {loading ? (
         <ActivityIndicator size="large" color="#007bff" style={{ marginTop: 40 }} />
       ) : (
-        <ScrollView
-          contentContainerStyle={{
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-          }}
-        >
+        <ScrollView contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' }}>
           {savedHotels.length > 0 ? (
             savedHotels.map((hotel) => (
-              <HotelCard key={hotel.id} data={hotel} handleNavigations={handleNavigation} />
+              <HotelCard
+                key={hotel.id}
+                data={hotel}
+                handleNavigations={handleNavigation}
+                handleUnsave={handleUnsave}
+              />
             ))
           ) : (
             <Text style={{ margin: 20, color: '#888' }}>
@@ -133,6 +121,7 @@ function Saved() {
     </View>
   );
 }
+
 
 export default function SavedStack() {
   return (

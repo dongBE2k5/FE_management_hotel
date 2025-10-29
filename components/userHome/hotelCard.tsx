@@ -12,9 +12,11 @@ interface HotelCardProps {
     handleNavigations: (id: number) => void;
     data: Hotel;
     onViewedUpdate?: () => void;
+      handleUnsave?: (hotelId: number) => Promise<void>;
 }
 
-const HotelCard: React.FC<HotelCardProps> = ({ handleNavigations, data, onViewedUpdate }) => {
+const HotelCard: React.FC<HotelCardProps> = ({ handleNavigations, data, onViewedUpdate, handleUnsave }) => {
+
     const [rateCount, setRateCount] = useState<number>(0);
     const [averageRate, setAverageRate] = useState<number>(0);
     const [isSaved, setIsSaved] = useState<boolean>(false);
@@ -69,52 +71,58 @@ const HotelCard: React.FC<HotelCardProps> = ({ handleNavigations, data, onViewed
     };
 
     const handleToggleSave = async () => {
-        if (isProcessing) return;
-        setIsProcessing(true);
+    if (isProcessing) return;
+    setIsProcessing(true);
 
-        try {
-            const userId = await AsyncStorage.getItem('userId');
-            if (!userId) return;
+    try {
+        const userId = await AsyncStorage.getItem('userId');
+        if (!userId) return;
 
-            //  Nếu đang lưu -> hỏi xác nhận bỏ lưu
-            if (isSaved) {
-                Alert.alert(
-                    "Xác nhận",
-                    "Bạn có chắc muốn hủy lưu khách sạn này không?",
-                    [
-                        { text: "Hủy", style: "cancel" },
-                        {
-                            text: "Đồng ý",
-                            onPress: async () => {
-                                try {
-                                    setIsSaved(false);
+        if (isSaved) {
+            // Nếu đang lưu -> hỏi xác nhận bỏ lưu
+            Alert.alert(
+                "Xác nhận",
+                "Bạn có chắc muốn hủy lưu khách sạn này không?",
+                [
+                    { text: "Hủy", style: "cancel", onPress: () => setIsProcessing(false) },
+                    {
+                        text: "Đồng ý",
+                        onPress: async () => {
+                            try {
+                                setIsSaved(false);
+
+                                
+                                if (handleUnsave) {
+                                    await handleUnsave(data.id);
+                                } else {
+                                    // Nếu không, fallback gọi API trực tiếp
                                     await removeSavedHotel(Number(userId), data.id);
                                     Alert.alert("Thành công", "Đã bỏ lưu khách sạn.");
-                                } catch (err) {
-                                    console.error(" Lỗi khi bỏ lưu:", err);
-                                    setIsSaved(true); // khôi phục nếu lỗi
-                                } finally {
-                                    setIsProcessing(false);
                                 }
-                            },
+                            } catch (err) {
+                                console.error(" Lỗi khi bỏ lưu:", err);
+                                setIsSaved(true);
+                            } finally {
+                                setIsProcessing(false);
+                            }
                         },
-                    ],
-                    { cancelable: true }
-                );
-            } else {
-                //  Nếu chưa lưu -> lưu ngay
-                setIsSaved(true);
-                await saveHotel(Number(userId), data.id);
-                Alert.alert("Thành công", "Đã lưu khách sạn vào danh sách yêu thích!");
-            }
-        } catch (err) {
-            console.error(" Lỗi khi toggle lưu:", err);
-            setIsSaved((prev) => !prev);
-        } finally {
-            // chỉ kết thúc khi không có confirm đang mở
-            if (!isSaved) setIsProcessing(false);
+                    },
+                ],
+                { cancelable: true }
+            );
+        } else {
+            // Nếu chưa lưu -> lưu ngay
+            setIsSaved(true);
+            await saveHotel(Number(userId), data.id);
+            Alert.alert("Thành công", "Đã lưu khách sạn vào danh sách yêu thích!");
         }
-    };
+    } catch (err) {
+        console.error(" Lỗi khi toggle lưu:", err);
+        setIsSaved((prev) => !prev);
+    } finally {
+        if (!isSaved) setIsProcessing(false);
+    }
+};
 
 
     return (

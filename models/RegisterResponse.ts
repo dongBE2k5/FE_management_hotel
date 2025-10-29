@@ -1,7 +1,7 @@
 import Role from "./Role";
 
 interface RegisterResponse {
-   data?: {
+  data?: {
     id: number;
     fullName: string;
     username: string;
@@ -9,8 +9,11 @@ interface RegisterResponse {
     phone: string;
     cccd: string;
     role: Role;
-   }
-    message?: string;
-
+    gender?: string;
+    birthDate?: string; // dạng 'YYYY-MM-DD'
+    address?: string;
   }
+  message?: string;
+
+}
 export default RegisterResponse;

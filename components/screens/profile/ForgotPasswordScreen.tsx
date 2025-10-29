@@ -4,6 +4,7 @@ import { sendOtp } from "@/service/UserAPI";
 import { Ionicons } from "@expo/vector-icons"; // cần cài expo install @expo/vector-icons
 import BannerLogin from "../../userProfile/bannerLogin";
 export default function ForgotPasswordScreen({ navigation }: any) {
+    
     const [email, setEmail] = useState("");
 
     const handleSendOtp = async () => {
