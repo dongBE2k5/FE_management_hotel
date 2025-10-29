@@ -3,7 +3,7 @@ import * as Linking from "expo-linking";
 // Tạo URL từ Linking
 const linkingUrl = Linking.createURL("/");
 
-let ip = "localhost"; // fallback mặc định
+let ip = "192.168.1.31"; // fallback mặc định
 
 try {
     const parsed = new URL(linkingUrl);
@@ -15,11 +15,11 @@ try {
         
     } else {
         // ⚙️ fallback IP LAN của bạn (hoặc để localhost)
-        ip = "localhost";
+        ip = "192.168.1.31";
     }
 } catch (error) {
     console.warn("Invalid Linking URL, fallback to IP LAN:", error);
-    ip = "localhost";
+    ip = "192.168.1.31";
 }
 
 const BaseUrl = `http://${ip}:8080/api`;
