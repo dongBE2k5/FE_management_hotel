@@ -1,8 +1,8 @@
 import Booking from '@/models/Booking/Booking';
 import Room from '@/models/Room';
-import Voucher from '@/models/Voucher';
 import { createBooking } from '@/service/BookingAPI';
-import { getUserVouchers } from '@/service/UserVoucherAPI';
+// Giả định bạn đã tạo hàm này trong một file service, ví dụ: '@/service/Payment/PaymentService'
+import { initiatePayment } from '@/components/payment/PaymentButton';
 import type { RootStackParamList } from '@/types/navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -12,19 +12,21 @@ import { createBookingUtility } from '@/service/BookingUtilityAPI';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   FlatList,
   Modal,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
-  Alert
+  View
 } from 'react-native';
-import { useVoucher } from '@/service/VoucherAPI';
+
 type ConfirmBookingProps = {
   room: Room,
   checkInDate: Date,
@@ -59,8 +61,6 @@ export default function ConfirmBooking() {
   >;
   const navigation = useNavigation<ConfirmBookingNavigationProp>();
 
-
-
   const formatDate = (d: any) => {
     if (!d) return '';
     if (typeof d === 'string') return d;
@@ -73,58 +73,82 @@ export default function ConfirmBooking() {
 
   // ---------- Thêm trạng thái voucher ----------
   const [voucherModalVisible, setVoucherModalVisible] = useState(false);
-  const [voucherModalVisible2, setVoucherModalVisible2] = useState(false);
-  //show voucher đã lưu trong modal, 2 loại
-  const [selectedGlobalVoucher, setSelectedGlobalVoucher] = useState<Voucher | null>(null);
-  const [selectedHotelVoucher, setSelectedHotelVoucher] = useState<Voucher | null>(null);
-
-  const [selectedVoucher, setSelectedVoucher] = useState<null | Voucher>(
+  const [selectedVoucher, setSelectedVoucher] = useState<null | { code: string; discount: number }>(
     null
   );
-  const [availableVouchers, setAvailableVouchers] = useState<Voucher[]>([])
+  // State để quản lý quá trình loading
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const userId = await AsyncStorage.getItem("userId");
-      const userVouchers = await getUserVouchers(Number(userId));
-      console.log("User vouchers từ backend:", userVouchers);
-      setAvailableVouchers(userVouchers);
-    };
-    fetchData();
-  }, []);
+  // Ví dụ danh sách voucher có sẵn
+  const availableVouchers = [
+    { code: 'SALE10', discount: 100000 },
+    { code: 'SUMMER5', discount: 50000 },
+    { code: 'VIP20', discount: 200000 },
+  ];
 
+  // const specialRequestTotal = specialRequests.length * specialRequestPrice;
+  // const baseTotal =
+  //   roomPrice * nights + taxFee + specialRequestTotal + (insuranceSelected ? insurancePrice : 0);
+
+  // const discount = selectedVoucher?.discount ?? 0;
   const totalPrice = Number(room.price) * nights;
 
-  const globalDiscount = selectedGlobalVoucher ? selectedGlobalVoucher.percent : 0;
-  const hotelDiscount = selectedHotelVoucher ? selectedHotelVoucher.percent : 0;
-  // tổng phần trăm giảm cộng lại (giới hạn 100%)
-  const totalDiscount = Math.min(globalDiscount + hotelDiscount, 100);
+  // Lắng nghe deep link trả về từ app thanh toán
+  useEffect(() => {
+    const handleDeepLink = ({ url }: { url: string }) => {
+      console.log("🔗 URL nhận được:", url);
+      const data = Linking.parse(url);
+      console.log("🔗 Deep link data parse:", data);
 
-  const finalPrice = totalPrice - (totalPrice * totalDiscount / 100);
-  //hàm thanh toán
-  const handleConfirmPayment = async () => {
-    if (selectedGlobalVoucher && totalPrice < selectedGlobalVoucher.priceCondition) {
-      alert(
-        `Giá phòng ${totalPrice.toLocaleString('vi-VN')} VND nhỏ hơn điều kiện của voucher app (${selectedGlobalVoucher.priceCondition.toLocaleString('vi-VN')} VND).`
-      );
-      return;
-    }
+      if (data) {
+        const status = (data.queryParams?.status as string) ?? "unknown";
+        console.log("🔗 Trạng thái thanh toán:", status);
 
-    if (selectedHotelVoucher && totalPrice < selectedHotelVoucher.priceCondition) {
-      alert(
-        `Giá phòng ${totalPrice.toLocaleString('vi-VN')} VND nhỏ hơn điều kiện của voucher khách sạn (${selectedHotelVoucher.priceCondition.toLocaleString('vi-VN')} VND).`
-      );
-      return;
-    }
+        if (status === "success" || status === "00") {
+          setTimeout(() => {
+            Alert.alert("Thành công", "Thanh toán thành công!", [
+              { text: "OK", onPress: () => router.replace("/(tabs)/booking") },
+            ]);
+          }, 500);
+        } else {
+          setTimeout(() => {
+            Alert.alert(
+              "Thất bại",
+              `Thanh toán không thành công. Trạng thái: ${status}`
+            );
+          }, 500);
+        }
+      }
+    };
 
-    const userId = await AsyncStorage.getItem('userId');
+    // Đăng ký listener deep link
+    const subscription = Linking.addEventListener("url", handleDeepLink);
 
-    const voucherIds: number[] = [];
-    // nếu có voucher khách sạn
-    if (selectedHotelVoucher?.id) voucherIds.push(selectedHotelVoucher.id);
+    // Kiểm tra nếu app được mở bằng deep link ngay từ đầu (khi chưa chạy)
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleDeepLink({ url });
+      }
+    });
 
-    // nếu có voucher app
-    if (selectedGlobalVoucher?.id) voucherIds.push(selectedGlobalVoucher.id);
+    // Cleanup listener khi unmount
+    return () => {
+      subscription.remove();
+    };
+  }, [router]);
+
+
+  // ⚡ Gộp chức năng Đặt phòng và Thanh toán
+  const handleConfirmAndPay = async () => {
+    setIsProcessing(true); // Bắt đầu loading
+    console.log("Bắt đầu quá trình đặt phòng và thanh toán...");
+
+    try {
+      // BƯỚC 1: TẠO BOOKING
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        throw new Error("Không tìm thấy User ID");
+      }
 
       const booking: Booking = {
         userId: Number(userId!),
@@ -158,10 +182,12 @@ export default function ConfirmBooking() {
       }
 
     } catch (err) {
-      console.error(err);
+      console.error("Lỗi trong quá trình xác nhận và thanh toán:", err);
+      // Alert.alert("Lỗi", "Đã có lỗi xảy ra. Vui lòng thử lại.");
+    } finally {
+      setIsProcessing(false); // Kết thúc loading
     }
   };
-
 
   return (
     <ScrollView style={styles.container}>
@@ -197,9 +223,9 @@ export default function ConfirmBooking() {
 
           <View style={styles.row}>
             {/* <Text>Yêu cầu đặc biệt</Text> */}
-              <Text style={{ width: '45%' }}>{item.name}</Text>
-              <Text style={{ width: '10%' }}>X{item.quantity}</Text>
-              <Text style={{ width: '45%', textAlign: 'right' }}>{(item.price * Number(item.quantity)).toLocaleString('vi-VN')} VND</Text>
+            <Text style={{ width: '45%' }}>{item.name}</Text>
+            <Text style={{ width: '10%' }}>X{item.quantity}</Text>
+            <Text style={{ width: '45%', textAlign: 'right' }}>{(item.price * Number(item.quantity)).toLocaleString('vi-VN')} VND</Text>
             {/* <Text>{specialRequests.map((item: UtilityItem) => item.price).join(', ')}</Text> */}
           </View>
         ))}
@@ -208,59 +234,50 @@ export default function ConfirmBooking() {
           <Text>Thuế & Phí</Text>
           <Text>{Number(0).toLocaleString('vi-VN')} VND</Text>
         </View>
-
+        {/* {specialRequests.length > 0 && (
+          <View style={styles.row}>
+            <Text>Yêu cầu đặc biệt (x{specialRequests.length})</Text>
+            <Text>{specialRequestTotal.toLocaleString('vi-VN')} VND</Text>
+          </View>
+        )}
+        {insuranceSelected && (
+          <View style={styles.row}>
+            <Text>Bảo hiểm du lịch</Text>
+            <Text>{insurancePrice.toLocaleString('vi-VN')} VND</Text>
+          </View>
+        )} */}
       </View>
 
+      {/* Chi tiết yêu cầu đặc biệt */}
+      {/* {specialRequests.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.label}>Chi tiết yêu cầu</Text>
+          {specialRequests.map((req: string, idx: number) => (
+            <Text key={idx} style={styles.value}>
+              • {req}
+            </Text>
+          ))}
+        </View>
+      )} */}
 
+      {/* ----- Ô chọn voucher ----- */}
       <View style={styles.section}>
-        <Text style={styles.label}>Voucher của app</Text>
+        <Text style={styles.label}>Voucher</Text>
         <TouchableOpacity
           style={styles.voucherBox}
           onPress={() => setVoucherModalVisible(true)}
         >
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={{ color: selectedGlobalVoucher ? '#333' : '#888' }}>
-              {selectedGlobalVoucher
-                ? `${selectedGlobalVoucher.code} - Giảm ${selectedGlobalVoucher.percent.toLocaleString('vi-VN')} %`
+            <Text style={{ color: selectedVoucher ? '#333' : '#888' }}>
+              {selectedVoucher
+                ? `${selectedVoucher.code} - Giảm ${selectedVoucher.discount.toLocaleString('vi-VN')} VND`
                 : 'Chọn voucher'}
             </Text>
-
-            {/* Nút xóa voucher nếu đang chọn */}
-            {selectedGlobalVoucher && (
+            {selectedVoucher && (
               <TouchableOpacity
                 onPress={(e) => {
-                  e.stopPropagation();        // chặn mở modal
-                  setSelectedGlobalVoucher(null);   // bỏ chọn
-                }}
-                style={styles.clearBtn}
-              >
-                <Text style={{ color: '#e53935', fontWeight: 'bold' }}>✕</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </TouchableOpacity>
-      </View>
-
-
-      <View style={styles.section}>
-        <Text style={styles.label}>Voucher của khách sạn</Text>
-        <TouchableOpacity
-          style={styles.voucherBox}
-          onPress={() => setVoucherModalVisible2(true)}
-        >
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={{ color: selectedHotelVoucher ? '#333' : '#888' }}>
-              {selectedHotelVoucher
-                ? `${selectedHotelVoucher.code} - Giảm ${selectedHotelVoucher.percent.toLocaleString('vi-VN')} %`
-                : 'Chọn voucher'}
-            </Text>
-
-            {/* Nút xóa voucher nếu đang chọn */}
-            {selectedHotelVoucher && (
-              <TouchableOpacity
-                onPress={(e) => {
-                  e.stopPropagation();        // chặn mở modal
-                  setSelectedHotelVoucher(null);   // bỏ chọn
+                  e.stopPropagation();    // chặn mở modal
+                  setSelectedVoucher(null);   // bỏ chọn
                 }}
                 style={styles.clearBtn}
               >
@@ -275,24 +292,19 @@ export default function ConfirmBooking() {
       <View style={[styles.row, styles.total]}>
         <Text style={{ fontWeight: 'bold' }}>Tổng cộng</Text>
         <View style={{ alignItems: 'flex-end' }}>
-          {(selectedGlobalVoucher || selectedHotelVoucher) ? (
+          {selectedVoucher ? (
             <>
               {/* Giá gốc gạch ngang */}
               <Text style={styles.oldPrice}>
                 {totalPrice.toLocaleString('vi-VN')} VND
               </Text>
-
-              {/* Giá sau giảm */}
+              {/* Giá đã giảm */}
               <Text style={styles.newPrice}>
-                {finalPrice.toLocaleString('vi-VN')} VND
-              </Text>
-
-              {/* Hiển thị phần giảm */}
-              <Text style={styles.discount}>
-                (Giảm {totalDiscount}%)
+                {totalPrice.toLocaleString('vi-VN')} VND
               </Text>
             </>
           ) : (
+            // Chưa chọn voucher: chỉ hiển thị 1 giá
             <Text style={styles.newPrice}>
               {price.toLocaleString('vi-VN')} VND
             </Text>
@@ -300,92 +312,20 @@ export default function ConfirmBooking() {
         </View>
       </View>
 
-
-
-
       {/* Nút thanh toán */}
-      <TouchableOpacity style={styles.payBtn} onPress={handleConfirmPayment}>
-        <Text style={styles.payText}>Thanh toán</Text>
+      <TouchableOpacity
+        style={styles.payBtn}
+        onPress={handleConfirmAndPay}
+        disabled={isProcessing}
+      >
+        {isProcessing ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.payText}>Xác nhận và Thanh toán</Text>
+        )}
       </TouchableOpacity>
 
-      {/* ===== Modal chọn voucher ks ===== */}
-      <Modal
-        visible={voucherModalVisible2}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setVoucherModalVisible2(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>
-              Voucher của khách sạn
-            </Text>
-
-            <ScrollView style={{ maxHeight: 400 }}>
-              {/* 🏨 Voucher của khách sạn */}
-              <Text style={{ fontSize: 16, fontWeight: '600', marginVertical: 8 }}>
-                🏨 Voucher của khách sạn
-              </Text>
-              {availableVouchers.filter(
-                (v) =>
-                  Number(v.hotelId) === Number(room.hotel?.id ?? room.hotelId) &&
-                  (v.used || 0) < (v.initialQuantity ?? v.quantity ?? 0)
-              ).length > 0 ? (
-                availableVouchers
-                  .filter(
-                    (v) =>
-                      Number(v.hotelId) === Number(room.hotel?.id ?? room.hotelId) &&
-                      (v.used || 0) < (v.initialQuantity ?? v.quantity ?? 0)
-                  )
-                  .map((item) => {
-                    const isEligible = totalPrice >= item.priceCondition;
-                    return (
-                      <TouchableOpacity
-                        key={item.id}
-                        style={[styles.voucherItem, !isEligible && { opacity: 0.5 }]}
-                        disabled={!isEligible}
-                        onPress={() => {
-                          if (!isEligible) {
-                            Alert.alert(
-                              'Không đủ điều kiện',
-                              'Giá phòng chưa đạt điều kiện để áp dụng voucher này.'
-                            );
-                            return;
-                          }
-                          setSelectedHotelVoucher(item);
-                          setVoucherModalVisible2(false);
-                        }}
-                      >
-                        <Text style={{ fontWeight: '600' }}>{item.code}</Text>
-                        <Text>Giảm {item.percent}%</Text>
-                        <Text>
-                          Điều kiện: Hóa đơn ≥ {item.priceCondition.toLocaleString('vi-VN')} VND
-                        </Text>
-                        {!isEligible && (
-                          <Text style={{ color: 'red', fontSize: 12 }}>
-                            Không đủ điều kiện áp dụng
-                          </Text>
-                        )}
-                      </TouchableOpacity>
-                    );
-                  })
-              ) : (
-                <Text style={{ color: '#888', fontStyle: 'italic' }}>
-                  Không có voucher khách sạn
-                </Text>
-              )}
-            </ScrollView>
-
-            <TouchableOpacity
-              style={[styles.payBtn, { marginTop: 10, backgroundColor: '#aaa' }]}
-              onPress={() => setVoucherModalVisible2(false)}
-            >
-              <Text style={styles.payText}>Đóng</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-      {/* ===== voucher app ===== */}
+      {/* ===== Modal chọn voucher ===== */}
       <Modal
         visible={voucherModalVisible}
         transparent
@@ -394,63 +334,23 @@ export default function ConfirmBooking() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>
-              Voucher của app
-            </Text>
-
-            <ScrollView style={{ maxHeight: 400 }}>
-              {/* 🎁 Voucher Toàn hệ thống */}
-              <Text style={{ fontSize: 16, fontWeight: '600', marginVertical: 8 }}>
-                🎁 Voucher Toàn hệ thống
-              </Text>
-              {availableVouchers.filter(
-                (v) =>
-                  !v.hotelId && (v.used || 0) < (v.initialQuantity ?? v.quantity ?? 0)
-              ).length > 0 ? (
-                availableVouchers
-                  .filter(
-                    (v) =>
-                      !v.hotelId && (v.used || 0) < (v.initialQuantity ?? v.quantity ?? 0)
-                  )
-                  .map((item) => {
-                    const isEligible = totalPrice >= item.priceCondition;
-                    return (
-                      <TouchableOpacity
-                        key={item.id}
-                        style={[styles.voucherItem, !isEligible && { opacity: 0.5 }]}
-                        disabled={!isEligible}
-                        onPress={() => {
-                          if (!isEligible) {
-                            Alert.alert(
-                              'Không đủ điều kiện',
-                              'Giá phòng chưa đạt điều kiện để áp dụng voucher này.'
-                            );
-                            return;
-                          }
-                          setSelectedGlobalVoucher(item);
-                          setVoucherModalVisible(false);
-                        }}
-                      >
-                        <Text style={{ fontWeight: '600' }}>{item.code}</Text>
-                        <Text>Giảm {item.percent}%</Text>
-                        <Text>
-                          Điều kiện: Hóa đơn ≥ {item.priceCondition.toLocaleString('vi-VN')} VND
-                        </Text>
-                        {!isEligible && (
-                          <Text style={{ color: 'red', fontSize: 12 }}>
-                            Không đủ điều kiện áp dụng
-                          </Text>
-                        )}
-                      </TouchableOpacity>
-                    );
-                  })
-              ) : (
-                <Text style={{ color: '#888', fontStyle: 'italic' }}>
-                  Không có voucher toàn hệ thống
-                </Text>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>Chọn Voucher</Text>
+            <FlatList
+              data={availableVouchers}
+              keyExtractor={(item) => item.code}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.voucherItem}
+                  onPress={() => {
+                    setSelectedVoucher(item);
+                    setVoucherModalVisible(false);
+                  }}
+                >
+                  <Text style={{ fontWeight: '600' }}>{item.code}</Text>
+                  <Text>Giảm {item.discount.toLocaleString('vi-VN')} VND</Text>
+                </TouchableOpacity>
               )}
-            </ScrollView>
-
+            />
             <TouchableOpacity
               style={[styles.payBtn, { marginTop: 10, backgroundColor: '#aaa' }]}
               onPress={() => setVoucherModalVisible(false)}
@@ -485,9 +385,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginBottom: 20,
+    minHeight: 48, // Đảm bảo nút không bị nhảy chiều cao khi có loading
   },
   payText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
@@ -526,7 +426,6 @@ const styles = StyleSheet.create({
     color: '#e53935',
     fontSize: 16,
   },
-
   discount: {
     fontSize: 16,
     color: '#e53935', // màu đỏ cho giảm giá
@@ -541,5 +440,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-
 });
