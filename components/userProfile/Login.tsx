@@ -5,106 +5,88 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useNavigation, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Alert } from "react-native";
-import Ionicons from "@expo/vector-icons/Ionicons";
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  Alert,
+} from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import LoginBanner from './bannerLogin';
+
+// 1. Import useUser (giả sử đường dẫn, hãy sửa lại nếu cần)
+import { useUser } from '@/context/UserContext';
 
 type LoginScreenNavigationProp = StackNavigationProp<
   ProfileStackParamList,
-  "Login"
+  'Login'
 >;
+
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalMessage, setModalMessage] = useState('');
-  const [modalType, setModalType] = useState<'success' | 'error'>('success');
-  const [userLogin, setUserLogin] = useState<UserLogin>({
+  // 2. Lấy hàm setUser từ Context
+  const { setUser } = useUser();
+  const router = useRouter(); // Vẫn giữ router nếu cần cho các việc khác
+  const navigation = useNavigation<LoginScreenNavigationProp>();
 
-    username: '',
-    password: ''
-  });
-
-  // Hàm toggle (chuyển đổi) trạng thái hiển thị mật khẩu
   const togglePasswordVisibility = () => {
-    setShowPassword(prev => !prev);
+    setShowPassword((prev) => !prev);
   };
 
-  const router = useRouter();
-  const navigation = useNavigation<LoginScreenNavigationProp>();
   const handleLogin = async () => {
+    const loginPayload: UserLogin = {
+      username: username,
+      password: password,
+    };
+
     try {
-      userLogin.username = username;
-      userLogin.password = password;
-      const res = await loginFunction(userLogin);
-      console.log("login res", res);
+      const res = await loginFunction(loginPayload);
+      console.log('login res', res);
 
       if (res != null) {
-        console.log("login res 2", res);
+        console.log('login res 2', res);
 
-        // Hiển thị thông báo thành công
-        Alert.alert(
-          "Thành công",
-          "Đăng nhập thành công!",
-          [
-            {
-              text: "OK",
-              onPress: async () => {
-                await AsyncStorage.setItem("userId", res.id.toString());
-                await AsyncStorage.setItem("userToken", res.accessToken);
-                await AsyncStorage.setItem("role", res.role.name);
-                setUser(res);
-                // Sau khi bấm OK thì chuyển sang LoggedAccount
-                router.replace('/');
-                navigation.replace("LoggedAccount");
-                
+        Alert.alert('Thành công', 'Đăng nhập thành công!', [
+          {
+            text: 'OK',
+            onPress: async () => {
+              // 3. Lưu thông tin vào bộ nhớ
+              await AsyncStorage.setItem('userId', res.id.toString());
+              await AsyncStorage.setItem('userToken', res.accessToken);
+              await AsyncStorage.setItem('role', res.role.name);
 
-              },
+              // 4. Cập nhật state global
+              // UserContext sẽ tự động lắng nghe thay đổi này và điều hướng
+              setUser(res);
+
+              // 5. XÓA điều hướng tại đây. UserContext sẽ xử lý.
+              // router.replace('/');
             },
-          ]
-        );
+          },
+        ]);
       } else {
-        // Hiển thị thông báo lỗi
         Alert.alert(
-          "Lỗi đăng nhập",
-          "Tên đăng nhập hoặc mật khẩu không chính xác!",
-          [{ text: "OK" }]
+          'Lỗi đăng nhập',
+          'Tên đăng nhập hoặc mật khẩu không chính xác!',
+          [{ text: 'OK' }]
         );
       }
-
-
-    } catch (err) {
-      console.error(err);
-      alert("Lỗi kết nối đến máy chủ!");
     }
-  };
-
-
-  // Ô nhập tên đăng nhập
-  const LoginInput = () => {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.label}>Tên Đăng Nhập:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Nhập tên đăng nhập"
-          placeholderTextColor="#999"
-          value={username}
-          onChangeText={setUsername}
-        />
-      </View>
-    );
+     catch (err) {
+      console.error(err);
+      Alert.alert('Lỗi', 'Lỗi kết nối đến máy chủ!');
+    }
   };
 
   // Nút đăng nhập
   const LoginButton = () => (
-    <TouchableOpacity style={styles.button}>
-      <TouchableOpacity onPress={handleLogin}>
-        <Text style={styles.buttonText}>Đăng nhập</Text>
-      </TouchableOpacity>
+    <TouchableOpacity style={styles.button} onPress={handleLogin}>
+      <Text style={styles.buttonText}>Đăng nhập</Text>
     </TouchableOpacity>
   );
 
@@ -114,11 +96,15 @@ export default function Login() {
       <Text style={styles.registerText}>
         Nếu chưa có tài khoản vui lòng ấn{' '}
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-          <Text style={{
-            color: 'blue',
-            transform: [{ translateY: 5 }],
-            fontWeight: 'bold',
-          }}>Đăng ký</Text>
+          <Text
+            style={{
+              color: 'blue',
+              transform: [{ translateY: 5 }],
+              fontWeight: 'bold',
+            }}
+          >
+            Đăng ký
+          </Text>
         </TouchableOpacity>
       </Text>
       <Text style={styles.infoText}>
@@ -129,7 +115,6 @@ export default function Login() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
-      {/* Banner trên cùng */}
       <LoginBanner
         title="Đăng Nhập"
         subtitle="Tận hưởng các tính năng hoàn chỉnh của travelokaTDC"
@@ -144,6 +129,7 @@ export default function Login() {
           placeholderTextColor="#999"
           value={username}
           onChangeText={setUsername}
+          autoCapitalize="none"
         />
       </View>
       <View style={styles.container}>
@@ -153,63 +139,31 @@ export default function Login() {
             style={[styles.input, { flex: 1 }]}
             placeholder="Nhập mật khẩu"
             placeholderTextColor="#999"
-            secureTextEntry={!showPassword} // thay đổi theo state
+            secureTextEntry={!showPassword}
             value={password}
             onChangeText={setPassword}
           />
           <TouchableOpacity onPress={togglePasswordVisibility}>
             <Ionicons
-              name={showPassword ? "eye-off" : "eye"}
+              name={showPassword ? 'eye-off' : 'eye'}
               size={22}
               color="#555"
             />
           </TouchableOpacity>
         </View>
-        <View style={{ alignItems: "flex-end", marginRight: 20 }}>
-          <TouchableOpacity onPress={() => navigation.navigate("ForgotPassword")}>
-            <Text style={{ color: "#007BFF", fontWeight: "600", marginTop: 5 }}>
+        <View style={{ alignItems: 'flex-end', marginRight: 20 }}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('ForgotPassword')}
+          >
+            <Text style={{ color: '#007BFF', fontWeight: '600', marginTop: 5 }}>
               Quên mật khẩu?
             </Text>
           </TouchableOpacity>
         </View>
-
       </View>
 
-
-      {/* Nút login */}
       <LoginButton />
-
-      {/* Phần hướng dẫn đăng ký */}
       <RegisterSection />
-
-      <Modal transparent={true} visible={modalVisible} animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View
-            style={[
-              styles.modalContainer,
-              { borderColor: modalType === 'success' ? '#28a745' : '#dc3545' },
-            ]}
-          >
-            <Text
-              style={[
-                styles.modalText,
-                { color: modalType === 'success' ? '#28a745' : '#dc3545' },
-              ]}
-            >
-              {modalMessage}
-            </Text>
-            {/* <TouchableOpacity
-              style={[
-                styles.closeButton,
-                { backgroundColor: modalType === 'success' ? '#28a745' : '#dc3545' },
-              ]}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={{ color: '#fff', fontWeight: 'bold' }}>Đóng</Text>
-            </TouchableOpacity> */}
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -217,28 +171,25 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     marginVertical: 10,
-    paddingHorizontal: 20
+    paddingHorizontal: 20,
   },
-  // Label cho mỗi input
   label: {
     fontWeight: 'bold',
     marginBottom: 5,
   },
-  // Input gạch chân
   input: {
     borderBottomWidth: 1,
     borderBottomColor: '#aaa',
     paddingVertical: 5,
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
-  // Nút đăng nhập
   button: {
     marginTop: 20,
     marginHorizontal: 20,
-    backgroundColor: '#ddd',   // màu xám nhạt
+    backgroundColor: '#ddd',
     paddingVertical: 12,
-    borderRadius: 8,           // bo góc
+    borderRadius: 8,
     alignItems: 'center',
   },
   buttonText: {
@@ -246,7 +197,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  // Phần dưới cùng (đăng ký + thông báo bảo mật)
   registerContainer: {
     marginTop: 20,
     paddingHorizontal: 20,
@@ -261,35 +211,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
   },
-  closeButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 6,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    width: '75%',
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 12,
-    borderWidth: 2,
-    alignItems: 'center',
-  },
-  modalText: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-
     paddingVertical: 5,
   },
 });

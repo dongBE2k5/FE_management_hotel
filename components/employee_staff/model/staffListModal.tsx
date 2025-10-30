@@ -1,23 +1,75 @@
-import React, { useState } from "react";
-import { Modal, View, Text, TouchableOpacity, StyleSheet, FlatList } from "react-native";
+import { connectAndSubscribe, disconnect, fetchInitialRequests ,sendRequest} from "@/service/Realtime/WebSocketAPI";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useEffect, useState } from "react";
+import { FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import FeedbackModal from "./feedbackmodal"; // 👈 import modal mới
+
 
 export default function StaffListModal({ visible, onClose, staffList = [] }) {
   const [showFeedback, setShowFeedback] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
-
+  const [requests, setRequests] = useState([]);
   const handleCall = (staff) => {
+    console.log(staff);
+    
     setSelectedStaff(staff);
     setShowFeedback(true); // 👈 mở modal feedback
   };
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const setupWebSocket = async () => {
+      if (!visible) {
+        disconnect();
+        return;
+      }
+
+      try {
+        const userIdStr = await AsyncStorage.getItem("userId");
+        if (!userIdStr) {
+          console.warn("⚠️ Không tìm thấy userId trong AsyncStorage");
+          return;
+        }
+        const userId = Number(userIdStr);
+
+        // 1. Lấy dữ liệu ban đầu
+        const initialRequests = await fetchInitialRequests(userId);
+        if (isMounted) setRequests(initialRequests);
+
+        // 2. Thiết lập WebSocket
+        connectAndSubscribe(userId, {
+          onConnected: () => console.log("✅ WebSocket connected from StaffListModal"),
+          onDisconnected: () => console.log("❌ WebSocket disconnected from StaffListModal"),
+          onError: (error) => console.error("⚠️ WebSocket error:", error),
+          onMessageReceived: (newRequest) => {
+            console.log("📩 Nhận request realtime:", newRequest);
+            if (isMounted) {
+              setRequests((prev) => [newRequest, ...prev]);
+            }
+          },
+        });
+      } catch (error) {
+        console.error("Lỗi thiết lập WebSocket:", error);
+      }
+    };
+
+    setupWebSocket();
+
+    // Cleanup khi modal đóng hoặc component unmount
+    return () => {
+      isMounted = false;
+      disconnect();
+    };
+  }, [visible]);
+
   const renderItem = ({ item }) => {
-    let statusColor = "#000";
-    if (item.status.includes("kiểm tra")) statusColor = "green";
-    else if (item.status.includes("dọn dẹp")) statusColor = "orange";
-    else if (item.status.includes("Hết giờ")) statusColor = "red";
-    else if (item.status.includes("chờ")) statusColor = "blue";
+    // let statusColor = "#000";
+    // if (item.status.includes("kiểm tra")) statusColor = "green";
+    // else if (item.status.includes("dọn dẹp")) statusColor = "orange";
+    // else if (item.status.includes("Hết giờ")) statusColor = "red";
+    // else if (item.status.includes("chờ")) statusColor = "blue";
 
     return (
       <View style={styles.card}>
@@ -31,11 +83,11 @@ export default function StaffListModal({ visible, onClose, staffList = [] }) {
           <Text style={styles.label}>Tên </Text>
           <Text style={[styles.value, { fontWeight: "700" }]}>{item.name}</Text>
         </View>
-
+        {/* 
         <View style={styles.row}>
           <Text style={styles.label}>Trạng thái </Text>
           <Text style={[styles.value, { color: statusColor }]}>{item.status}</Text>
-        </View>
+        </View> */}
 
         <View style={styles.row}>
           <Text style={styles.label}>SĐT </Text>
@@ -79,10 +131,10 @@ export default function StaffListModal({ visible, onClose, staffList = [] }) {
         staffName={selectedStaff?.name}
         onClose={() => setShowFeedback(false)}
         onCloseAll={() => {
-    // 🔹 Đóng luôn cả Feedback và StaffList
-    setShowFeedback(false);
-    onClose(); // đóng StaffListModal cha
-  }}
+          // 🔹 Đóng luôn cả Feedback và StaffList
+          setShowFeedback(false);
+          onClose(); // đóng StaffListModal cha
+        }}
       />
     </>
   );

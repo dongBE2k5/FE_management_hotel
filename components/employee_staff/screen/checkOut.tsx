@@ -13,10 +13,12 @@ import {
 // Giả định bạn đã có các hàm API và component Modal này
 import { getBookingById, getHistoryBookingsByBookingId, updateBookingStatus } from "@/service/BookingAPI";
 // import { getServicesByBookingId } from "@/service/ServiceAPI"; // Bỏ comment khi có API dịch vụ
+import { getEmployeeByHotel } from '@/service/EmpoyeeAPI';
+import { getPaymentsByBookingId } from "@/service/Payment/PaymentAPI";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import CostDetailModal from "../model/costdetailModal";
 import StaffListModal from "../model/staffListModal";
-import { getPaymentsByBookingId } from "@/service/Payment/PaymentAPI"
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { id } from 'date-fns/locale';
 
 // HÀM HỢP NHẤT DỮ LIỆU CHO MÀN HÌNH CHÍNH
 // Thêm isPaid để xác định trạng thái thanh toán cuối cùng
@@ -38,7 +40,7 @@ const transformDataForScreen = (bookingDetails, historyDetails, isPaid) => {
     // Nếu chưa thanh toán, có thể kiểm tra trạng thái cọc từ history
     const hasDeposit = historyDetails.some(item => item.newStatus === 'DA_COC');
     if (hasDeposit) {
-        paymentStatusText = 'Đã cọc';
+      paymentStatusText = 'Đã cọc';
     }
   }
 
@@ -75,16 +77,21 @@ export default function Checkout() {
   const [costModalVisible, setCostModalVisible] = useState(false);
   const [staffModalVisible, setStaffModalVisible] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
-
+  const [employeeList, setEmployeeList] = useState([]);
   // Dữ liệu giả nhân viên (có thể thay bằng API sau)
-  const staffData = [
-    {
-      role: "Nhân viên dọn phòng",
-      name: "Đỗ Nguyên Tài",
-      status: "Đang kiểm tra phòng",
-      phone: "012354667897",
-    },
-  ];
+  const staffData = (employee) => ({
+    id : employee.user.id,
+    role: employee.position === "CLEANING" ? "Nhân viên dọn phòng" : "Nhân viên khách sạn",
+    name: employee.user.fullName,
+    // status: "Đang kiểm tra phòng",
+    phone: employee.user.phone,
+  }
+
+  )
+
+
+
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -94,18 +101,30 @@ export default function Checkout() {
         return;
       }
       try {
+        const hotelIdStr = await AsyncStorage.getItem('hotelID');
+        const hotelId = hotelIdStr ? Number(hotelIdStr) : null;
+        if (!hotelId) {
+          setError("Không tìm thấy thông tin khách sạn.");
+          setIsLoading(false);
+          return;
+        }
         setIsLoading(true);
         // Gọi đồng thời các API cần thiết, bao gồm cả payment
-        const [bookingDetails, historyDetails, payments] = await Promise.all([
+        const [bookingDetails, historyDetails, payments, listEmployee] = await Promise.all([
           getBookingById(bookingId),
           getHistoryBookingsByBookingId(bookingId),
-          getPaymentsByBookingId(bookingId)
+          getPaymentsByBookingId(bookingId),
+          getEmployeeByHotel(hotelId)
           // getServicesByBookingId(bookingId) // Bỏ comment khi có API
         ]);
-        
+        console.log("Danh sách nhân viên theo khách sạn:", listEmployee);
+        setEmployeeList(listEmployee
+          ?.filter(emp => emp?.position === "CLEANING")
+          .map(staffData));
+
         // Kiểm tra xem có thanh toán nào thành công không
         const isPaid = payments.some(payment => payment.status === 'success');
-        
+
         // 1. Xử lý dữ liệu cho màn hình checkout chính
         const formattedScreenData = transformDataForScreen(bookingDetails, historyDetails, isPaid);
         setBookingData(formattedScreenData);
@@ -153,23 +172,23 @@ export default function Checkout() {
   // HÀM MỚI ĐỂ XÁC NHẬN CHECK-OUT
   const handleConfirmCheckout = async () => {
     try {
-        const userId = await AsyncStorage.getItem("userId");
-        if (!userId) {
-            Alert.alert("Lỗi", "Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.");
-            return;
-        }
+      const userId = await AsyncStorage.getItem("userId");
+      if (!userId) {
+        Alert.alert("Lỗi", "Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.");
+        return;
+      }
 
-        // Gọi API để cập nhật trạng thái
-        await updateBookingStatus(bookingId, "CHECK_OUT", Number(userId));
+      // Gọi API để cập nhật trạng thái
+      await updateBookingStatus(bookingId, "CHECK_OUT", Number(userId));
 
-        // Thông báo thành công và quay lại
-        Alert.alert("Thành công", "Check-out thành công!", [
-            { text: "OK", onPress: () => navigation.goBack() }
-        ]);
+      // Thông báo thành công và quay lại
+      Alert.alert("Thành công", "Check-out thành công!", [
+        { text: "OK", onPress: () => navigation.goBack() }
+      ]);
 
     } catch (err) {
-        console.error("Lỗi khi xác nhận check-out:", err);
-        Alert.alert("Lỗi", "Không thể xác nhận check-out. Vui lòng thử lại.");
+      console.error("Lỗi khi xác nhận check-out:", err);
+      Alert.alert("Lỗi", "Không thể xác nhận check-out. Vui lòng thử lại.");
     }
   };
 
@@ -253,13 +272,13 @@ export default function Checkout() {
         >
           <Text style={styles.btnText}>Xem chi tiết dịch vụ & thanh toán</Text>
         </TouchableOpacity>
-        
+
         {/* NÚT XÁC NHẬN CHECK-OUT MỚI */}
         <TouchableOpacity
-            style={[styles.btn, { backgroundColor: "#dc3545" }]} // Màu đỏ để xác nhận
-            onPress={handleConfirmCheckout}
+          style={[styles.btn, { backgroundColor: "#dc3545" }]} // Màu đỏ để xác nhận
+          onPress={handleConfirmCheckout}
         >
-            <Text style={styles.btnText}>Xác nhận Check-out</Text>
+          <Text style={styles.btnText}>Xác nhận Check-out</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={[styles.btn, { backgroundColor: "#ccc" }]} onPress={() => navigation.goBack()}>
@@ -269,7 +288,7 @@ export default function Checkout() {
 
       <StaffListModal
         visible={staffModalVisible}
-        staffList={staffData}
+        staffList={employeeList}
         onClose={() => setStaffModalVisible(false)}
       />
 
@@ -283,112 +302,112 @@ export default function Checkout() {
 }
 
 const styles = StyleSheet.create({
-    centeredContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: "#fff",
-    },
-    container: {
-        flex: 1,
-        backgroundColor: "#fff",
-        padding: 16,
-    },
-    header: {
-        marginBottom: 24,
-    },
-    headerTitle: {
-        fontSize: 22,
-        fontWeight: "bold",
-        textAlign: 'center',
-    },
-    subTitle: {
-        color: "#666",
-        marginBottom: 24,
-        textAlign: 'center',
-        fontSize: 14,
-    },
-    progressWrapper: {},
-    progressVisualContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 25,
-    },
-    progressLabelContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 8,
-    },
-    stepCircle: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    stepCircleActive: {
-        backgroundColor: '#1E63E9',
-    },
-    stepCircleInactive: {
-        backgroundColor: '#D9D9D9',
-    },
-    stepTextActive: {
-        color: '#FFFFFF',
-        fontWeight: 'bold',
-    },
-    stepTextInactive: {
-        color: '#333333',
-        fontWeight: 'bold',
-    },
-    stepLabel: {
-        flex: 1,
-        fontSize: 12,
-        textAlign: 'center',
-        color: '#666',
-    },
-    connector: {
-        flex: 1,
-        height: 2,
-        backgroundColor: '#D9D9D9',
-        marginHorizontal: 10,
-    },
-    connectorActive: {
-        backgroundColor: '#1E63E9',
-    },
-    card: {
-        borderWidth: 1,
-        borderColor: "#ddd",
-        borderRadius: 8,
-        padding: 12,
-        marginBottom: 16,
-    },
-    rowBetween: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginTop: 6,
-    },
-    bold: {
-        fontWeight: "600",
-    },
-    badge: {
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 6,
-    },
-    divider: {
-        height: 1,
-        backgroundColor: "#ddd",
-        marginVertical: 8,
-    },
-    btn: {
-        padding: 12,
-        borderRadius: 8,
-        alignItems: "center",
-        marginBottom: 10,
-    },
-    btnText: {
-        color: "#fff",
-        fontWeight: "600",
-    },
+  centeredContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: "#fff",
+  },
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    padding: 16,
+  },
+  header: {
+    marginBottom: 24,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    textAlign: 'center',
+  },
+  subTitle: {
+    color: "#666",
+    marginBottom: 24,
+    textAlign: 'center',
+    fontSize: 14,
+  },
+  progressWrapper: {},
+  progressVisualContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 25,
+  },
+  progressLabelContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  stepCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stepCircleActive: {
+    backgroundColor: '#1E63E9',
+  },
+  stepCircleInactive: {
+    backgroundColor: '#D9D9D9',
+  },
+  stepTextActive: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  stepTextInactive: {
+    color: '#333333',
+    fontWeight: 'bold',
+  },
+  stepLabel: {
+    flex: 1,
+    fontSize: 12,
+    textAlign: 'center',
+    color: '#666',
+  },
+  connector: {
+    flex: 1,
+    height: 2,
+    backgroundColor: '#D9D9D9',
+    marginHorizontal: 10,
+  },
+  connectorActive: {
+    backgroundColor: '#1E63E9',
+  },
+  card: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  rowBetween: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 6,
+  },
+  bold: {
+    fontWeight: "600",
+  },
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#ddd",
+    marginVertical: 8,
+  },
+  btn: {
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  btnText: {
+    color: "#fff",
+    fontWeight: "600",
+  },
 });

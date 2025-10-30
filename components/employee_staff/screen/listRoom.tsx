@@ -1,7 +1,9 @@
 import { getAllBookingsByHotelId } from '@/service/BookingAPI';
+import { connectAndSubscribeBooking, disconnect } from '@/service/Realtime/BookingWS';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import React, { useEffect, useMemo, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     FlatList,
     SafeAreaView,
@@ -12,6 +14,8 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+
+
 
 // Cấu hình cho các trạng thái
 const statusConfig = {
@@ -43,29 +47,67 @@ export default function ListRoom() {
     });
 
     const [data, setData] = useState([]);
-    useEffect(() => {
-        const fetchBookings = async () => {
-            try {
-                // // Giả lập dữ liệu API với cccd
-                //  const mockApiResponse = [
-                //     { id: 1, checkInDate: '2025-10-20', checkOutDate: '2025-10-22', status: 'DA_THANH_TOAN', user: { fullName: 'Nguyễn Văn A', cccd: '012345678910' }, room: { type: 'Deluxe Twin', number: '302' }, totalPrice: 3200000, amountPaid: 3200000 },
-                //     { id: 2, checkInDate: '2025-10-18', checkOutDate: '2025-10-19', status: 'CHUA_THANH_TOAN', user: { fullName: 'Lê Thị B', cccd: '112233445566' }, room: { type: 'Standard', number: '102' }, totalPrice: 950000, amountPaid: 0 },
-                //     { id: 3, checkInDate: '2025-10-15', checkOutDate: '2025-10-16', status: 'CHECK_IN', user: { fullName: 'Trần Hoàng C', cccd: '998877665544' }, room: { type: 'Suite', number: '501' }, totalPrice: 5000000, amountPaid: 5000000 },
-                //     { id: 4, checkInDate: '2025-10-19', checkOutDate: '2025-10-21', status: 'DA_COC', user: { fullName: 'Phạm Thị D', cccd: '001122334455' }, room: { type: 'Superior', number: '205' }, totalPrice: 2100000, amountPaid: 1000000 },
-                // ];
-                // setData(mockApiResponse.map(mapBookingData));
-
-                const [rawData] = await Promise.all([getAllBookingsByHotelId(1)]);
-                console.log("data", rawData);
-                const formattedData = rawData.map(mapBookingData);
-                setData(formattedData);
-
-            } catch (error) {
-                console.error("Lỗi:", error);
-            }
-        };
-        fetchBookings();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            let isMounted = true;
+            const fetchBookings = async () => {
+                try {
+                    // // Giả lập dữ liệu API với cccd
+                    //  const mockApiResponse = [
+                    //     { id: 1, checkInDate: '2025-10-20', checkOutDate: '2025-10-22', status: 'DA_THANH_TOAN', user: { fullName: 'Nguyễn Văn A', cccd: '012345678910' }, room: { type: 'Deluxe Twin', number: '302' }, totalPrice: 3200000, amountPaid: 3200000 },
+                    //     { id: 2, checkInDate: '2025-10-18', checkOutDate: '2025-10-19', status: 'CHUA_THANH_TOAN', user: { fullName: 'Lê Thị B', cccd: '112233445566' }, room: { type: 'Standard', number: '102' }, totalPrice: 950000, amountPaid: 0 },
+                    //     { id: 3, checkInDate: '2025-10-15', checkOutDate: '2025-10-16', status: 'CHECK_IN', user: { fullName: 'Trần Hoàng C', cccd: '998877665544' }, room: { type: 'Suite', number: '501' }, totalPrice: 5000000, amountPaid: 5000000 },
+                    //     { id: 4, checkInDate: '2025-10-19', checkOutDate: '2025-10-21', status: 'DA_COC', user: { fullName: 'Phạm Thị D', cccd: '001122334455' }, room: { type: 'Superior', number: '205' }, totalPrice: 2100000, amountPaid: 1000000 },
+                    // ];
+                    // setData(mockApiResponse.map(mapBookingData));
+    
+                    const hotelIdStr = await AsyncStorage.getItem('hotelID'); // ✅ await
+                    const hotelId = hotelIdStr ? Number(hotelIdStr) : null;
+                    if (!hotelId) {
+                        console.error("Hotel ID không hợp lệ.");
+                        return;
+                    }
+                    const [bookings] = await Promise.all([
+                        getAllBookingsByHotelId(hotelId),
+                    ]);
+    
+                    // console.log("bookings", bookings);
+    
+                    const sortedData = bookings.sort(
+                        (a, b) => new Date(b.checkInDate || 0) - new Date(a.checkInDate || 0)
+                    );
+    
+                    const formattedData = sortedData.map(mapBookingData);
+    
+                    setData(formattedData);
+                } catch (error) {
+                    console.error("Lỗi:", error);
+                }
+            };
+    
+            const setupWs = async () => {
+                connectAndSubscribeBooking({
+                    onConnected: () => console.log('✅ WebSocket connected from ListRoom'),
+                    onDisconnected: () => console.log('❌ WebSocket disconnected from ListRoom'),
+                    onError: (error) => console.error('⚠️ WebSocket error:', error),
+                    onMessageReceived: (newRequest) => {
+                        console.log("📩 Nhận request realtime:", newRequest);
+                        fetchBookings();
+                        // if (isMounted) {
+                        //     setRequests((prev) => [newRequest, ...prev]);
+                        // }
+                    },
+                });
+            };
+            fetchBookings();
+            setupWs();
+            return () => {
+                isMounted = false;
+                disconnect();
+            };
+        }, [])
+        
+    );
 
     const navigation = useNavigation();
     const [activeFilter, setActiveFilter] = useState('ALL');

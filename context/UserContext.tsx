@@ -1,13 +1,12 @@
 import RegisterResponse from '@/models/RegisterResponse';
+import { getEmployeeByUser } from '@/service/EmpoyeeAPI';
 import { getUserById } from '@/service/UserAPI';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter, useSegments } from 'expo-router';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-// 1. Import thêm ActivityIndicator và View
 import { ActivityIndicator, View } from 'react-native';
 
-// ... (Giữ nguyên type, UserContextType, và createContext)
 type UserType = RegisterResponse & { role: string };
 
 type UserContextType = {
@@ -19,8 +18,8 @@ type UserContextType = {
 
 const UserContext = createContext<UserContextType>({
   user: null,
-  refreshUser: async () => { },
-  setUser: () => { },
+  refreshUser: async () => {},
+  setUser: () => {},
   isLoading: true,
 });
 
@@ -33,22 +32,53 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const refreshUser = async () => {
     try {
       const userId = await AsyncStorage.getItem('userId');
-      const role = await AsyncStorage.getItem("role");
+      const role = await AsyncStorage.getItem('role');
 
       if (role && userId) {
+        // SỬA LỖI: Bước 1. Luôn lấy thông tin User làm cốt lõi
         const res = await getUserById(userId);
+
         if (res) {
+          // Lấy user thành công -> set user
           setUser({ ...res, role });
+
+          // SỬA LỖI: Bước 2. Tác vụ phụ: Lấy hotelID (chỉ sau khi đã lấy user thành công)
+          // Bọc trong try...catch riêng để nếu lỗi thì không ảnh hưởng đến việc login
+          if (
+            role === 'ROLE_EMPLOYEE' ||
+            role === 'ROLE_CLEANING' ||
+            role === 'ROLE_ADMIN'
+          ) {
+            try {
+              const employee = await getEmployeeByUser(Number(userId)); // Giờ ta chắc chắn userId có giá trị
+              if (employee) {
+                await AsyncStorage.setItem(
+                  'hotelID',
+                  employee.hotelId.toString()
+                );
+              }
+            } catch (employeeError) {
+              console.error(
+                'Lỗi khi lấy thông tin hotel của nhân viên:',
+                employeeError
+              );
+              // Không làm gì cả, user vẫn được đăng nhập
+            }
+          }
         } else {
+          // API getUserById thất bại (ví dụ: user bị xóa)
           setUser(null);
           await AsyncStorage.removeItem('userId');
           await AsyncStorage.removeItem('role');
+          await AsyncStorage.removeItem('hotelID'); // Xóa luôn hotelID
         }
       } else {
+        // Không có role hoặc userId trong Storage
         setUser(null);
       }
     } catch (error) {
-      console.error("Lỗi khi làm mới người dùng:", error);
+      // Lỗi nghiêm trọng (ví dụ: API getUserById sập)
+      console.error('Lỗi khi làm mới người dùng:', error);
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -60,26 +90,20 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     refreshUser();
   }, []);
 
-  // useEffect điều hướng (ĐÃ SỬA ĐỔI)
+  // useEffect điều hướng (Giữ nguyên, logic này đúng)
   useEffect(() => {
-    // 1. Không làm gì nếu đang tải
     if (isLoading) {
       return;
     }
-
     const inGroupLayout = segments[0] ?? null;
 
-    // 2. Đã tải xong, NHƯNG KHÔNG CÓ USER
-    // Đây là "default return" (trạng thái mặc định) -> về (tabs)
-    // Rất quan trọng khi user logout
     if (!user || !user.role) {
       if (inGroupLayout !== '(tabs)') {
         router.replace('/(tabs)');
       }
-      return; // Dừng ở đây
+      return;
     }
-    
-    // 3. Đã tải xong VÀ CÓ USER -> Điều hướng theo role
+
     if (user.role === 'ROLE_EMPLOYEE' || user.role === 'ROLE_ADMIN') {
       if (inGroupLayout !== '(employee)') {
         router.replace('/(employee)');
@@ -92,16 +116,13 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       if (inGroupLayout !== '(cleaningStaff)') {
         router.replace('/(cleaningStaff)');
       }
-    }
-    else {
-      // Các role mặc định khác (ví dụ ROLE_USER) cũng về (tabs)
+    } else {
       if (inGroupLayout !== '(tabs)') {
         router.replace('/(tabs)');
       }
     }
   }, [user, isLoading, segments]);
 
-  // 2. Thêm màn hình Loading tại đây
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -110,7 +131,6 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // 3. Chỉ render app khi đã hết loading
   return (
     <UserContext.Provider value={{ user, refreshUser, setUser, isLoading }}>
       {children}
@@ -119,3 +139,4 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const useUser = () => useContext(UserContext);
+

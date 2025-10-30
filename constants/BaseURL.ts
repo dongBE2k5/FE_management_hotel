@@ -9,7 +9,7 @@ try {
     const parsed = new URL(linkingUrl);
     console.log("Lay ip host thanh cong ", parsed.hostname);
     // Nếu hostname khác "localhost" (ví dụ exp://192.168.1.6:19000)
-    if (parsed.hostname && parsed.hostname !== "192.168.1.6") {
+    if (parsed.hostname && parsed.hostname !== "localhost") {
         ip = parsed.hostname;
         console.log("Lay ip host thanh cong ", ip);
 
@@ -23,7 +23,9 @@ try {
 }
 
 const BaseUrl = `http://${ip}:8080/api`;
+// const BaseUrl = `https://prudish-leonie-noncapriciously.ngrok-free.dev/api`;
 const urlIP = `http://${ip}:8080`;
+// const urlIP = `https://prudish-leonie-noncapriciously.ngrok-free.dev`;
 // const getBaseUrl = ip;
 export default BaseUrl;
 export {urlIP} ;

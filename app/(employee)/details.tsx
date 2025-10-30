@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  StyleSheet,
-  Text,
-  View,
+  Alert,
   Button,
   FlatList,
   SafeAreaView,
-  Alert, // Sử dụng Alert để thông báo lỗi
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 
 // Import các hàm và kiểu dữ liệu từ socketAPI
@@ -14,12 +14,12 @@ import {
   connectAndSubscribe,
   disconnect,
   fetchInitialRequests,
-  sendRequest,
-  respondToRequest,
   Request,
-  Status,
   RequestPayload,
-} from '@/service/WebSocketAPI'; // Import từ file .ts
+  respondToRequest,
+  sendRequest,
+  Status,
+} from '@/service/Realtime/WebSocketAPI'; // Import từ file .ts
 
 // -------------------------------------------------------------
 // Giả sử bạn đã đăng nhập và có thông tin user
