@@ -1,4 +1,6 @@
 import Room from "@/models/Room";
+import CCCDScannerScreen from '../components/host/screen/CCCDScannerScreen';
+import { CameraCaptureView } from '../components/host/screen/CameraCaptureView';
 
 // src/types/navigation.ts
 export type RootStackParamList = {
@@ -72,4 +74,11 @@ export type EmployeeStackParamList = {
   listRoom: undefined;
   bookingDetail: { bookingId: number }; // có params thì khai báo ở đây
   checkout: undefined; // có params thì khai báo ở đây
+}
+export type HostStack ={
+  // CCCDScanner: undefined;
+  CCCDScannerScreen : undefined;
+  CameraCaptureView: { onCapture: (imageUri: string) => void }; 
+  
+
 }

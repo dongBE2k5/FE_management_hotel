@@ -12,7 +12,7 @@ export default function App() {
         const checkRole = async () => {
 
             try {
-                // await AsyncStorage.setItem("role", "ROLE_EMPLOYEE")
+                await AsyncStorage.setItem("role", "ROLE_HOST");
                 const role = await AsyncStorage.getItem("role")
                 console.log(role);
 
@@ -23,9 +23,11 @@ export default function App() {
 
                 if (role === "ROLE_EMPLOYEE" || role === "ROLE_ADMIN") {
                     router.replace("/(employee)");
+                } else if (role === "ROLE_HOST") {
+                    router.replace("/(host)");
                 } else {
                     router.replace("/(tabs)");
-                }
+                           }
             } catch (e) {
                 console.error("Error getting role:", e);
                 router.replace("/(tabs)");
