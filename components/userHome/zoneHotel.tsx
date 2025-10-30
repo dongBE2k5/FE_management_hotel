@@ -1,6 +1,6 @@
 import { Hotel } from '@/models/Hotel';
 import LocationModel from '@/models/Location';
-import { getAllHotel, getHotelByLocation, getRecentlyViewedHotels } from '@/service/HotelAPI';
+import { getAllHotel, getHotelByLocation, getRecentlyViewedHotels, getRecentlyViewedHotelsByLocation } from '@/service/HotelAPI';
 import { getAllLocation } from '@/service/LocationAPI';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -12,7 +12,7 @@ import type { RootStackParamList } from '../../types/navigation';
 import Slide from "../userHotelDetail/slideImage";
 import HotelCard from "./hotelCard";
 import LocationSelector from "./location";
-
+import { getBestChoiceHotels } from '@/service/BookingAPI';
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
 
@@ -35,10 +35,20 @@ export default function ZoneHotel() {
         (hotel, index, self) =>
             index === self.findIndex(h => h.id === hotel.id)
     );
-    const uniqueRecentHotels2 = uniqueRecentHotels.filter(hotels => hotels.id == 2);
-    console.log("uniqueRecentHotels", uniqueRecentHotels2);
 
-
+    //bestchoice 
+    const [bestChoiceHotels, setBestChoiceHotels] = useState<Hotel[]>([]);
+    useEffect(() => {
+        const fetchBestChoiceHotels = async () => {
+            try {
+                const data = await getBestChoiceHotels();
+                setBestChoiceHotels(data);
+            } catch (err) {
+                console.error("Lỗi khi lấy Best Choice Hotels:", err);
+            }
+        };
+        fetchBestChoiceHotels();
+    }, []);
     useEffect(() => {
         const fetchHotels = async () => {
             try {
@@ -76,11 +86,11 @@ export default function ZoneHotel() {
             fetchViewedHotels();
         }, [])
     );
-    const fetchViewedHotels = async () => {
+    const fetchViewedHotelsByLocation = async (locationId?: number) => {
         try {
             const userId = await AsyncStorage.getItem('userId');
             if (!userId) return;
-            const data = await getRecentlyViewedHotels(Number(userId));
+            const data = await getRecentlyViewedHotelsByLocation(Number(userId), locationId);
             setRecentHotels(data);
         } catch (err) {
             console.error(err);
@@ -90,19 +100,37 @@ export default function ZoneHotel() {
     // Dùng useFocusEffect để load lại khi quay về
     useFocusEffect(
         useCallback(() => {
-            fetchViewedHotels();
+            fetchViewedHotelsByLocation();
         }, [])
     );
 
     const changeLocation = async (id: Number) => {
         try {
-            const data = await getHotelByLocation(id)
-            console.log(data)
-            setHotels(data)
+            if (id === 0) {
+                // 0 = “Tất cả”
+                const [allHotels, allBestChoices] = await Promise.all([
+                    getAllHotel(),
+                    getBestChoiceHotels()
+                ]);
+                setHotels(allHotels);
+                setBestChoiceHotels(allBestChoices);
+            } else {
+                const [filteredHotels, filteredBestChoices] = await Promise.all([
+                    getHotelByLocation(id),
+                    getBestChoiceHotels(Number(id))
+                ]);
+                setHotels(filteredHotels);
+                setBestChoiceHotels(filteredBestChoices);
+            }
+
+            // 🔥 Cập nhật danh sách đã xem theo location
+            await fetchViewedHotelsByLocation(Number(id));
+
         } catch (error) {
             console.error(error);
         }
-    }
+    };
+
 
 
     return (
@@ -123,8 +151,8 @@ export default function ZoneHotel() {
 
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cardScroll}>
                             {/* lọc khách sạn trùng lặp*/}
-                            {uniqueRecentHotels.filter(hotels => hotels.id == 2).map(hotel => (
-                                <HotelCard key={hotel.id} handleNavigations={handleNavigation} data={hotel}  onViewedUpdate={fetchViewedHotels}  />
+                            {uniqueRecentHotels.map(hotel => (
+                                <HotelCard key={hotel.id} handleNavigations={handleNavigation} data={hotel} onViewedUpdate={fetchViewedHotelsByLocation} />
                             ))}
 
                         </ScrollView>
@@ -141,44 +169,33 @@ export default function ZoneHotel() {
                     <Image source={require("../../assets/images/fire.png")} />
                 </View>
 
-
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.cardScroll}
-                >
-                    <Pressable
-                        // onPress={() => navigation.navigate('HotelDetail', {hotelId: 1})}
-                        pressRetentionOffset={{ left: 20, right: 20, top: 20, bottom: 20 }}
-                    >
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10, }}>
-                            {hotels.map(hotel => (
-                                <HotelCard key={hotel.id} handleNavigations={handleNavigation} data={hotel} />
-                            ))}
-                        </ScrollView>
-                    </Pressable>
-                </ScrollView>
-
-
+                {bestChoiceHotels.length > 0 ? (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cardScroll}>
+                        {bestChoiceHotels.map(hotel => (
+                            <HotelCard
+                                key={hotel.id}
+                                handleNavigations={handleNavigation}
+                                data={hotel}
+                            />
+                        ))}
+                    </ScrollView>
+                ) : (
+                    <Text style={{ marginLeft: 15, color: '#888' }}>Đang tải danh sách...</Text>
+                )}
                 <View style={{
                     flexDirection: 'row',
                     alignItems: 'center',
                     marginHorizontal: 10,
                 }}>
                     <Text style={styles.text}>Khách sạn nội địa</Text>
-                    <View style={styles.searchInputContainer}>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Tìm kiếm khách sạn phù hợp?"
-                            placeholderTextColor="#000000"
-                        />
-                        <Ionicons name="search" size={15} color="#73c5fcff" />
-
-                    </View>
                 </View>
 
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <LocationSelector locations={locations} changeLocation={changeLocation} />
+                    <LocationSelector
+                        locations={[{ id: 0, name: "Tất cả" }, ...locations]}
+                        changeLocation={changeLocation}
+                    />
+
                 </ScrollView>
 
                 <ScrollView
@@ -216,20 +233,18 @@ export default function ZoneHotel() {
                             showsVerticalScrollIndicator={false}
                             style={styles.cardScroll}
                         >
-                            {/* <HotelCard />
-                            <HotelCard />
-                            <HotelCard />
-                            <HotelCard /> */}
+                            {hotels.map(hotel => (
+                                <HotelCard key={hotel.id} handleNavigations={handleNavigation} data={hotel} />
+                            ))}
                         </ScrollView>
                     </View>
                     <ScrollView
                         showsVerticalScrollIndicator={false}
                         style={styles.cardScroll}
                     >
-                        {/* <HotelCard />
-                        <HotelCard />
-                        <HotelCard />
-                        <HotelCard /> */}
+                        {hotels.map(hotel => (
+                            <HotelCard key={hotel.id} handleNavigations={handleNavigation} data={hotel} />
+                        ))}
                     </ScrollView>
                 </View>
             </View>

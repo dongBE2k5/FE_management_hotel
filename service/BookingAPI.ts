@@ -4,7 +4,7 @@ import BookingResponse from '@/models/Booking/BookingResponse';
 import History from '@/models/Booking/History';
 import BaseUrl from '../constants/BaseURL';
 import Booking from '../models/Booking/Booking';
-
+import { Hotel } from '@/models/Hotel';
 
 interface HistoryStatus {
     bookingId: number;
@@ -19,9 +19,25 @@ const createBooking = async (booking: Booking): Promise<BookingResponse> => {
         headers: {
             'Content-Type': 'application/json',
         },
+        
         body: JSON.stringify(booking),
+        
+        
     });
     return response.json();
+}
+//best choice
+
+export async function getBestChoiceHotels(locationId?: number) {
+    const url = locationId
+        ? `${BaseUrl}/bookings/best-choice?locationId=${locationId}`
+        : `${BaseUrl}/bookings/best-choice`;
+
+    const res = await fetch(url);
+    if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    return await res.json();
 }
 
 

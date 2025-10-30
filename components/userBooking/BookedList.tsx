@@ -19,6 +19,10 @@ export default function BookedList() {
   const [bookings, setBookings] = useState<BookingResponse[]>([]);
   const [countdown, setCountdown] = useState(60);
   const [loading, setLoading] = useState(false);
+  const [filterStatus, setFilterStatus] = useState("CHUA_THANH_TOAN");
+  const filteredBookings = filterStatus
+    ? bookings.filter((b) => b.status === filterStatus)
+    : bookings;
 
   const fetchBookings = async () => {
     try {
@@ -110,17 +114,17 @@ export default function BookedList() {
   };
 
   const renderItem = ({ item }: { item: BookingResponse }) => {
-    const { room, checkInDate, checkOutDate, totalPrice, status } = item;
+    console.log(item);
+    const { room, checkInDate, checkOutDate, totalPrice, status, imageHotel } = item;
 
     return (
       <View style={styles.card}>
         <Image
           source={{
-            uri: item?.imageHotel,
+            uri: imageHotel,
           }}
           style={styles.hotelImage}
         />
-
         <View style={styles.infoContainer}>
           <View style={styles.headerRow}>
             <Text style={styles.roomType}>
@@ -175,7 +179,7 @@ export default function BookedList() {
               <Text style={styles.detailText}>Xem chi tiết</Text>
             </TouchableOpacity>
 
-            {status !== "DA_HUY" && (
+            {status === "CHUA_THANH_TOAN" && (
               <TouchableOpacity
                 style={[styles.cancelButton, { flex: 1 }]}
                 onPress={() => handleCancelBooking(item.id)}
@@ -183,6 +187,7 @@ export default function BookedList() {
                 <Text style={styles.cancelText}>Hủy</Text>
               </TouchableOpacity>
             )}
+
           </View>
         </View>
       </View>
@@ -195,11 +200,41 @@ export default function BookedList() {
       <View style={styles.container}>
         <Text style={styles.title}>🧾 Lịch sử đặt phòng</Text>
 
-        {bookings.length === 0 ? (
-          <Text style={styles.emptyText}>Bạn chưa có đặt phòng nào.</Text>
+        {/* 🔽 Thanh lọc trạng thái */}
+        <View style={styles.filterRow}>
+          {[
+            { label: "Chưa thanh toán", value: "CHUA_THANH_TOAN" },
+            { label: "Đã thanh toán", value: "DA_THANH_TOAN" },
+            { label: "Đã hủy", value: "DA_HUY" },
+          ].map((opt) => (
+            <TouchableOpacity
+              key={opt.value}
+              style={[
+                styles.filterButton,
+                filterStatus === opt.value && styles.filterButtonActive,
+              ]}
+              onPress={() =>
+                setFilterStatus((prev) => (prev === opt.value ? "" : opt.value))
+              }
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  filterStatus === opt.value && styles.filterTextActive,
+                ]}
+              >
+                {opt.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* 🔽 Danh sách booking */}
+        {filteredBookings.length === 0 ? (
+          <Text style={styles.emptyText}>Không có đặt phòng nào phù hợp.</Text>
         ) : (
           <FlatList
-            data={bookings}
+            data={filteredBookings}
             renderItem={renderItem}
             keyExtractor={(item) => item.id.toString()}
             showsVerticalScrollIndicator={false}
@@ -209,6 +244,7 @@ export default function BookedList() {
       </View>
     </>
   );
+
 }
 
 const styles = StyleSheet.create({
@@ -338,4 +374,30 @@ const styles = StyleSheet.create({
     marginTop: 40,
     fontSize: 16,
   },
+  filterRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 16,
+    backgroundColor: "#F1F5F9",
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  filterButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+  },
+  filterButtonActive: {
+    backgroundColor: "#3B82F6",
+  },
+  filterText: {
+    fontSize: 14,
+    color: "#334155",
+    fontWeight: "500",
+  },
+  filterTextActive: {
+    color: "#fff",
+    fontWeight: "700",
+  },
+
 });

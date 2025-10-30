@@ -5,8 +5,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useNavigation, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import LoginBanner from './bannerLogin';
+import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 type LoginScreenNavigationProp = StackNavigationProp<
   ProfileStackParamList,
@@ -15,6 +16,8 @@ type LoginScreenNavigationProp = StackNavigationProp<
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [modalType, setModalType] = useState<'success' | 'error'>('success');
@@ -23,6 +26,11 @@ export default function Login() {
     username: '',
     password: ''
   });
+
+  // Hàm toggle (chuyển đổi) trạng thái hiển thị mật khẩu
+  const togglePasswordVisibility = () => {
+    setShowPassword(prev => !prev);
+  };
 
   const router = useRouter();
   const navigation = useNavigation<LoginScreenNavigationProp>();
@@ -88,23 +96,6 @@ export default function Login() {
     );
   };
 
-  // Ô nhập mật khẩu
-  const PassInput = () => {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.label}>Mật Khẩu:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Nhập mật khẩu"
-          placeholderTextColor="#999"
-          secureTextEntry={true}   // ẩn ký tự mật khẩu
-          value={password}
-          onChangeText={setPassword}
-        />
-      </View>
-    );
-  };
-
   // Nút đăng nhập
   const LoginButton = () => (
     <TouchableOpacity style={styles.button}>
@@ -154,15 +145,33 @@ export default function Login() {
       </View>
       <View style={styles.container}>
         <Text style={styles.label}>Mật Khẩu:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Nhập mật khẩu"
-          placeholderTextColor="#999"
-          secureTextEntry={true}   // ẩn ký tự mật khẩu
-          value={password}
-          onChangeText={setPassword}
-        />
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={[styles.input, { flex: 1 }]}
+            placeholder="Nhập mật khẩu"
+            placeholderTextColor="#999"
+            secureTextEntry={!showPassword} // thay đổi theo state
+            value={password}
+            onChangeText={setPassword}
+          />
+          <TouchableOpacity onPress={togglePasswordVisibility}>
+            <Ionicons
+              name={showPassword ? "eye-off" : "eye"}
+              size={22}
+              color="#555"
+            />
+          </TouchableOpacity>
+        </View>
+        <View style={{ alignItems: "flex-end", marginRight: 20 }}>
+          <TouchableOpacity onPress={() => navigation.navigate("ForgotPassword")}>
+            <Text style={{ color: "#007BFF", fontWeight: "600", marginTop: 5 }}>
+              Quên mật khẩu?
+            </Text>
+          </TouchableOpacity>
+        </View>
+
       </View>
+
 
       {/* Nút login */}
       <LoginButton />
@@ -274,5 +283,10 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     textAlign: 'center',
   },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
 
+    paddingVertical: 5,
+  },
 });

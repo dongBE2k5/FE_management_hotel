@@ -6,22 +6,53 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import React, { useEffect, useState } from 'react';
-import { Button, Image, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, Image, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RoomCard from "./roomCard";
 import RoomZone from './roomZone';
+import { getRatesByHotel, getAverageRate } from '@/service/RateAPI';
+import Rate from '@/models/Rate';
+import { getVouchersByHotel } from "@/service/VoucherAPI";
+import Voucher from "@/models/Voucher";
+import VoucherCard from "@/components/userHome/voucherCard";
+import { getUserVouchers, saveUserVoucher } from '@/service/UserVoucherAPI';
+import { getAllVouchers } from '@/service/VoucherAPI';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type RoomProps = {
     roomTypeImage: RoomTypeImage[],
     hotelId: number
 }
-    const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
+
+interface Props {
+    hotelId: number;
+}
+const today = new Date();
+const tomorrow = new Date(today);
+tomorrow.setDate(today.getDate() + 1);
 export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
+    const [rates, setRates] = useState<Rate[]>([]);
+    const [averageRate, setAverageRate] = useState<number>(0);
+    // Những điều khách thích nhất
+    const defaultTags = ['Phòng sạch', 'Nội thất đẹp', 'Nhân viên thân thiện', 'Dịch vụ tốt'];
+    const tagCounts: Record<string, number> = {};
+    defaultTags.forEach(tag => (tagCounts[tag] = 0));
+
+    rates.forEach(rate => {
+        rate.likedPoints?.forEach(point => {
+            if (tagCounts[point] !== undefined) tagCounts[point]++;
+        });
+    });
+
+    const tagDisplayList = Object.entries(tagCounts);
+
 
     const [checkIn, setCheckIn] = useState<Date>(today);      // mặc định hôm nay
+    const [tempCheckIn, setTempCheckIn] = useState<Date>(checkIn);
+
     const [checkOut, setCheckOut] = useState<Date | null>(tomorrow);
+    const [tempCheckOut, setTempCheckOut] = useState<Date | null>(checkOut);
+
     const [showIn, setShowIn] = useState(false);
     const [showOut, setShowOut] = useState(false);
     const [rooms, setRooms] = useState<Room[]>([]);
@@ -31,23 +62,14 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
     const phongDoi = rooms.filter(room => room.typeRoom == "DOI");
     const phongGiaDinh = rooms.filter(room => room.typeRoom == "GIA_DINH");
 
-
-    
-    // useEffect(() => {
-    //     if (checkIn) {
-    //       const nextDay = new Date(checkIn);
-    //       nextDay.setDate(nextDay.getDate() + 1); // +1 ngày
-    //       setCheckOut(nextDay);
-    //     }
-    //   }, [checkIn]);
     useEffect(() => {
         const fetchRoomAvailableByHotel = async (id: number, checkIn: Date, checkOut: Date) => {
             console.log("fetchRoomAvailableByHotel");
             console.log(checkIn, checkOut);
-            
+
             try {
                 const data = await getRoomAvailableByHotel(id, checkIn, checkOut);
-                setRooms(data); 
+                setRooms(data);
                 setIsSearch(false);
             } catch (err) {
                 console.error(err);
@@ -55,6 +77,20 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
         };
         fetchRoomAvailableByHotel(hotelId, checkIn, checkOut!);
     }, [isSearch]);
+    useEffect(() => {
+        const fetchRates = async () => {
+            try {
+                const rateData = await getRatesByHotel(hotelId);
+                const avg = await getAverageRate(hotelId);
+                setRates(rateData);
+                setAverageRate(avg);
+            } catch (error) {
+                console.error("❌ Lỗi khi tải đánh giá:", error);
+            }
+        };
+        fetchRates();
+    }, [hotelId]);
+
     // console.log(rooms);
     // console.log(roomTypeImage);
     const taxFee = 124182;
@@ -121,37 +157,57 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                     onRequestClose={() => setShowIn(false)}
                 >
                     <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000066' }}>
-                        <View style={{
-                            backgroundColor: '#fff',
-                            height: 260,
-                            borderTopLeftRadius: 12,
-                            borderTopRightRadius: 12,
-                            justifyContent: 'center'
-                        }}>
+                        <View
+                            style={{
+                                backgroundColor: '#fff',
+                                height: 300,
+                                borderTopLeftRadius: 12,
+                                borderTopRightRadius: 12,
+                                justifyContent: 'center',
+                            }}
+                        >
+                            {/* Header */}
+                            <View
+                                style={{
+                                    flexDirection: 'row',
+                                    justifyContent: 'space-between',
+                                    paddingHorizontal: 16,
+                                    paddingVertical: 10,
+                                    borderBottomWidth: 1,
+                                    borderColor: '#ddd',
+                                }}
+                            >
+                                <TouchableOpacity onPress={() => setShowIn(false)}>
+                                    <Text style={{ color: '#009EDE', fontWeight: 'bold' }}>Hủy</Text>
+                                </TouchableOpacity>
+                                <Text style={{ fontWeight: 'bold', fontSize: 16 }}>Nhận phòng</Text>
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        setCheckIn(tempCheckIn);
+                                        // nếu ngày nhận >= ngày trả thì reset ngày trả
+                                        if (checkOut && tempCheckIn >= checkOut) setCheckOut(null);
+                                        setShowIn(false);
+                                    }}
+                                >
+                                    <Text style={{ color: '#009EDE', fontWeight: 'bold' }}>OK</Text>
+                                </TouchableOpacity>
+                            </View>
+
                             <DateTimePicker
-                                value={checkIn}
-                                minimumDate={checkIn}
+                                value={tempCheckIn}
+                                minimumDate={new Date()}
                                 mode="date"
                                 display="spinner"
-                                onChange={(_, date) => date && setCheckIn(date)}
-                                style={{ height: 200 }}
+                                themeVariant="light"
+                                textColor="black"
+                                style={{ flex: 1 }}
+                                onChange={(_, date) => date && setTempCheckIn(date)}
                             />
-                            {/* <input
-                                type="date"
-                                value={checkIn?.toISOString().split('T')[0]}
-                                min={new Date().toISOString().split('T')[0]}
-                                onChange={(e) => setCheckIn(new Date(e.target.value))}
-                                style={{ fontSize: 18, padding: 8 }}
-                            /> */}
-                            {/* <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingRight: 12 }}>
-                                <Button title="Chọn" onPress={() => {
-                                    setShowIn(false);
-                                    if (checkOut && checkIn >= checkOut) setCheckOut(null);
-                                }} />
-                            </View> */}
                         </View>
                     </View>
                 </Modal>
+
+
 
                 {/* Android giữ nguyên */}
                 {Platform.OS === 'android' && showIn && (
@@ -179,41 +235,54 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                     onRequestClose={() => setShowOut(false)}
                 >
                     <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000066' }}>
-                        <View style={{
-                            backgroundColor: '#fff',   // trắng rõ ràng
-                            height: 260,
-                            borderTopLeftRadius: 12,
-                            borderTopRightRadius: 12,
-                            justifyContent: 'center'
-                        }}>
+                        <View
+                            style={{
+                                backgroundColor: '#fff',
+                                height: 300,
+                                borderTopLeftRadius: 12,
+                                borderTopRightRadius: 12,
+                                justifyContent: 'center',
+                            }}
+                        >
+                            {/* Header */}
+                            <View
+                                style={{
+                                    flexDirection: 'row',
+                                    justifyContent: 'space-between',
+                                    paddingHorizontal: 16,
+                                    paddingVertical: 10,
+                                    borderBottomWidth: 1,
+                                    borderColor: '#ddd',
+                                }}
+                            >
+                                <TouchableOpacity onPress={() => setShowOut(false)}>
+                                    <Text style={{ color: '#009EDE', fontWeight: 'bold' }}>Hủy</Text>
+                                </TouchableOpacity>
+                                <Text style={{ fontWeight: 'bold', fontSize: 16 }}>Trả phòng</Text>
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        if (tempCheckOut) setCheckOut(tempCheckOut);
+                                        setShowOut(false);
+                                    }}
+                                >
+                                    <Text style={{ color: '#009EDE', fontWeight: 'bold' }}>OK</Text>
+                                </TouchableOpacity>
+                            </View>
+
                             <DateTimePicker
-                                value={checkOut || new Date()}       // 👈 luôn mặc định ngày hôm nay
-                                minimumDate={new Date()}
+                                value={tempCheckOut || new Date(checkIn.getTime() + 86400000)}
+                                minimumDate={new Date(checkIn.getTime() + 86400000)}
                                 mode="date"
                                 display="spinner"
-                                themeVariant="light" // ép sáng
-                                textColor="black"    // màu chữ của spinner (iOS 14+)
+                                themeVariant="light"
+                                textColor="black"
                                 style={{ flex: 1 }}
-                                onChange={(_, date) => date && setCheckOut(date)}
+                                onChange={(_, date) => date && setTempCheckOut(date)}
                             />
-                            {/* <input
-                                type="date"
-                                value={checkOut?.toISOString().split('T')[0]}
-                                min={(() => {
-                                    const tomorrow = new Date(checkIn);
-                                    tomorrow.setDate(tomorrow.getDate() + 1);
-                                    return tomorrow.toISOString().split('T')[0];
-                                })()}
-                                onChange={(e) => setCheckOut(new Date(e.target.value))}
-                                style={{ fontSize: 18, padding: 8 }}
-                            /> */}
-                            {/* <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 12 }}>
-                                <Button title="Chọn" onPress={() => setShowOut(false)} />
-
-                            </View> */}
                         </View>
                     </View>
                 </Modal>
+
 
                 {Platform.OS === 'android' && showOut && (
                     <DateTimePicker
@@ -228,14 +297,15 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                     />
                 )}
                 <View style={{ marginTop: 10 }}>
-                <Button title='Tìm kiếm' onPress={() => {
-                    // fetchRoomAvailableByHotel(hotelId, checkIn, checkOut);
-                    setIsSearch(true);
-                   }} />
+                    <Button title='Tìm kiếm' onPress={() => {
+                        // fetchRoomAvailableByHotel(hotelId, checkIn, checkOut);
+                        setIsSearch(true);
+                    }} />
                 </View>
 
 
             </View>
+            <HotelVoucherSection hotelId={hotelId} />
             {/* Tiện ích */}
             <View style={styles.section}>
                 <Text style={styles.title}>Tiện ích</Text>
@@ -264,8 +334,13 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                         style={{ marginLeft: 5, width: 30, height: 20, marginTop: 10 }}
                         source={require('../../assets/images/logo.png')}
                     />
-                    <Text style={{ marginLeft: 5, marginTop: 12, color: '#0046de', fontWeight: 'bold' }}>8.7</Text>
-                    <Text style={{ marginLeft: 5, marginTop: 12, color: '#009EDE', fontWeight: 'bold' }}>Ấn tượng</Text>
+                    <Text style={{ marginLeft: 5, marginTop: 12, color: '#0046de', fontWeight: 'bold' }}>
+                        {averageRate.toFixed(1)}
+                    </Text>
+                    <Text style={{ marginLeft: 5, marginTop: 12, color: '#009EDE', fontWeight: 'bold' }}>
+                        {averageRate >= 5 ? 'Tuyệt vời' : averageRate >= 4 ? 'Ấn tượng' : 'Tốt'}
+                    </Text>
+
                 </View>
             </View>
 
@@ -274,34 +349,32 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                 <Text style={styles.title}>Những điều khách thích nhất</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
                     <View style={styles.row}>
-                        {[
-                            ['Phòng sạch', '(4)'],
-                            ['Nội thất sạch', '(9)'],
-                            ['Nhân viên thân thiện', '(12)'],
-                            ['Dịch vụ tốt', '(4)'],
-                        ].map(([label, count], idx) => (
+                        {tagDisplayList.map(([tag, count], idx) => (
                             <View key={idx} style={styles.chip}>
-                                <Text style={styles.chipText}>{label}</Text>
-                                <Text style={[styles.chipText, { marginLeft: 5 }]}>{count}</Text>
+                                <Text style={styles.chipText}>{tag}</Text>
+                                <Text style={[styles.chipText, { marginLeft: 5 }]}>({count})</Text>
                             </View>
                         ))}
                     </View>
                 </ScrollView>
             </View>
 
+
+
             {/* Đánh giá hàng đầu */}
             <View style={styles.section}>
                 <Text style={styles.title}>Đánh giá hàng đầu</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ padding: 10 }}>
                     <View style={styles.row}>
-                        {Array.from({ length: 3 }).map((_, idx) => (
+                        {rates.slice(0, 10).map((r, idx) => (
                             <Text key={idx} style={styles.reviewText}>
-                                “Phòng đẹp tuyệt vời mới lung linh lấp la lấp lánh lắm hahahahahahahaa”
+                                “{r.comment}”
                             </Text>
                         ))}
                     </View>
                 </ScrollView>
             </View>
+
 
             {/* Zone phòng */}
             {phongDon.length > 0 && (
@@ -326,17 +399,84 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
 
                     <RoomCard checkInDate={checkIn} checkOutDate={checkOut} rooms={rooms.filter(room => room.typeRoom == "GIA_DINH")} />
                 </>
-                )}
+            )}
 
-            {/* Zone phòng
-            <RoomZone />
-            <RoomCard />
-            <RoomCard />
-            <RoomCard />
-            <RoomCard /> */}
+
 
         </View>
     );
+}
+
+//hiển thị voucher ks
+function HotelVoucherSection({ hotelId }: Props) {
+  const [hotelVouchers, setHotelVouchers] = useState<Voucher[]>([]);
+  const [savedVouchers, setSavedVouchers] = useState<Voucher[]>([]);
+  const [userId, setUserId] = useState<number | null>(null);
+
+  // ✅ Lấy userId trước
+  useEffect(() => {
+    const fetchUserAndVouchers = async () => {
+      try {
+        const idStr = await AsyncStorage.getItem("userId");
+        if (!idStr) return;
+
+        const id = Number(idStr);
+        setUserId(id);
+
+        // 🔹 Load voucher khách sạn hiện tại
+        const allVouchers = await getAllVouchers();
+        const hotelVs = allVouchers.filter(v => v.hotelId === hotelId);
+        setHotelVouchers(hotelVs);
+
+        // 🔹 Load voucher đã lưu của user
+        const saved = await getUserVouchers(id);
+        setSavedVouchers(saved);
+      } catch (error) {
+        console.error("❌ Lỗi khi tải dữ liệu voucher:", error);
+      }
+    };
+
+    fetchUserAndVouchers();
+  }, [hotelId]); // reload khi đổi khách sạn
+
+  const handleSaveVoucher = async (voucher: Voucher) => {
+    if (!userId) return;
+
+    const res = await saveUserVoucher(userId, voucher.id!);
+    if (res) {
+      Alert.alert("✅ Thành công", "Voucher đã được lưu!");
+      setSavedVouchers((prev) => [...prev, voucher]);
+    } else {
+      Alert.alert("❌ Lỗi", "Voucher này đã được lưu trước đó!");
+    }
+  };
+
+  const isVoucherSaved = (voucherId: number) =>
+    savedVouchers.some((v) => v.id === voucherId);
+
+  if (hotelVouchers.length === 0) return null;
+
+  return (
+    <View style={styles.section}>
+      <Text style={styles.title}>🎟 Ưu đãi của khách sạn</Text>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ marginTop: 10 }}
+      >
+        {hotelVouchers.map((v) => (
+          <View key={v.id} style={{ marginRight: 10,marginBottom:5 }}>
+            <VoucherCard
+              voucher={v}
+              onSave={() => handleSaveVoucher(v)}
+              isSaved={isVoucherSaved(v.id!)} // ✅ Giờ sẽ nhận đúng trạng thái
+            />
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -377,7 +517,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#000',
     },
-    section: { margin: 15 },
+    section: { margin: 15 ,},
     row: { flexDirection: 'row', alignItems: 'center' },
     title: { color: 'black', fontWeight: 'bold', fontSize: 15 },
     subTitle: { color: '#999494', fontWeight: 'bold', fontSize: 12, marginLeft: 5, marginTop: 5 },
@@ -408,7 +548,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#EFEFEF',
         borderRadius: 20,
         padding: 10,
-        width: 200,
         color: '#999494',
         fontWeight: 'bold',
         fontSize: 11,
