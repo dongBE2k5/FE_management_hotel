@@ -1,4 +1,5 @@
 import Room from "@/models/Room";
+import { UtilityItem } from "@/models/Utility/Utility";
 import CCCDScannerScreen from '../components/host/screen/CCCDScannerScreen';
 import { CameraCaptureView } from '../components/host/screen/CameraCaptureView';
 
@@ -14,6 +15,8 @@ export type RootStackParamList = {
     checkInDate: string;
     checkOutDate: string;
     nights: number;
+    specialRequests: UtilityItem[],
+    price: number,
 
   };
   ReviewBooking: {
@@ -21,6 +24,8 @@ export type RootStackParamList = {
     checkInDate: Date,
     checkOutDate: Date | null,
     nights: number,
+    specialRequests: UtilityItem[],
+    price: number,
   };
   Booking: {
     hotelName: string;
@@ -76,9 +81,25 @@ export type ProfileStackParamList = {
 };
 
 export type EmployeeStackParamList = {
+  hotelEdit: { id: number },
+  CreateHotel: undefined,
+  hotelList: undefined,
+  hostBookings: undefined;
   listRoom: undefined;
   bookingDetail: { bookingId: number }; // có params thì khai báo ở đây
   checkout: undefined; // có params thì khai báo ở đây
+}
+
+export type HostStackParamList = {
+  hostBookings: undefined;
+  bookingDetail: { bookingId: number }; // có params thì khai báo ở đây
+  checkout: undefined; // có params thì khai báo ở đây
+  RoomList: undefined;
+  AddRoom: undefined;
+  ManageRoomTypes: undefined;
+  ManageServices: undefined;
+  // RoomDetail:{roomId:number};
+  RoomDetail:undefined;
 }
 export type HostStack ={
   // CCCDScanner: undefined;

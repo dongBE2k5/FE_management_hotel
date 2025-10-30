@@ -1,3 +1,5 @@
+import { HotelRequest } from '@/models/Hotel/HotelRequest';
+import axios from 'axios';
 import BaseUrl from '../constants/BaseURL';
 import { Hotel } from '../models/Hotel';
 
@@ -94,9 +96,9 @@ async function getHotelByLocation(id: Number): Promise<Hotel[]> {
   return data;
 }
 
-async function find(id: Number): Promise<Hotel> {
+async function findHotelById(id: Number): Promise<Hotel> {
+  console.log(`${BaseUrl}/hotels/${id}`);
   const res = await fetch(`${BaseUrl}/hotels/${id}`);
-
   if (!res.ok) {
     throw new Error(`HTTP error! status: ${res.status}`);
   }
@@ -106,40 +108,33 @@ async function find(id: Number): Promise<Hotel> {
   return data;
 }
 
-//  Hàm tìm kiếm khách sạn theo nhiều tiêu chí
-export async function searchHotels(
-  name?: string,
-  city?: string,
-  status?: string,
-  minPrice?: number,
-  maxPrice?: number
-): Promise<Hotel[]> {
-  try {
-    const params = new URLSearchParams();
-    // Chỉ append khi có giá trị thực
-    if (name && name.trim() !== "") params.append("name", name);
-    if (city && city.trim() !== "") params.append("city", city);
-    if (status && status.trim() !== "") params.append("status", status);
-
-    if (minPrice != null) params.append("minPrice", minPrice.toString());
-    if (maxPrice != null) params.append("maxPrice", maxPrice.toString());
-
-    const url = `${BaseUrl}/hotels/search?${params.toString()}`;
-    console.log("🔍 Search URL:", url);
-
-    const res = await fetch(url);
-    console.log("API status:", res.status);
-
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
-    const data: Hotel[] = await res.json();
-    console.log("✅ Search result:", data);
-
-    return data;
-  } catch (error) {
-    console.error("❌ Error fetching search hotels:", error);
-    return [];
+async function getAllHotelsByUser(userId: number): Promise<Hotel[]> {
+  const res = await axios.get(`${BaseUrl}/hotels/user/${userId}`);
+  if (res.status !== 201) {
+    throw new Error(`HTTP error! status: ${res.status}`);
   }
+  console.log(res.data);
+  return res.data;
 }
-export { find, getAllHotel, getHotelByLocation };
+
+async function updateHotel(id: number, hotel: HotelRequest): Promise<Hotel> {
+  const res = await axios.put(`${BaseUrl}/hotels/${id}`, hotel);
+  console.log(res.data);
+  if (res.status !== 201) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+  console.log(res.data);
+  return res.data;
+}
+
+async function createHotel(hotel: HotelRequest): Promise<Hotel> {
+  const res = await axios.post(`${BaseUrl}/hotels`, hotel);
+  console.log(res.data);
+  if (res.status !== 200) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+  return res.data;
+}
+
+export { createHotel, findHotelById, getAllHotel, getAllHotelsByUser, getHotelByLocation, updateHotel };
 

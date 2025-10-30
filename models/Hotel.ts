@@ -6,9 +6,13 @@ interface Hotel {
   email: string;
   status: string;
   image: string
-  locationName: string;
+  location: Location;
   minPrice: number | null;
   maxPrice: number | null;
    locationId?: number; // ✅ thêm dòng này
+}
+interface Location {
+  id: number;
+  name: string;
 }
 export { Hotel };

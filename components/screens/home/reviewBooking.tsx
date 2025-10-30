@@ -17,6 +17,8 @@ export default function HotelDetail() {
     checkInDate,
     checkOutDate,
     nights,
+    specialRequests,
+    price,
   } = route.params;
 
   const handleScroll = (event: { nativeEvent: { contentOffset: { y: number } } }) => {
@@ -51,7 +53,7 @@ export default function HotelDetail() {
         overScrollMode="never"
       >
         {/* ✅ Truyền toàn bộ dữ liệu xuống ConfirmBooking qua props */}
-       <ConfirmBooking room={room} checkInDate={checkInDate} checkOutDate={checkOutDate} nights={nights} />
+       <ConfirmBooking room={room} checkInDate={checkInDate} checkOutDate={checkOutDate} nights={nights} specialRequests={specialRequests} price={price} />
       </ScrollView>
     </View>
   );

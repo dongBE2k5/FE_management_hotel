@@ -1,31 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import { UtilityItem } from '@/models/Utility/Utility';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
+  FlatList,
   Modal,
   StyleSheet,
-  FlatList,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View
 } from 'react-native';
-import Ionicons from '@expo/vector-icons/Ionicons';
 
 type Props = {
-  onChange?: (items: string[]) => void; // 👈 thêm
+  utility: UtilityItem[];
+  onChange?: (items: UtilityItem[]) => void; // 👈 thêm
 };
 
-export default function SpecialRequest({ onChange }: Props) {
+export default function SpecialRequest({ utility, onChange }: Props) {
   const [visible, setVisible] = useState(false);
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<UtilityItem[]>([]);
+  const [quantity, setQuantity] = useState<{ [key: number]: number }>({});
+  useEffect(() => {
+    setQuantity(Array(utility.length).fill(1));
+  }, [utility]);
+  // const options = [
+  //   'Phòng tầng cao',
+  //   'Không hút thuốc',
+  //   'Có nôi cho trẻ em',
+  //   'Check-in sớm',
+  //   'View biển/ thành phố',
+  // ];
 
-  const options = [
-    'Phòng tầng cao',
-    'Không hút thuốc',
-    'Có nôi cho trẻ em',
-    'Check-in sớm',
-    'View biển/ thành phố',
-  ];
-
-  const toggleItem = (item: string) => {
+  const toggleItem = (item: UtilityItem) => {
     setSelected(prev =>
       prev.includes(item)
         ? prev.filter(i => i !== item)
@@ -35,8 +42,16 @@ export default function SpecialRequest({ onChange }: Props) {
 
   // 🔑 Gửi dữ liệu lên cha mỗi khi selected thay đổi
   useEffect(() => {
-    onChange?.(selected);
-  }, [selected]);
+    onChange?.(selected.map(item => ({
+      ...item,
+      quantity: quantity[item.id] || 1
+    })));
+    
+    console.log("selected", selected.map(item => ({
+      ...item,
+      quantity: quantity[item.id] || 1
+    })));
+  }, [selected, quantity]);
 
   return (
     <View style={styles.container}>
@@ -45,9 +60,11 @@ export default function SpecialRequest({ onChange }: Props) {
           <Text style={styles.placeholder}>Chọn yêu cầu</Text>
         ) : (
           <View style={styles.selectedBox}>
-            {selected.map((item, index) => (
-              <View key={item}>
-                <Text style={styles.selectedText}>{item}</Text>
+            {selected?.map((item, index) => (
+              <View style={styles.optionRowShow} key={item.id.toString()}>
+                <Text style={[styles.optionText, { width: '25%' }]}>{item.name}</Text>
+                <Text style={[styles.optionText, { width: '25%', fontWeight: 'bold', fontSize: 12, color: '#5b5b5b' }]}>SL: {quantity[item.id] || 1}</Text>
+                <Text style={[styles.optionText, { width: '50%', fontWeight: 'bold', fontSize: 12, color: '#5b5b5b' }]}>Giá: {item.price * Number(quantity[item.id] || 1)} VNĐ</Text>
                 {index !== selected.length - 1 && <View style={styles.separator} />}
               </View>
             ))}
@@ -66,15 +83,36 @@ export default function SpecialRequest({ onChange }: Props) {
             <Text style={styles.title}>Chọn yêu cầu</Text>
 
             <FlatList
-              data={options}
-              keyExtractor={(item) => item}
+              data={utility}
+              keyExtractor={(item) => item.id.toString()}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={styles.optionRow}
                   onPress={() => toggleItem(item)}
                 >
-                  <Text style={styles.optionText}>{item}</Text>
-                  {selected.includes(item) && (
+                  <Text style={[styles.optionText, { width: '25%' }]}>{item.name}</Text>
+                  {selected?.includes(item) && (
+                    <View style={styles.quantityContainer}>
+                      <Text style={styles.quantityText}>SL: </Text>
+                      <View pointerEvents="box-none">
+                        <TouchableWithoutFeedback onPress={() => { }}>
+                          <TextInput
+                            style={styles.quantityInput}
+                            placeholder="Số lượng"
+                            value={quantity[item.id]?.toString() ?? '1'}
+                            onChangeText={(text) =>
+                              setQuantity({ ...quantity, [item.id]: Number(text) })
+                            }
+                            keyboardType="numeric"
+                          />
+                        </TouchableWithoutFeedback>
+
+                      </View>
+                    </View>
+                  )}
+
+                  <Text style={[styles.optionText, { width: '50%', fontWeight: 'bold', fontSize: 14, color: '#5b5b5b' }]}>Giá: {item.price * Number(quantity[item.id] || 1)} VNĐ</Text>
+                  {selected?.includes(item) && (
                     <Ionicons name="checkmark" size={20} color="green" />
                   )}
                 </TouchableOpacity>
@@ -116,8 +154,33 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: '#ccc',
+    alignItems: 'center',
   },
   optionText: { fontSize: 14, color: '#000' },
   closeBtn: { marginTop: 12, backgroundColor: '#009EDE', paddingVertical: 10, borderRadius: 8 },
   closeText: { color: '#fff', textAlign: 'center', fontWeight: 'bold' },
+  optionRowShow: {
+    display: 'flex',
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    paddingBottom: 10,
+    paddingTop: 10,
+  },
+  quantityInput: {
+    width: 50,
+    height: 30,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+  },
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  quantityText: {
+    fontSize: 14,
+    color: '#000',
+  },
 });
