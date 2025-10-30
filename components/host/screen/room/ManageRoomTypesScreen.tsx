@@ -1,13 +1,11 @@
+import { urlImage } from '@/constants/BaseURL';
 import { useHost } from '@/context/HostContext';
-import TypeOfRoomRequest from '@/models/TypeOfRoom/TypeOfRoomRequest';
-import TypeOfRoomResponse from '@/models/TypeOfRoom/TypeOfRoomResponse';
-import Utility from '@/models/Utility/Utility';
-import { getAllUtilityByType } from '@/service/HotelUtilityAPI';
 import { addTypeOfRoom, deleteTypeOfRoom, getTypeOfRoomByHotel, updateTypeOfRoom } from '@/service/TypeOfRoomService';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from "expo-image-picker";
 import { useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, FlatList, Image, Modal, SafeAreaView, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Image, Modal, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 // --- DỮ LIỆU MOCKUP ---
 const mockInitialServices = [
@@ -59,139 +57,128 @@ const RoomTypeDefault = [
     },
 ]
 // --- Modal đã sửa lỗi ---
-const TypeEditorModal = ({ visible, onClose, onSave, type, allServices, onAdd}) => {
-    const [name, setName] = useState('');
+const TypeEditorModal = ({ visible, onClose, type, onAdd, onSave }) => {
     const [imageUrls, setImageUrls] = useState<string[]>([]);
-    const [selectedServices, setSelectedServices] = useState([]);
-    const [roomTypes, setRoomTypes] = useState<TypeOfRoomResponse>();
+    const [existingImages, setExistingImages] = useState<any[]>([]); // ảnh cũ (từ DB)
+    const [newImages, setNewImages] = useState<string[]>([]); // ảnh mới chọn
+    const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
     const [selectedType, setSelectedType] = useState(type);
-    const [utilities, setUtilities] = useState<Utility>();
-    const [servicePrices, setServicePrices] = useState<{ [key: number]: string }>({});
-    const isEditing = !!type;
     const { hotelId } = useHost();
 
-    // SỬA LỖI: Xóa mảng initialServices cứng, modal nên dùng dữ liệu từ prop "allServices"
+    const isEditing = !!type;
 
+    console.log("existingImages123", existingImages);
+    console.log("newImages123", newImages);
+    console.log("deletedImageIds123", deletedImageIds);
+    // Khi mở modal
     useFocusEffect(
         useCallback(() => {
-
-
-            console.log(isEditing);
-            console.log("type", type);
-            setSelectedType(type!);
             if (visible && isEditing) {
-                setName(type.room === "DON"
-                    ? "Phòng Đơn"
-                    : type.room === "DOI"
-                        ? "Phòng Đôi"
-                        : "Phòng Gia Đình");
-                console.log("type.imageRooms", type.imageRooms);
-                setImageUrls(isEditing && type.imageRooms?.length > 0 ? type.imageRooms.map((i) => i.image) : [] as string[]);
-                
-                // setSelectedServices(isEditing ? type.applicableServices || [] : []);
-            }else {
+                console.log("🟡 Chế độ chỉnh sửa loại phòng:", type.room);
+                const dbImages = type.imageRooms || [];
+                setExistingImages(dbImages); // lưu lại ảnh có id
+                setImageUrls(dbImages.map((i) => urlImage + i.image));
+                setNewImages([]);
+                setDeletedImageIds([]);
+            } else {
                 setImageUrls([]);
+                setNewImages([]);
+                setExistingImages([]);
             }
-        }, [type,visible])
-    )
-   
-
-    // const hotelId = 1;
-
-    useFocusEffect(
-        useCallback(() => {
-            if (!hotelId) return;
-            const fetchRoomTypes = async () => {
-    
-                const typeOfRoom = await getTypeOfRoomByHotel(hotelId);
-                console.log(typeOfRoom);
-                setRoomTypes(typeOfRoom);
-    
-            };
-    
-            const fetchUtilities = async () => {
-                const utilities = await getAllUtilityByType("OUTROOM");
-                console.log(utilities.data);
-                setUtilities(utilities);
-            };
-            fetchRoomTypes();
-            fetchUtilities();
-           
-    
-        }, [])
+        }, [visible, type])
     );
-    const handlePriceChange = (serviceId: number, value: string) => {
-        setServicePrices(prev => ({
-            ...prev,
-            [serviceId]: value
-        }));
-    };
-     const handleUrlChange = (text, index) => {
-        const newUrls = [...imageUrls];
-        newUrls[index] = text;
-        setImageUrls(newUrls);
+
+    /** 📸 Chọn thêm ảnh mới */
+    const handleChooseImage = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== "granted") {
+            Alert.alert("Quyền bị từ chối", "Cần quyền truy cập thư viện ảnh.");
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            quality: 0.8,
+            allowsMultipleSelection: true,
+            selectionLimit: 0,
+        });
+
+        if (!result.canceled) {
+            const selected = result.assets.map((a) => a.uri);
+            setNewImages((prev) => [...prev, ...selected]);
+        }
     };
 
-
-    const addUrlInput = () => setImageUrls([...imageUrls, '']);
-    const removeUrlInput = (index) => {
-        if (imageUrls.length <= 1) return;
-        const newUrls = imageUrls.filter((_, i) => i !== index);
-        setImageUrls(newUrls);
-    };
-
-    const toggleServiceSelection = (serviceId: number) => {
-        if (selectedServices.includes(serviceId)) {
-            setSelectedServices(selectedServices.filter(id => id !== serviceId));
+    /** ❌ Xóa ảnh cũ hoặc ảnh mới */
+    const removeImage = (url: string, isOld = false, imageId?: number) => {
+        if (isOld && imageId) {
+            setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
+            setDeletedImageIds((prev) => [...prev, imageId]);
         } else {
-            setSelectedServices([...selectedServices, serviceId]);
+            setNewImages((prev) => prev.filter((u) => u !== url));
         }
     };
 
-    const handleSave = () => {
+    /** 💾 Gửi dữ liệu lên server */
+    const handleSave = async () => {
+        try {
+            if (!selectedType) {
+                Alert.alert("Thiếu thông tin", "Chưa chọn loại phòng.");
+                return;
+            }
 
-        console.log("hotelId", hotelId);
-        const finalUrls = imageUrls.filter(url => url && String(url).trim() !== '');
-        console.log("finalUrls", finalUrls);
-        if (!selectedType || finalUrls.length === 0) {
-            Alert.alert("Lỗi", "Vui lòng nhập tên và ít nhất một URL hình ảnh.");
-            return;
+            const formData = new FormData();
+            formData.append("hotelId", `${hotelId}`);
+            formData.append("roomTypeId", `${selectedType?.id}`);
+            if(deletedImageIds.length > 0) {
+                deletedImageIds.forEach(id => {
+                    formData.append("deletedImageIds", id.toString());
+                  });            }
+
+            // Thêm ảnh mới
+            newImages.forEach((uri) => {
+                const fileName = uri.split("/").pop();
+                const fileType = fileName?.split(".").pop();
+                formData.append("images", {
+                    uri,
+                    name: fileName || `photo_${Date.now()}.jpg`,
+                    type: `image/${fileType || "jpeg"}`,
+                } as any);
+            });
+
+            console.log("📤 Gửi formData:", formData);
+
+            if (isEditing) {
+                await onSave(formData);
+            } else {
+                await onAdd(formData);
+            }
+
+            Alert.alert("✅ Thành công", isEditing ? "Cập nhật loại phòng thành công" : "Thêm loại phòng thành công");
+            onClose();
+        } catch (error) {
+            console.error("❌ Lỗi upload:", error);
+            Alert.alert("Lỗi", "Không thể lưu dữ liệu");
         }
-        console.log("Lưu loại phòng");
-        const dataTypeRoom  = {
-            hotelId: hotelId!,
-            roomTypeId: selectedType.id,
-            image: finalUrls,
-        }
-        console.log("dataTypeRoom", dataTypeRoom);
-        onSave(dataTypeRoom);
     };
-    const handleAdd = async () => {
-        console.log("Thêm loại phòng");
-        const finalUrls = imageUrls.filter(url => url && String(url).trim() !== '');
-        if (!selectedType || finalUrls.length === 0) {
-            Alert.alert("Lỗi", "Vui lòng nhập tên và ít nhất một URL hình ảnh.");
-            return;
-        }
-        const dataTypeRoom : TypeOfRoomRequest = {
-            hotelId: hotelId!,
-            roomTypeId: selectedType.id, 
-            image: finalUrls,
-        }
-        console.log("dataTypeRoom", dataTypeRoom);
-        onAdd(dataTypeRoom);
-    }
 
     return (
         <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
             <SafeAreaView style={{ flex: 1 }}>
+                {/* Header */}
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={onClose} style={styles.backButton}><Ionicons name="close" size={28} /></TouchableOpacity>
-                    <Text style={styles.headerTitle}>{isEditing ? 'Chỉnh sửa Loại phòng' : 'Thêm Loại phòng'}</Text>
-                    <TouchableOpacity onPress={isEditing ? handleSave : handleAdd}><Text style={styles.saveText}>Lưu</Text></TouchableOpacity>
+                    <TouchableOpacity onPress={onClose} style={styles.backButton}>
+                        <Ionicons name="close" size={28} />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>
+                        {isEditing ? "Chỉnh sửa Loại phòng" : "Thêm Loại phòng"}
+                    </Text>
+                    <TouchableOpacity onPress={handleSave}>
+                        <Text style={styles.saveText}>Lưu</Text>
+                    </TouchableOpacity>
                 </View>
-                <ScrollView>
-                    <View style={styles.formSection}>
+
+                <View style={styles.formSection}>
                         <Text style={styles.inputLabel}>Tên loại phòng</Text>
                         <View style={styles.typeSelector}>
                             {RoomTypeDefault.map(rt => (
@@ -206,59 +193,59 @@ const TypeEditorModal = ({ visible, onClose, onSave, type, allServices, onAdd}) 
                                 </TouchableOpacity>
                             ))}
                         </View>
-                        <Text style={styles.inputLabel}>Danh sách URL hình ảnh</Text>
-                        {imageUrls?.map((url, index) => (
-                            <View key={index} style={styles.urlInputContainer}>
-                                <TextInput style={styles.urlInput} placeholder={`URL hình ảnh ${index + 1}`} value={url} onChangeText={(text) => handleUrlChange(text, index)} />
-                                {imageUrls?.length > 1 && (
-                                    <TouchableOpacity onPress={() => removeUrlInput(index)} style={styles.removeButton}>
-                                        <Ionicons name="trash-outline" size={22} color="#dc3545" />
-                                    </TouchableOpacity>
-                                )}
-                            </View>
-                        ))}
-                        <TouchableOpacity style={styles.addButton} onPress={addUrlInput}>
-                            <Ionicons name="add" size={20} color="#007bff" />
-                            <Text style={styles.addButtonText}>Thêm ảnh khác</Text>
-                        </TouchableOpacity>
                     </View>
-                    <Text style={styles.mainSectionTitle}>Dịch vụ áp dụng</Text>
-                    <View style={styles.serviceSelectionContainer}>
 
-                        {(utilities?.data || []).map(service => {
-                            const isSelected = selectedServices.includes(service.id);
-                            return (
-                                <View key={service.id} style={styles.serviceToggleItem}>
-                                    <View style={{ flex: 1 }}>
-                                        <Text style={styles.serviceName}>{service.name}</Text>
+                {/* Nội dung */}
+                <ScrollView>
+                    <View style={styles.formSection}>
+                        <Text style={styles.inputLabel}>Hình ảnh loại phòng</Text>
 
-                                        {isSelected && (
-                                            <TextInput
-                                                style={styles.priceInput}
-                                                placeholder="Nhập giá dịch vụ..."
-                                                keyboardType="numeric"
-                                                value={servicePrices[service.id] || ""}
-                                                onChangeText={(text) => handlePriceChange(service.id, text)}
-                                            />
-                                        )}
+                        {/* Ảnh cũ */}
+                        {existingImages.length > 0 && (
+                            <View style={{ flexDirection: "row", flexWrap: "wrap", marginVertical: 10, gap: 10 }} >
+                                {existingImages.map((img) => (
+                                    <View key={img.id} style={{ width: 100, borderRadius: 10 }} >
+                                        <Image source={{ uri: urlImage + img.image }} style={styles.imagePreview} />
+                                        <TouchableOpacity
+                                            onPress={() => removeImage(urlImage + img.image, true, img.id)}
+                                            style={styles.deleteIcon}
+                                        >
+                                            <Ionicons name="close" size={14} color="#fff" />
+                                        </TouchableOpacity>
                                     </View>
+                                ))}
+                            </View>
+                        )}
 
-                                    <Switch
-                                        value={isSelected}
-                                        onValueChange={() => toggleServiceSelection(service.id)}
-                                        trackColor={{ false: "#ccc", true: "#81b0ff" }}
-                                        thumbColor={isSelected ? "#007bff" : "#f4f3f4"}
-                                    />
-                                </View>
-                            );
-                        })}
+                        {/* Ảnh mới */}
+                        {newImages.length > 0 && (
+                            <View >
+                                {newImages.map((uri, index) => (
+                                    <View key={index} >
+                                        <Image source={{ uri }} style={styles.imagePreview} />
+                                        <TouchableOpacity
+                                            onPress={() => removeImage(uri, false)}
+                                            style={styles.deleteIcon}
+                                        >
+                                            <Ionicons name="close" size={14} color="#fff" />
+                                        </TouchableOpacity>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
 
+                        {/* Nút thêm ảnh */}
+                        <TouchableOpacity style={styles.imageButton} onPress={handleChooseImage}>
+                            <Ionicons name="images" size={20} color="#007bff" />
+                            <Text style={styles.imageButtonText}>Chọn ảnh</Text>
+                        </TouchableOpacity>
                     </View>
                 </ScrollView>
             </SafeAreaView>
         </Modal>
     );
 };
+
 
 // --- COMPONENT CHÍNH ĐÃ SỬA ---
 export default function ManageRoomTypesScreen({ route, navigation = mockNavigation }) {
@@ -278,7 +265,9 @@ export default function ManageRoomTypesScreen({ route, navigation = mockNavigati
     const { hotelId } = useHost();
     console.log("hotelId", hotelId);
 
-    const handleSaveType = async (typeData: TypeOfRoomRequest) => {
+    const handleSaveType = async (typeData: FormData) => {
+        console.log("hotelId123", hotelId);
+        console.log("typeData123", typeData);
         if (!hotelId) return;
         console.log("typeData", typeData);
         const response = await updateTypeOfRoom(hotelId, typeData);
@@ -289,21 +278,25 @@ export default function ManageRoomTypesScreen({ route, navigation = mockNavigati
         Alert.alert("Thành công", "Đã cập nhật loại phòng thành công");
     };
 
-    const handleAddType = async (typeData: TypeOfRoomRequest) => {
+    const handleAddType = async (typeData: FormData) => {
         try {
             const response = await addTypeOfRoom(typeData);
-            console.log("response", response);
-            setModalVisible(false);
-            setSelectedType(null);
-            setRefreshing(prev => !prev);
-            Alert.alert("Thành công", "Đã thêm loại phòng thành công");
+            console.log("response123", response);
+            if (response) {
+                Alert.alert("Thành công", "Đã thêm loại phòng thành công");
+                setModalVisible(false);
+                setSelectedType(null);
+                setRefreshing(prev => !prev);
+            } else {
+                Alert.alert("Lỗi", "Đã xảy ra lỗi khi thêm loại phòng");
+            }
         } catch (error) {
             console.error("Lỗi khi thêm loại phòng", error);
-            Alert.alert("Lỗi", "Đã xảy ra lỗi khi thêm loại phòng");
+            Alert.alert("Lỗi", "Đã xảy ra lỗi khi thêm loại phòng: " + error);
         }
     };
 
-        useEffect(() => {
+    useEffect(() => {
         const fetchRoomTypes = async () => {
             if (!hotelId) return;
             console.log("hotelId", hotelId);
@@ -404,6 +397,7 @@ const styles = StyleSheet.create({
     typeSelector: {
         flexDirection: 'row',
         flexWrap: 'wrap',
+        marginVertical: 10,
     },
     typeButton: {
         backgroundColor: '#f4f7fc',
@@ -435,5 +429,38 @@ const styles = StyleSheet.create({
         paddingVertical: 6,
         fontSize: 15,
         width: 150,
+    },
+    imageButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 10,
+        borderWidth: 1,
+        borderColor: '#007bff',
+        borderRadius: 8,
+    },
+    imageButtonText: {
+        color: '#007bff',
+        fontWeight: 'bold',
+        marginLeft: 8,
+    },
+    imagePreview: { width: "100%", height: 180, borderRadius: 10, marginBottom: 10 },
+    imageButtons: { flexDirection: "row", justifyContent: "space-between", marginBottom: 15 },
+    imageContainer: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        marginVertical: 10,
+    },
+    imageWrapper: {
+        position: "relative",
+        margin: 5,
+    },
+    deleteIcon: {
+        position: "absolute",
+        top: 2,
+        right: 2,
+        backgroundColor: "rgba(0,0,0,0.5)",
+        borderRadius: 12,
+        padding: 3,
     },
 });

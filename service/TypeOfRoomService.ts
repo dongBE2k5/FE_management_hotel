@@ -1,4 +1,3 @@
-import TypeOfRoomRequest from '@/models/TypeOfRoom/TypeOfRoomRequest';
 import axios from 'axios';
 import BaseUrl from '../constants/BaseURL';
 import TypeOfRoomResponse from '../models/TypeOfRoom/TypeOfRoomResponse';
@@ -21,17 +20,21 @@ async function getTypeOfRoomByHotel(id: number): Promise<TypeOfRoomResponse> {
   return data;
 }
 
-async function updateTypeOfRoom(id: number, typeOfRoom: TypeOfRoomRequest): Promise<any> {
+async function updateTypeOfRoom(id: number, typeOfRoom: FormData): Promise<any> {
 
-  const res = await axios.put(`${BaseUrl}/type-rooms/${id}`, typeOfRoom);
+  const res = await axios.put(`${BaseUrl}/type-rooms/${id}`, typeOfRoom, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   if (res.status !== 200) {
     throw new Error(`HTTP error! status: ${res.status}`);
   }
   return res.data;
 }
 
-async function addTypeOfRoom(typeOfRoom: TypeOfRoomRequest): Promise<any> {
-  const res = await axios.post(`${BaseUrl}/type-rooms`, typeOfRoom);
+async function addTypeOfRoom(typeOfRoom: FormData): Promise<any> {
+  const res = await axios.post(`${BaseUrl}/type-rooms`, typeOfRoom, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   if (res.status !== 201) {
     throw new Error(`HTTP error! status: ${res.status}`);
   }

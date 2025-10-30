@@ -36,7 +36,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
       // const role = await AsyncStorage.getItem("role");
 
-      // await AsyncStorage.setItem("role", "ROLE_HOST")
+      await AsyncStorage.setItem("role", "ROLE_USER")
       const role = await AsyncStorage.getItem("role");
 
       if (role) {
