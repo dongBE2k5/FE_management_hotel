@@ -1,0 +1,86 @@
+[33mca542c7[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mthuansprint2[m[33m)[m HEAD@{0}: pull: updating HEAD
+[33mca542c7[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mthuansprint2[m[33m)[m HEAD@{1}: checkout: moving from thuansprint2 to thuansprint2
+[33mca542c7[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mthuansprint2[m[33m)[m HEAD@{2}: commit: done spirnt 2
+[33ma54830f[m HEAD@{3}: commit: done sprint 2, thuan
+[33m045ffef[m HEAD@{4}: commit: update doi mat khau, quen mat khau, xac thuc otp bang emai user
+[33m5aedb9e[m HEAD@{5}: commit: lưu hotel theo user, hủy lưu hotel, lọc hotel đã lưu theo locations
+[33mcffb0e9[m HEAD@{6}: commit: update voucher, chia làm 2 loai done, lưu voucher id theo mảng []
+[33m6df48f9[m HEAD@{7}: commit: update bestchoice theo location
+[33mc0b29fc[m HEAD@{8}: commit: update form search, get hotel reviewd by location, location all
+[33m3e522f5[m HEAD@{9}: checkout: moving from thuansprint2 to thuansprint2
+[33m3e522f5[m HEAD@{10}: commit: done voucher, xét voucher theo ks, ẩn voucher nếu hết lượt, lưu voucher theo người dùng, giảm giá theo voucher, lưu giá đã giảm vào booking
+[33m34f7be9[m HEAD@{11}: pull: Fast-forward
+[33m59a70f4[m HEAD@{12}: commit: voucher save, comfirm call voucher fail
+[33m2b78520[m HEAD@{13}: commit: update lai giao dien, goi api danhgia hotel
+[33m2215d13[m HEAD@{14}: commit: done danh gia
+[33m3cc8343[m HEAD@{15}: commit: update danh gia
+[33m955e264[m[33m ([m[1;31morigin/thuan[m[33m)[m HEAD@{16}: checkout: moving from 955e264fdf3b4b9b069ec3961181ee2f7d515512 to thuansprint2
+[33m955e264[m[33m ([m[1;31morigin/thuan[m[33m)[m HEAD@{17}: pull origin thuan --rebase (start): checkout 955e264fdf3b4b9b069ec3961181ee2f7d515512
+[33m6ada773[m[33m ([m[1;32mthuan[m[33m)[m HEAD@{18}: commit: update danh gia nguoi dung, done
+[33ma2eb119[m HEAD@{19}: reset: moving to HEAD
+[33ma2eb119[m HEAD@{20}: commit: update danh gia nguoi dung, do danh gia len fe, tinh so sao hotel dua vao danh gia
+[33m8399078[m[33m ([m[1;32mtai[m[33m)[m HEAD@{21}: merge tai: Fast-forward
+[33m6116700[m HEAD@{22}: checkout: moving from tai to thuan
+[33m8399078[m[33m ([m[1;32mtai[m[33m)[m HEAD@{23}: commit: update code cho Dong test
+[33m7050532[m HEAD@{24}: checkout: moving from thuan to tai
+[33m6116700[m HEAD@{25}: checkout: moving from tai to thuan
+[33m7050532[m HEAD@{26}: pull: Fast-forward
+[33m761fa46[m HEAD@{27}: pull: Fast-forward
+[33m505644c[m HEAD@{28}: checkout: moving from thuan to tai
+[33m6116700[m HEAD@{29}: checkout: moving from tai to thuan
+[33m505644c[m HEAD@{30}: checkout: moving from tai to tai
+[33m505644c[m HEAD@{31}: checkout: moving from thuan to tai
+[33m6116700[m HEAD@{32}: checkout: moving from tai to thuan
+[33m505644c[m HEAD@{33}: checkout: moving from thuan to tai
+[33m6116700[m HEAD@{34}: checkout: moving from tai to thuan
+[33m505644c[m HEAD@{35}: checkout: moving from thuan to tai
+[33m6116700[m HEAD@{36}: checkout: moving from tai to thuan
+[33m505644c[m HEAD@{37}: checkout: moving from thuan to tai
+[33m6116700[m HEAD@{38}: checkout: moving from tai to thuan
+[33m505644c[m HEAD@{39}: checkout: moving from thuan to tai
+[33m6116700[m HEAD@{40}: checkout: moving from tai to thuan
+[33m505644c[m HEAD@{41}: checkout: moving from tai to tai
+[33m505644c[m HEAD@{42}: pull: Fast-forward
+[33mec743c5[m HEAD@{43}: pull: Fast-forward
+[33m302a793[m HEAD@{44}: pull: Fast-forward
+[33m3bba97e[m HEAD@{45}: pull: Fast-forward
+[33mbd3a87a[m HEAD@{46}: checkout: moving from thuan to tai
+[33m6116700[m HEAD@{47}: commit: thuan update xem ks đã xem, đăng xuất, chưa xong trạng thái đã đăng nhập
+[33mcf0ba85[m HEAD@{48}: checkout: moving from tai to thuan
+[33mbd3a87a[m HEAD@{49}: checkout: moving from thuan to tai
+[33mcf0ba85[m HEAD@{50}: checkout: moving from thuan to thuan
+[33mcf0ba85[m HEAD@{51}: commit: Cập nhật code mới,gộp code tai va thuan, khung project gọn
+[33m71ceb91[m HEAD@{52}: checkout: moving from tai to thuan
+[33mbd3a87a[m HEAD@{53}: checkout: moving from thuan to tai
+[33m71ceb91[m HEAD@{54}: checkout: moving from tai to thuan
+[33mbd3a87a[m HEAD@{55}: checkout: moving from thuan to tai
+[33m71ceb91[m HEAD@{56}: checkout: moving from tai to thuan
+[33mbd3a87a[m HEAD@{57}: pull: Fast-forward
+[33m931a98f[m HEAD@{58}: pull: Fast-forward
+[33m27f3f76[m HEAD@{59}: pull: Fast-forward
+[33m018316d[m HEAD@{60}: pull: Fast-forward
+[33m69564f0[m HEAD@{61}: checkout: moving from thuan to tai
+[33m71ceb91[m HEAD@{62}: checkout: moving from tai to thuan
+[33m69564f0[m HEAD@{63}: checkout: moving from thuan to tai
+[33m71ceb91[m HEAD@{64}: commit: tối ưu thư mucj, gọn code user
+[33m1923d40[m HEAD@{65}: commit: update code, login, register, logic nav pofile
+[33mf371520[m HEAD@{66}: reset: moving to HEAD@{14}
+[33md3a37e7[m[33m ([m[1;32mKhang[m[33m)[m HEAD@{67}: reset: moving to HEAD@{9}
+[33mf371520[m HEAD@{68}: reset: moving to HEAD@{13}
+[33mf371520[m HEAD@{69}: reset: moving to HEAD@{12}
+[33mf371520[m HEAD@{70}: reset: moving to HEAD@{7}
+[33md3a37e7[m[33m ([m[1;32mKhang[m[33m)[m HEAD@{71}: reset: moving to HEAD@{8}
+[33mf371520[m HEAD@{72}: reset: moving to HEAD@{8}
+[33mf371520[m HEAD@{73}: reset: moving to HEAD@{7}
+[33md3a37e7[m[33m ([m[1;32mKhang[m[33m)[m HEAD@{74}: reset: moving to HEAD@{5}
+[33mf371520[m HEAD@{75}: reset: moving to HEAD
+[33mf371520[m HEAD@{76}: checkout: moving from Khang to thuan
+[33md3a37e7[m[33m ([m[1;32mKhang[m[33m)[m HEAD@{77}: checkout: moving from thuan to Khang
+[33mf371520[m HEAD@{78}: reset: moving to HEAD
+[33mf371520[m HEAD@{79}: checkout: moving from Khang to thuan
+[33md3a37e7[m[33m ([m[1;32mKhang[m[33m)[m HEAD@{80}: checkout: moving from thuan to Khang
+[33mf371520[m HEAD@{81}: reset: moving to HEAD
+[33mf371520[m HEAD@{82}: commit: Create UI user
+[33mc3752c0[m[33m ([m[1;32mmain[m[33m)[m HEAD@{83}: checkout: moving from main to thuan
+[33mc3752c0[m[33m ([m[1;32mmain[m[33m)[m HEAD@{84}: pull --tags origin main: Fast-forward
+[33m2d12abe[m HEAD@{85}: clone: from https://github.com/dongBE2k5/FE_management_hotel.git
