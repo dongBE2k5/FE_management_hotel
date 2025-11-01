@@ -87,7 +87,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (user?.role === 'ROLE_EMPLOYEE') {
       router.replace('/(employee)');
-    } else if (user?.role === 'ROLE_ADMIN') {
+    } else if (user?.role === 'ROLE_HOST') {
       router.replace('/(host)');
     } else if (user?.role === 'ROLE_CLEANINGSTAFF') {
       router.replace('/(cleaningStaff)');

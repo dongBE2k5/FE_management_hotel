@@ -9,6 +9,7 @@ import React, { useState } from 'react';
 import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Alert } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import LoginBanner from './bannerLogin';
 
 type LoginScreenNavigationProp = StackNavigationProp<
   ProfileStackParamList,
@@ -27,6 +28,9 @@ export default function Login() {
     username: '',
     password: ''
   });
+    const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
 const { setUser } = useUser();
   const router = useRouter();
   const navigation = useNavigation<LoginScreenNavigationProp>();
@@ -40,13 +44,13 @@ const { setUser } = useUser();
       if (res != null) {
 
         // Hiển thị thông báo thành công
-        // Alert.alert(
-        //   "Thành công",
-        //   "Đăng nhập thành công!",
-        //   [
-        //     {
-        //       text: "OK",
-        //       onPress: async () => {
+        Alert.alert(
+          "Thành công",
+          "Đăng nhập thành công!",
+          [
+            {
+              text: "OK",
+              onPress: async () => {
                 await AsyncStorage.setItem("userId", (res.id).toString());
                 await AsyncStorage.setItem("userToken", res.accessToken);
                 await AsyncStorage.setItem("role", res.role.name);
@@ -56,20 +60,20 @@ const { setUser } = useUser();
                 // Sau khi bấm OK thì chuyển sang LoggedAccount
                 if(res.role.name === 'ROLE_EMPLOYEE') {
                   router.replace('/(employee)');
-                } else if(res.role.name === 'ROLE_ADMIN') {
+                } else if(res.role.name === 'ROLE_HOST') {
                   router.replace('/(host)');
                 } else if(res.role.name === 'ROLE_CLEANINGSTAFF') {
                   router.replace('/(cleaningStaff)');
                 } else {
                   router.replace('/(tabs)');
                 }
-                // navigation.replace("LoggedAccount");
+                navigation.replace("LoggedAccount");
                 
 
-        //       },
-        //     },
-        //   ]
-        // );
+              },
+            },
+          ]
+        );
       } else {
         // Hiển thị thông báo lỗi
         Alert.alert(
