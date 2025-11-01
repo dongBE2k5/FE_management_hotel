@@ -185,7 +185,8 @@ const TypeEditorModal = ({ visible, onClose, type, onAdd, onSave }) => {
                                 <TouchableOpacity
                                     key={rt.id}
                                     style={[styles.typeButton, (selectedType?.id ?? type?.id) === rt.id && styles.typeButtonSelected]}
-                                    onPress={() => setSelectedType(rt)}
+                                    onPress={() => isEditing ? console.log(123)
+                                     : setSelectedType(rt)}
                                 >
                                     <Text style={[styles.typeButtonText, (selectedType?.id ?? type?.id) === rt.id && styles.typeButtonTextSelected]}>
                                         {rt.name}
