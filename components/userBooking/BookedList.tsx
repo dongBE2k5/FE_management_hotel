@@ -114,17 +114,17 @@ export default function BookedList() {
   };
 
   const renderItem = ({ item }: { item: BookingResponse }) => {
-    const { room, checkInDate, checkOutDate, totalPrice, status } = item;
+    console.log(item);
+    const { room, checkInDate, checkOutDate, totalPrice, status, imageHotel } = item;
 
     return (
       <View style={styles.card}>
         <Image
           source={{
-            uri: item?.imageHotel,
+            uri: imageHotel,
           }}
           style={styles.hotelImage}
         />
-        <Text style={styles.roomNumber}>Phòng: {room?.roomNumber}</Text>
         <View style={styles.infoContainer}>
           <View style={styles.headerRow}>
             <Text style={styles.roomType}>

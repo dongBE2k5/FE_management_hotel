@@ -1,12 +1,12 @@
 import BookingResponse from "@/models/Booking/BookingResponse";
 import { getBookingById } from "@/service/BookingAPI";
-import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View, Pressable } from "react-native";
-import { ScrollView, GestureHandlerRootView } from "react-native-gesture-handler";
-import RoomReviewForm from "./RoomReviewForm";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
+import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { GestureHandlerRootView, ScrollView } from "react-native-gesture-handler";
+import RoomReviewForm from "./RoomReviewForm";
 
 type BookingDetailScreenProps = {
     bookingId: number;
@@ -48,7 +48,7 @@ export default function BookingDetailScreen({ bookingId }: BookingDetailScreenPr
             <ScrollView style={styles.container}>
                 <Image
                     source={{
-                        uri: "https://achi.vn/wp-content/uploads/2024/12/Thiet-ke-khach-san-hien-dai-dep-3-sao-tai-da-nang-achi-A184-01.jpg",
+                        uri: booking?.imageHotel,
                     }}
                     style={styles.image}
                 />

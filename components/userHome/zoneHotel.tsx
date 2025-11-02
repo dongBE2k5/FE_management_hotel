@@ -35,8 +35,6 @@ export default function ZoneHotel() {
         (hotel, index, self) =>
             index === self.findIndex(h => h.id === hotel.id)
     );
-    const uniqueRecentHotels2 = uniqueRecentHotels.filter(hotels => hotels.id == 2);
-    console.log("uniqueRecentHotels1", uniqueRecentHotels2);
 
 
     useEffect(() => {

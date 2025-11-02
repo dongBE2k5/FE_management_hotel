@@ -1,5 +1,7 @@
 import Room from "@/models/Room";
 import { UtilityItem } from "@/models/Utility/Utility";
+import CCCDScannerScreen from '../components/host/screen/CCCDScannerScreen';
+import { CameraCaptureView } from '../components/host/screen/CameraCaptureView';
 
 // src/types/navigation.ts
 export type RootStackParamList = {
@@ -15,6 +17,7 @@ export type RootStackParamList = {
     nights: number;
     specialRequests: UtilityItem[],
     price: number,
+
   };
   ReviewBooking: {
     room: Room,
@@ -97,6 +100,28 @@ export type HostStackParamList = {
   ManageServices: undefined;
   // RoomDetail:{roomId:number};
   RoomDetail:undefined;
+}
+export type HostStack ={
+  // CCCDScanner: undefined;
+  CCCDScannerScreen : undefined;
+  CameraCaptureView: { onCapture: (imageUri: string) => void }; 
+   hostBookings: undefined;
+  bookingDetail: { bookingId: number }; // có params thì khai báo ở đây
+  checkout: undefined; // có params thì khai báo ở đây
+  RoomList: undefined;
+  AddRoom: undefined;
+  ManageRoomTypes: undefined;
+  ManageServices: undefined;
+  // RoomDetail:{roomId:number};
+  RoomDetail:undefined;
+    hotelEdit: { id: number },
+  CreateHotel: undefined,
+  HotelList: undefined,
+  
+  listRoom: undefined;
+  
+  
+
 }
 export type CleningEmployee ={
   CleaningStaffScreen:undefined
