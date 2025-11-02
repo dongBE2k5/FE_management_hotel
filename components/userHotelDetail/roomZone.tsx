@@ -49,11 +49,11 @@ export default function RoomZone({ utilityOfTypeRoom, roomTypeImage }: RoomZoneP
             <View style={{ backgroundColor: 'white', width: '100%', padding: 20, marginTop: 10 }}>
                 <View style={{ flexDirection: 'row', display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
                     {utilityOfTypeRoom?.map((utility) => (
-                        <View style={{ flexDirection: 'row', marginRight: 15, marginBottom: 10, width: '33%' }}>
+                        <View key={utility.id} style={{ flexDirection: 'row', marginRight: 15, marginBottom: 10, width: '33%' }}>
                             <Image style={{ width: 20, height: 20, marginRight: 5, }} source={{ uri: urlImage + utility.imageUrl }} />
                             <Text style={{ fontWeight: 'bold', fontSize: 12, display: 'flex', alignItems: 'center' }}>{utility.utilityName}</Text>
                         </View>
-                    ))}
+                    ))} 
                     {/* <View style={{ flexDirection: 'row', marginRight: 15 }}>
                         <Ionicons style={{ marginRight: 5 }} name="expand" size={15} color="black" />
                         <Text style={{ fontWeight: 'bold', fontSize: 12 }}>20.0m2</Text>

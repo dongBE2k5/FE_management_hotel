@@ -1,12 +1,11 @@
 import { Hotel } from '@/models/Hotel';
 import { saveViewedHotelAPI } from '@/service/HotelAPI';
+import { getRatesByHotel } from "@/service/RateAPI";
+import { isHotelSaved, removeSavedHotel, saveHotel } from '@/service/SavedHotelAPI';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View, Alert } from "react-native";
-import React, { useState, useEffect } from "react";
-import Rate from "@/models/Rate";
-import { getRatesByHotel } from "@/service/RateAPI";
-import { saveHotel, removeSavedHotel, isHotelSaved } from '@/service/SavedHotelAPI';
+import React, { useEffect, useState } from "react";
+import { Alert, Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface HotelCardProps {
     handleNavigations: (id: number) => void;
@@ -136,7 +135,7 @@ const HotelCard: React.FC<HotelCardProps> = ({ handleNavigations, data, onViewed
                                     style={{ width: 10, height: 10 }}
                                     source={require("../../assets/images/gps.png")}
                                 />
-                                <Text style={styles.locationText}>{data.locationName}</Text>
+                                <Text style={styles.locationText}>{data.location?.name}</Text>
                             </View>
 
                             {/* 🔖 Nút lưu */}

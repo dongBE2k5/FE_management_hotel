@@ -1,29 +1,29 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { View, ActivityIndicator } from "react-native";
-import { createStackNavigator } from "@react-navigation/stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { createStackNavigator } from "@react-navigation/stack";
+import React, { useCallback, useState } from "react";
+import { ActivityIndicator, View } from "react-native";
 
 // 🧩 Import các màn hình
 import CameraCaptureScreen from "@/components/host/screen/CameraCaptureView";
 import CCCDScannerScreen from "@/components/host/screen/CCCDScannerScreen";
 
 
+import HostBookings from "@/components/host/screen/bookings/HostBookings";
+import CreateHotel from "@/components/host/screen/hotel/CreateHotel";
+import EditHotel from "@/components/host/screen/hotel/EditHotel";
+import HotelList from "@/components/host/screen/hotel/HotelList";
 import { getHostByUser } from "@/service/HostAPI"; // 🧠 API lấy host theo userId
 import { HostStack } from "@/types/navigation";
-import HotelList from "@/components/host/screen/hotel/HotelList";
-import HostBookings from "@/components/host/screen/bookings/HostBookings";
-import EditHotel from "@/components/host/screen/hotel/EditHotel";
-import CreateHotel from "@/components/host/screen/hotel/CreateHotel";
 
-import Checkout from "@/components/employee_staff/screen/checkOut";
 import BookingDetail from "@/components/employee_staff/screen/bookingDetail";
+import Checkout from "@/components/employee_staff/screen/checkOut";
 import KycFormScreen from "@/components/host/screen/CCCDScannerScreen";
 import { useFocusEffect } from "expo-router";
 
 const Stack = createStackNavigator<HostStack>();
 
 export default function HomeLayout() {
-  const [isHost, setIsHost] = useState<boolean | null>(null); // null: chưa xác định
+  const [isHost, setIsHost] = useState<boolean | null>(true); // null: chưa xác định
   const [loading, setLoading] = useState(true);
 // app/(host)/index.tsx
 useFocusEffect(

@@ -63,7 +63,7 @@ export default function SpecialRequest({ utility, onChange }: Props) {
             {selected?.map((item, index) => (
               <View style={styles.optionRowShow} key={item.id.toString()}>
                 <Text style={[styles.optionText, { width: '25%' }]}>{item.name}</Text>
-                <Text style={[styles.optionText, { width: '25%', fontWeight: 'bold', fontSize: 12, color: '#5b5b5b' }]}>SL: {quantity[item.id] || 1}</Text>
+                <Text style={[styles.optionText, { width: '20%', fontWeight: 'bold', fontSize: 12, color: '#5b5b5b' }]}>SL: {quantity[item.id] || 1}</Text>
                 <Text style={[styles.optionText, { width: '50%', fontWeight: 'bold', fontSize: 12, color: '#5b5b5b' }]}>Giá: {item.price * Number(quantity[item.id] || 1)} VNĐ</Text>
                 {index !== selected.length - 1 && <View style={styles.separator} />}
               </View>
@@ -90,9 +90,9 @@ export default function SpecialRequest({ utility, onChange }: Props) {
                   style={styles.optionRow}
                   onPress={() => toggleItem(item)}
                 >
-                  <Text style={[styles.optionText, { width: '25%' }]}>{item.name}</Text>
+                  <Text style={[styles.optionText, { width: '20%' }]}>{item.name}</Text>
                   {selected?.includes(item) && (
-                    <View style={styles.quantityContainer}>
+                    <View  style={[styles.quantityContainer, { width: '25%' }]}>
                       <Text style={styles.quantityText}>SL: </Text>
                       <View pointerEvents="box-none">
                         <TouchableWithoutFeedback onPress={() => { }}>
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   },
   quantityInput: {
     width: 50,
-    height: 30,
+    height: 40,
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 8,

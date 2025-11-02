@@ -1,8 +1,12 @@
 import Booking from '@/models/Booking/Booking';
+import { BookingUtilityRequest } from '@/models/BookingUtility/BookingUtilityRequest';
 import Room from '@/models/Room';
+import { UtilityItem } from '@/models/Utility/Utility';
 import Voucher from '@/models/Voucher';
 import { createBooking } from '@/service/BookingAPI';
+import { createBookingUtility } from '@/service/BookingUtilityAPI';
 import { getUserVouchers } from '@/service/UserVoucherAPI';
+import { useVoucher } from '@/service/VoucherAPI';
 import type { RootStackParamList } from '@/types/navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { RouteProp } from '@react-navigation/native';
@@ -11,21 +15,20 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  FlatList,
+  Alert,
   Modal,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
-  Alert
+  View
 } from 'react-native';
-import { useVoucher } from '@/service/VoucherAPI';
 type ConfirmBookingProps = {
   room: Room,
   checkInDate: Date,
   checkOutDate: Date | null,
   nights: number
+  specialRequests: UtilityItem[]
 }
 
 export default function ConfirmBooking() {
@@ -33,7 +36,7 @@ export default function ConfirmBooking() {
 
   const router = useRouter();
   const route = useRoute<RouteProp<RootStackParamList, 'ConfirmBooking'>>();
-  const { room, checkInDate, checkOutDate, nights } = route.params;
+  const { room, checkInDate, checkOutDate, nights, specialRequests,  } = route.params;
 
   type ConfirmBookingNavigationProp = NativeStackNavigationProp<
     RootStackParamList,
@@ -122,6 +125,17 @@ export default function ConfirmBooking() {
       const data = await createBooking(booking);
       if (selectedGlobalVoucher?.id) await useVoucher(selectedGlobalVoucher.id, totalPrice);
       if (selectedHotelVoucher?.id) await useVoucher(selectedHotelVoucher.id, totalPrice);
+      const bookingUtilityRequest: BookingUtilityRequest = {
+        bookingId: data.id,
+        utilityItemBooking: specialRequests.map(item => {
+          return {
+            utilityId: item.id,
+            quantity: Number(item.quantity)
+          }
+        })
+      }
+      const createdBookingUtility = await createBookingUtility(bookingUtilityRequest);
+      console.log("Đã tạo booking utility thành công:", createdBookingUtility);
       router.replace("/(tabs)/booking");
     } catch (err) {
       console.error(err);
@@ -159,10 +173,16 @@ export default function ConfirmBooking() {
           <Text>Giá phòng</Text>
           <Text>{(totalPrice).toLocaleString('vi-VN')} VND</Text>
         </View>
-        <View style={styles.row}>
-          <Text>Thuế & Phí</Text>
-          <Text>{Number(0).toLocaleString('vi-VN')} VND</Text>
-        </View>
+        {specialRequests.map((item: UtilityItem) => (
+
+          <View key={item.id} style={styles.row}>
+            {/* <Text>Yêu cầu đặc biệt</Text> */}
+            <Text style={{ width: '45%' }}>{item.name}</Text>
+            <Text style={{ width: '10%' }}>X{item.quantity}</Text>
+            <Text style={{ width: '45%', textAlign: 'right' }}>{(item.price * Number(item.quantity)).toLocaleString('vi-VN')} VND</Text>
+            {/* <Text>{specialRequests.map((item: UtilityItem) => item.price).join(', ')}</Text> */}
+          </View>
+        ))}
 
       </View>
 

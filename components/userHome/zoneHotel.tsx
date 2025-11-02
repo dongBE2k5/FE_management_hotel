@@ -1,20 +1,18 @@
 import { Hotel } from '@/models/Hotel';
 import LocationModel from '@/models/Location';
+import { getBestChoiceHotels } from '@/service/BookingAPI';
 import { getAllHotel, getHotelByLocation, getRecentlyViewedHotels, getRecentlyViewedHotelsByLocation } from '@/service/HotelAPI';
 import { getAllLocation } from '@/service/LocationAPI';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import React, { useEffect, useState } from 'react';
-import { Image, ImageBackground, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import React, { useCallback, useEffect, useState } from 'react';
+import { Image, ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { RootStackParamList } from '../../types/navigation';
 import Slide from "../userHotelDetail/slideImage";
 import HotelCard from "./hotelCard";
 import LocationSelector from "./location";
-import { getBestChoiceHotels } from '@/service/BookingAPI';
-import { useFocusEffect } from "@react-navigation/native";
-import { useCallback } from "react";
 
 type ZoneHotelNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -35,7 +33,7 @@ export default function ZoneHotel() {
         (hotel, index, self) =>
             index === self.findIndex(h => h.id === hotel.id)
     );
-
+    console.log("uniqueRecentHotels", uniqueRecentHotels);
     //bestchoice 
     const [bestChoiceHotels, setBestChoiceHotels] = useState<Hotel[]>([]);
     useEffect(() => {
