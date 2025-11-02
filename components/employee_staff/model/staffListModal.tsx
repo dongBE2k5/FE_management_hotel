@@ -1,16 +1,20 @@
 import { connectAndSubscribe, disconnect, fetchInitialRequests, sendRequest } from "@/service/Realtime/WebSocketAPI";
+import { getRoomItemsByResquset } from "@/service/RoomItemAPI";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import { FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import FeedbackModal from "./feedbackmodal"; // 👈 import modal mới
 
-
 export default function StaffListModal({ visible, onClose, staffList = [], roomId }) {
-
   const [showFeedback, setShowFeedback] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [requests, setRequests] = useState([]);
+  
+  // 🔽 THÊM STATE MỚI: Dùng để lưu request vừa nhận từ WebSocket
+  const [activeRequest, setActiveRequest] = useState(null);
+
+  console.log(requests);
 
   const handleCall = async (staff) => {
     try {
@@ -19,25 +23,24 @@ export default function StaffListModal({ visible, onClose, staffList = [], roomI
         console.warn("⚠️ Không tìm thấy userId trong AsyncStorage");
         return;
       }
-
       const userId = Number(userIdStr);
 
       const requestPayload = {
         senderId: userId,
         receiverId: staff.id,
         content: "Yêu cầu kiểm tra phòng",
-
       };
       console.log(staff);
+      
+      // 🔽 RESET state cũ trước khi mở modal
+      setActiveRequest(null); 
+      
       sendRequest(requestPayload, roomId);
       setSelectedStaff(staff);
       setShowFeedback(true); // 👈 mở modal feedback
     } catch (error) {
-
+      console.error("Lỗi khi gọi nhân viên:", error); // Thêm log lỗi
     }
-
-
-
   };
 
   useEffect(() => {
@@ -60,7 +63,7 @@ export default function StaffListModal({ visible, onClose, staffList = [], roomI
         // 1. Lấy dữ liệu ban đầu
         const initialRequests = await fetchInitialRequests(userId);
         if (isMounted) setRequests(initialRequests);
-        
+
         // 2. Thiết lập WebSocket
         connectAndSubscribe(userId, {
           onConnected: () => console.log("✅ WebSocket connected from StaffListModal"),
@@ -68,8 +71,12 @@ export default function StaffListModal({ visible, onClose, staffList = [], roomI
           onError: (error) => console.error("⚠️ WebSocket error:", error),
           onMessageReceived: (newRequest) => {
             console.log("📩 Nhận request realtime:", newRequest);
+            
             if (isMounted) {
               setRequests((prev) => [newRequest, ...prev]);
+              
+              // 🔽 ĐÂY LÀ CHÌA KHÓA: Cập nhật request đang hoạt động
+              setActiveRequest(newRequest); 
             }
           },
         });
@@ -88,12 +95,7 @@ export default function StaffListModal({ visible, onClose, staffList = [], roomI
   }, [visible]);
 
   const renderItem = ({ item }) => {
-    // let statusColor = "#000";
-    // if (item.status.includes("kiểm tra")) statusColor = "green";
-    // else if (item.status.includes("dọn dẹp")) statusColor = "orange";
-    // else if (item.status.includes("Hết giờ")) statusColor = "red";
-    // else if (item.status.includes("chờ")) statusColor = "blue";
-
+    // ...
     return (
       <View style={styles.card}>
         <View style={styles.row}>
@@ -106,11 +108,6 @@ export default function StaffListModal({ visible, onClose, staffList = [], roomI
           <Text style={styles.label}>Tên </Text>
           <Text style={[styles.value, { fontWeight: "700" }]}>{item.name}</Text>
         </View>
-        {/* 
-        <View style={styles.row}>
-          <Text style={styles.label}>Trạng thái </Text>
-          <Text style={[styles.value, { color: statusColor }]}>{item.status}</Text>
-        </View> */}
 
         <View style={styles.row}>
           <Text style={styles.label}>SĐT </Text>
@@ -152,17 +149,21 @@ export default function StaffListModal({ visible, onClose, staffList = [], roomI
       <FeedbackModal
         visible={showFeedback}
         staffName={selectedStaff?.name}
-        onClose={() => setShowFeedback(false)}
-        onCloseAll={() => {
-          // 🔹 Đóng luôn cả Feedback và StaffList
+        roomNumber={roomId} // 👈 Truyền roomId vào
+        activeRequest={activeRequest} // 👈 **TRUYỀN PROP QUAN TRỌNG NHẤT**
+        onClose={() => {
           setShowFeedback(false);
+          setActiveRequest(null); // 👈 Reset khi đóng
+        }}
+        onCloseAll={() => {
+          setShowFeedback(false);
+          setActiveRequest(null); // 👈 Reset khi đóng
           onClose(); // đóng StaffListModal cha
         }}
       />
     </>
   );
 }
-
 
 const styles = StyleSheet.create({
   overlay: {

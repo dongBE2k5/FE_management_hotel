@@ -1,29 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs } from "expo-router";
 import React from "react";
-// Cần import CommonActions, NavigationProp, ParamListBase để xử lý điều hướng và kiểu dữ liệu
-import { CommonActions, NavigationProp, ParamListBase } from "@react-navigation/native";
-
-// Định nghĩa kiểu dữ liệu cho một Route trong Tab Navigator (chứa Stack)
-type TabRouteWithState = {
-    name: string;
-    key: string;
-    // state của Stack Navigator bên trong, chứa index và routes của Stack
-    state?: { index: number; routes: { name: string }[] }; 
-};
-
-// Định nghĩa kiểu dữ liệu cho State của Tab Navigator
-type TabState = {
-    routes: TabRouteWithState[];
-    index: number;
-    // Thêm các thuộc tính khác của State nếu cần
-    type: string;
-    key: string;
-    routeNames: string[];
-    history: unknown[];
-    stale: boolean;
-};
-
 
 export default function TabLayout() {
   return (
@@ -47,41 +24,17 @@ export default function TabLayout() {
             <Ionicons name="home" size={size} color={color} />
           ),
         }}
-      
         listeners={({ navigation }) => ({
           tabPress: (e) => {
-           
-            const tabState = navigation.getState() as TabState; 
-
-           
-            const indexRoute = tabState.routes.find(route => route.name === 'index');
-
-           
-            const stackIndex = indexRoute?.state?.index ?? 0;
-
-        
-            if (stackIndex > 0) {
-              console.log("TabPress: Resetting Home Stack back to 'Home' screen.");
-              e.preventDefault(); // Ngăn Tab chuyển đổi mặc định
-
-           
-              navigation.dispatch(
-                CommonActions.reset({
-                  index: 0,
-                  routes: [{
-                    name: 'index', // Tên Route Tab
-                    state: {
-                      routes: [{ name: 'Home' }] // Tên màn hình gốc trong Stack Navigator (App.tsx)
-                    }
-                  }],
-                })
-              );
-            }
+            e.preventDefault(); // chặn điều hướng mặc định
+            navigation.reset({
+              index: 0,
+              routes: [{ name: "index" }], // reset về đúng index
+            });
           },
         })}
       />
 
-      {/* Các Tabs.Screen khác giữ nguyên */}
       <Tabs.Screen
         name="saved"
         options={{
@@ -121,9 +74,6 @@ export default function TabLayout() {
         listeners={({ navigation }) => ({
           tabPress: (e) => {
             const state = navigation.getState();
-            // Lỗi ở đây: state.routes[state.index] là Tab hiện tại.
-            // Để kiểm tra màn hình cuối của Stack Profile, cần tìm đúng Stack Profile.
-            // Tạm thời giữ nguyên theo code cũ của bạn
             const currentRoute =
               state.routes[state.index].state?.routes?.at(-1)?.name;
             if (currentRoute === "LoggedAccount") e.preventDefault();
