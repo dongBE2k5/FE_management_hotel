@@ -16,10 +16,6 @@ import {
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import LoginBanner from './bannerLogin';
-
-// 1. Import useUser (giả sử đường dẫn, hãy sửa lại nếu cần)
-import { useUser } from '@/context/UserContext';
-
 type LoginScreenNavigationProp = StackNavigationProp<
   ProfileStackParamList,
   'Login'
