@@ -9,17 +9,47 @@ import ZoneHotel from '@/components/userHome/zoneHotel';
 import ConfirmBooking from '@/components/userHotelDetail/ConfirmBooking';
 import Login from '@/components/userProfile/Login';
 
+import { useNavigation, useFocusEffect } from '@react-navigation/native'; // <-- Thêm useNavigation và useFocusEffect
+
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { StackActions, CommonActions } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react'; // <-- Thêm useCallback
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 const Stack = createStackNavigator();
 
 
 export function HomeScreen() {
+  const navigation = useNavigation(); // <-- Lấy đối tượng navigation
   const [showStickyHeader, setShowStickyHeader] = useState(false);
 
+  // 💡 LOGIC QUAN TRỌNG: Reset Stack khi màn hình được Focus
+  useFocusEffect(
+    useCallback(() => {
+      const state = navigation.getState();
+
+      // Kiểm tra Stack Index của chính Stack này
+      if (state && state.index > 0) {
+        console.log("Đang reset Stack về màn hình Home.");
+
+        // ✅ SỬ DỤNG CommonActions.reset để đảm bảo Stack được khởi tạo lại về màn hình Home
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0, // Đặt index của Stack về 0 (là màn hình Home)
+            routes: [
+              { name: 'Home' }, // Khởi tạo Stack chỉ với màn hình 'Home'
+            ],
+          })
+        );
+      }
+
+      // Lưu ý: Nếu muốn dùng popToTop, bạn phải đảm bảo navigation.getParent() là Tab Navigator
+      // và gọi dispatch trên parent, nhưng cách dùng CommonActions.reset này là chuẩn nhất 
+      // cho việc "quay về màn hình gốc của một Tab".
+
+    }, [navigation])
+  );
   const handleScroll = (event: { nativeEvent: { contentOffset: { y: number } } }) => {
     const scrollY = event.nativeEvent.contentOffset.y;
     setShowStickyHeader(scrollY > 100);

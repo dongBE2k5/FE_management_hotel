@@ -207,8 +207,23 @@ async function changePassword(
     });
 
     if (!res.ok) {
-      const err = await res.text();
-      return { success: false, message: err };
+      const errText = await res.text();
+      let errorMessage = "Đổi mật khẩu thất bại."; // Giá trị mặc định
+
+      try {
+     
+        const errorObject = JSON.parse(errText);
+        if (errorObject.message) {
+          errorMessage = errorObject.message;
+        } else {
+          errorMessage = errText; // Trường hợp không có trường message
+        }
+      } catch (e) { 
+        errorMessage = errText;
+      }
+      
+
+      return { success: false, message: errorMessage };
     }
 
     return { success: true, message: "Đổi mật khẩu thành công!" };
@@ -217,10 +232,50 @@ async function changePassword(
   }
 }
 
+// Cập nhật thông tin người dùng
+async function updateProfile(
+  userId: number,
+  updatedData: {
+    fullName?: string;
+    email?: string;
+    phone?: string;
+    cccd?: string;
+    gender?: string;
+    birthDate?: string; // YYYY-MM-DD
+    address?: string;
+  }
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const token = await AsyncStorage.getItem("userToken");
+    if (!token) {
+      return { success: false, message: "Không tìm thấy token người dùng." };
+    }
+
+    const res = await fetch(`${BaseUrl}/auth/${userId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify(updatedData), // ✅ gửi đúng key theo DTO
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      return { success: false, message: errText };
+    }
+
+    return { success: true, message: "Cập nhật thông tin thành công!" };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
+
+export default updateProfile;
 
 
 export {
   getUserById, loginFunction, register, logoutFunction, getCurrentUser, sendOtp,
-  resetPassword,changePassword
+  resetPassword, changePassword, updateProfile
 };
 

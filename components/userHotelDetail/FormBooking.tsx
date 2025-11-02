@@ -262,9 +262,11 @@ export default function FormBooking() {
                         flexDirection: 'row',
                     }}>
                         <Text style={{ fontWeight: 'bold', fontSize: 10, marginRight: 10 }}>
-                            {user?.data?.fullName}
+                            Họ tên: 
+                             {user?.data?.fullName}
                         </Text>
                         <Text style={{ fontWeight: 'bold', fontSize: 10, marginRight: 10 }}>
+                            Email: 
                             {user?.data?.email}
                         </Text>
 
@@ -273,6 +275,7 @@ export default function FormBooking() {
                         flexDirection: 'row',     marginTop: 10
                     }}>
                         <Text style={{ fontWeight: 'bold', fontSize: 10, marginRight: 10 }}>
+                            Số điện thoại: 
                             {user?.data?.phone}
                         </Text>
                         <Ionicons name="checkmark" size={15} color="green" />
