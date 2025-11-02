@@ -15,8 +15,6 @@ import {
     View,
 } from 'react-native';
 
-
-
 // Cấu hình cho các trạng thái
 const statusConfig = {
     CHUA_THANH_TOAN: { text: 'Chưa thanh toán', color: '#fd7e14', icon: 'wallet-outline' },
@@ -33,6 +31,18 @@ const formatDate = (date) => {
     return `${d.getDate()}/${d.getMonth() + 1}`;
 };
 
+// 🔽 THÊM HÀM MỚI ĐỂ FORMAT NGÀY GIỜ
+const formatDateTime = (date) => {
+    if (!date) return '';
+    const d = new Date(date);
+    const day = `0${d.getDate()}`.slice(-2);
+    const month = `0${d.getMonth() + 1}`.slice(-2);
+    const year = d.getFullYear();
+    const hours = `0${d.getHours()}`.slice(-2);
+    const minutes = `0${d.getMinutes()}`.slice(-2);
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
+};
+
 export default function ListRoom() {
     // --- LOGIC GỌI API VÀ XỬ LÝ DỮ LIỆU ---
     const mapBookingData = (booking) => ({
@@ -44,6 +54,7 @@ export default function ListRoom() {
         price: booking.totalPrice || 0,
         amountPaid: booking.amountPaid || 0,
         status: booking.status || 'CHUA_THANH_TOAN',
+        createdAt: booking.createdAt || null, // 👈 Đã có
     });
 
     const [data, setData] = useState([]);
@@ -52,16 +63,7 @@ export default function ListRoom() {
             let isMounted = true;
             const fetchBookings = async () => {
                 try {
-                    // // Giả lập dữ liệu API với cccd
-                    //  const mockApiResponse = [
-                    //     { id: 1, checkInDate: '2025-10-20', checkOutDate: '2025-10-22', status: 'DA_THANH_TOAN', user: { fullName: 'Nguyễn Văn A', cccd: '012345678910' }, room: { type: 'Deluxe Twin', number: '302' }, totalPrice: 3200000, amountPaid: 3200000 },
-                    //     { id: 2, checkInDate: '2025-10-18', checkOutDate: '2025-10-19', status: 'CHUA_THANH_TOAN', user: { fullName: 'Lê Thị B', cccd: '112233445566' }, room: { type: 'Standard', number: '102' }, totalPrice: 950000, amountPaid: 0 },
-                    //     { id: 3, checkInDate: '2025-10-15', checkOutDate: '2025-10-16', status: 'CHECK_IN', user: { fullName: 'Trần Hoàng C', cccd: '998877665544' }, room: { type: 'Suite', number: '501' }, totalPrice: 5000000, amountPaid: 5000000 },
-                    //     { id: 4, checkInDate: '2025-10-19', checkOutDate: '2025-10-21', status: 'DA_COC', user: { fullName: 'Phạm Thị D', cccd: '001122334455' }, room: { type: 'Superior', number: '205' }, totalPrice: 2100000, amountPaid: 1000000 },
-                    // ];
-                    // setData(mockApiResponse.map(mapBookingData));
-    
-                    const hotelIdStr = await AsyncStorage.getItem('hotelID'); // ✅ await
+                    const hotelIdStr = await AsyncStorage.getItem('hotelID');
                     const hotelId = hotelIdStr ? Number(hotelIdStr) : null;
                     if (!hotelId) {
                         console.error("Hotel ID không hợp lệ.");
@@ -71,10 +73,8 @@ export default function ListRoom() {
                         getAllBookingsByHotelId(hotelId),
                     ]);
     
-                    // console.log("bookings", bookings);
-    
                     const sortedData = bookings.sort(
-                        (a, b) => new Date(b.checkInDate || 0) - new Date(a.checkInDate || 0)
+                        (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
                     );
     
                     const formattedData = sortedData.map(mapBookingData);
@@ -93,9 +93,6 @@ export default function ListRoom() {
                     onMessageReceived: (newRequest) => {
                         console.log("📩 Nhận request realtime:", newRequest);
                         fetchBookings();
-                        // if (isMounted) {
-                        //     setRequests((prev) => [newRequest, ...prev]);
-                        // }
                     },
                 });
             };
@@ -113,11 +110,15 @@ export default function ListRoom() {
     const [activeFilter, setActiveFilter] = useState('ALL');
     const [searchQuery, setSearchQuery] = useState(''); // State cho thanh tìm kiếm
 
-    // Cập nhật logic lọc và đếm để bao gồm cả tìm kiếm
+    // 🔽 SỬA LOGIC LỌC (REQUEST 1)
     const { filteredBookings, counts } = useMemo(() => {
         const calculatedCounts = {
             ALL: data.length,
-            PENDING_GROUP: data.filter(b => b.status === 'CHUA_THANH_TOAN' || b.status === 'DA_COC').length,
+            PENDING_GROUP: data.filter(b => 
+                b.status === 'CHUA_THANH_TOAN' || 
+                b.status === 'DA_COC' || 
+                b.status === 'DA_THANH_TOAN' // 👈 THÊM VÀO ĐÂY
+            ).length,
             CHECK_IN: data.filter(b => b.status === 'CHECK_IN').length,
             COMPLETED_GROUP: data.filter(b => b.status === 'CHECK_OUT' || b.status === 'DA_HUY').length,
         };
@@ -126,7 +127,11 @@ export default function ListRoom() {
         // Lọc theo tab
         switch (activeFilter) {
             case 'PENDING_GROUP':
-                list = data.filter(b => b.status === 'CHUA_THANH_TOAN' || b.status === 'DA_COC');
+                list = data.filter(b => 
+                    b.status === 'CHUA_THANH_TOAN' || 
+                    b.status === 'DA_COC' || 
+                    b.status === 'DA_THANH_TOAN' // 👈 THÊM VÀO ĐÂY
+                );
                 break;
             case 'CHECK_IN':
                 list = data.filter(b => b.status === 'CHECK_IN');
@@ -163,17 +168,35 @@ export default function ListRoom() {
         </TouchableOpacity>
     );
 
+    // 🔽 SỬA LOGIC PAYMENTPROGRESS (REQUEST 2)
     const PaymentProgress = ({ item }) => {
         const { amountPaid, price, status } = item;
-        const percentage = price > 0 ? (amountPaid / price) * 100 : 0;
+        
+        // Luôn hiển thị 100% nếu đã thanh toán, check-in, check-out
+        const percentage = useMemo(() => {
+            if (status === 'DA_THANH_TOAN' || status === 'CHECK_IN' || status === 'CHECK_OUT') {
+                return 100;
+            }
+            if (price > 0) {
+                return (amountPaid / price) * 100;
+            }
+            return 0;
+        }, [status, amountPaid, price]);
+
         let barColor = '#6c757d';
         if (status === 'DA_COC') barColor = '#17a2b8';
         if (status === 'DA_THANH_TOAN' || status === 'CHECK_IN' || status === 'CHECK_OUT') barColor = '#28a745';
+
+        // Luôn hiển thị số tiền đã trả = tổng tiền nếu đã thanh toán xong
+        const paidText = (status === 'DA_THANH_TOAN' || status === 'CHECK_IN' || status === 'CHECK_OUT')
+            ? price.toLocaleString('vi-VN')
+            : amountPaid.toLocaleString('vi-VN');
+
         return (
             <View style={styles.paymentContainer}>
                 <View style={styles.paymentLabels}>
                     <Text style={styles.paymentText}>Thanh toán</Text>
-                    <Text style={styles.paymentAmount}>{amountPaid.toLocaleString('vi-VN')} / {price.toLocaleString('vi-VN')}₫</Text>
+                    <Text style={styles.paymentAmount}>{paidText} / {price.toLocaleString('vi-VN')}₫</Text>
                 </View>
                 <View style={styles.progressBarBackground}>
                     <View style={[styles.progressBarFill, { width: `${percentage}%`, backgroundColor: barColor }]} />
@@ -182,6 +205,7 @@ export default function ListRoom() {
         );
     };
 
+    // 🔽 SỬA BOOKINGCARD ĐỂ THÊM CREATEDAT (REQUEST 3)
     const BookingCard = ({ item }) => {
         const statusInfo = statusConfig[item.status] || statusConfig.DA_HUY;
         return (
@@ -196,6 +220,13 @@ export default function ListRoom() {
                         </View>
                     </View>
                     <View style={styles.infoRow}><Ionicons name="calendar-outline" size={20} color="#666" style={styles.infoIcon} /><Text style={styles.dateInfo}>{item.dateInfo}</Text></View>
+                    
+                    {/* 🔽 THÊM DÒNG NGÀY TẠO */}
+                    <View style={styles.infoRow}>
+                        <Ionicons name="create-outline" size={20} color="#666" style={styles.infoIcon} />
+                        <Text style={styles.dateInfo}>Ngày tạo: {formatDateTime(item.createdAt)}</Text>
+                    </View>
+
                     <PaymentProgress item={item} />
                 </View>
                 <View style={[styles.statusFooter, { backgroundColor: statusInfo.color }]}>
