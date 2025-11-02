@@ -1,7 +1,5 @@
 import Room from "@/models/Room";
 import { UtilityItem } from "@/models/Utility/Utility";
-import CCCDScannerScreen from '../components/host/screen/CCCDScannerScreen';
-import { CameraCaptureView } from '../components/host/screen/CameraCaptureView';
 
 // src/types/navigation.ts
 export type RootStackParamList = {

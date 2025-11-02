@@ -1,4 +1,4 @@
-import * as Linking from 'expo-linking';
+import { openURL } from 'expo-linking'; // 👈 SỬA Ở ĐÂY
 import React from "react";
 import {
   Alert,
@@ -23,24 +23,24 @@ export default function CostDetailModal({ visible, onClose, costData }) {
   // Nếu không có dữ liệu, hiển thị modal thông báo
   if (!costData) {
     return (
-        <Modal
-            visible={visible}
-            transparent
-            animationType="fade"
-            onRequestClose={onClose}
-        >
-            <View style={styles.overlay}>
-                <View style={styles.modalContainer}>
-                    <Text style={styles.title}>Không có thông tin</Text>
-                    <Text style={{ textAlign: 'center', marginVertical: 10 }}>
-                        Không thể tính toán chi phí. Vui lòng kiểm tra lại thông tin check-in.
-                    </Text>
-                    <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-                        <Text style={styles.closeText}>Đóng</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-        </Modal>
+      <Modal
+        visible={visible}
+        transparent
+        animationType="fade"
+        onRequestClose={onClose}
+      >
+        <View style={styles.overlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.title}>Không có thông tin</Text>
+            <Text style={{ textAlign: 'center', marginVertical: 10 }}>
+              Không thể tính toán chi phí. Vui lòng kiểm tra lại thông tin check-in.
+            </Text>
+            <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+              <Text style={styles.closeText}>Đóng</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     );
   }
 
@@ -62,7 +62,8 @@ export default function CostDetailModal({ visible, onClose, costData }) {
       }
       const paymentUrl = await PaymentAPI.createPayment(totalAmount, 'vnpay', costData.bookingId);
       if (paymentUrl) {
-        await Linking.openURL(paymentUrl.toString());
+        // 👈 SỬA CÁCH GỌI HÀM Ở ĐÂY
+        await openURL(paymentUrl.toString()); 
       } else {
         Alert.alert("Lỗi", "Không thể tạo đơn thanh toán");
       }
@@ -130,7 +131,7 @@ export default function CostDetailModal({ visible, onClose, costData }) {
           {/* Nút thanh toán chỉ hiển thị khi chưa thanh toán */}
           {!costData?.isPaid && (
             <TouchableOpacity style={styles.closeBtn} onPress={handlePayment}>
-                <Text style={styles.closeText}>Thanh toán</Text>
+              <Text style={styles.closeText}>Thanh toán</Text>
             </TouchableOpacity>
           )}
         </View>
