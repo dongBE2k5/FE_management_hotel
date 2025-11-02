@@ -135,8 +135,6 @@ async function createHotel(hotel: HotelRequest): Promise<Hotel> {
   }
   return res.data;
 }
-
-export { createHotel, findHotelById, getAllHotel, getAllHotelsByUser, getHotelByLocation, updateHotel };
 //  Hàm tìm kiếm khách sạn theo nhiều tiêu chí
 export async function searchHotels(
   name?: string,
@@ -172,5 +170,18 @@ export async function searchHotels(
     return [];
   }
 }
-export { find, getAllHotel, getHotelByLocation };
+async function find(id: Number): Promise<Hotel> {
+  const res = await fetch(`${BaseUrl}/hotels/${id}`);
+
+  if (!res.ok) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+
+  // ép kiểu dữ liệu trả về
+  const data: Hotel = await res.json();
+  return data;
+}
+export { find,createHotel, findHotelById, getAllHotel, getAllHotelsByUser, getHotelByLocation, updateHotel };
+
+
 
