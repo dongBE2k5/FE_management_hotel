@@ -1,8 +1,20 @@
 import ListRoom from "@/components/employee_staff/screen/listRoom";
+import { useHost } from "@/context/HostContext";
+import { HostStackParamList } from "@/types/navigation";
+import { RouteProp, useRoute } from "@react-navigation/native";
 import { StyleSheet, View } from "react-native";
 import DashboardScreen from "./DashboardScreen";
 
 export default function HostBookings() {
+    const { hotelId, setHotelId } = useHost();
+    const route = useRoute<RouteProp<HostStackParamList, 'hostBookings'>>();
+    // const id = route.params?.id;
+    console.log("hotelId", hotelId);
+    // useEffect(() => {
+    //     const getBookings = async () => {
+    //         const bookings = await getBookingsByHotelId(hotelId);
+    //     }
+    // }, []);
     return (
         // Bọc trong một View cha với flex: 1
         <View style={styles.pageContainer}>

@@ -1,3 +1,4 @@
+import { useUser } from '@/context/UserContext';
 import UserLogin from '@/models/UserLogin';
 import { loginFunction } from '@/service/UserAPI';
 import { ProfileStackParamList } from '@/types/navigation';

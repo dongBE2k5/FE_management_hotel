@@ -1,5 +1,10 @@
+import { useHost } from '@/context/HostContext';
+import RoomRequest from '@/models/Room/RoomRequest';
+import TypeOfRoomResponse from '@/models/TypeOfRoom/TypeOfRoomResponse';
+import { addRoom } from '@/service/RoomAPI';
+import { getTypeOfRoomByHotel } from '@/service/TypeOfRoomService';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 // --- DỮ LIỆU MOCKUP ---
@@ -11,7 +16,7 @@ const mockRoomTypes = [
 ];
 
 // Hàm giả lập để xử lý việc thêm phòng
-const mockOnAddRooms = (newRooms) => {
+const mockOnAddRooms = (newRooms: RoomRequest[]) => {
     console.log('Phòng mới được thêm (giả lập):', newRooms);
     // Hiển thị Alert thay vì gọi hàm thật
     Alert.alert(
@@ -30,15 +35,29 @@ const mockNavigation = {
 // Cung cấp giá trị mặc định cho props để chạy độc lập
 export default function AddRoomScreen({ route, navigation = mockNavigation }) {
     // Nếu có route.params thì dùng, không thì dùng dữ liệu giả
-    const roomTypes = route?.params?.roomTypes || mockRoomTypes;
     const onAddRooms = route?.params?.onAddRooms || mockOnAddRooms;
-
+    const [roomTypes, setRoomTypes] = useState<TypeOfRoomResponse>();
     const [selectedType, setSelectedType] = useState(null);
     const [price, setPrice] = useState('');
+    const [description, setDescription] = useState('');
     const [roomNumbers, setRoomNumbers] = useState('');
+    const { hotelId } = useHost();
+    console.log("hotelId", hotelId);
+    useEffect(() => {
+        if (!hotelId) return;
+        const fetchRoomTypes = async () => {
+           
+            const typeOfRoom = await getTypeOfRoomByHotel(hotelId);
+            console.log(typeOfRoom);
+            setRoomTypes(typeOfRoom);
+        };
+       
+        
+        fetchRoomTypes();
+    }, []);
 
-    const handleAddRooms = () => {
-        if (!selectedType || !price || !roomNumbers) {
+    const handleAddRooms = async () => {
+        if (!selectedType || !price || !roomNumbers || !description) {
             Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin.");
             return;
         }
@@ -48,30 +67,35 @@ export default function AddRoomScreen({ route, navigation = mockNavigation }) {
             Alert.alert("Lỗi", "Số phòng không hợp lệ. Vui lòng nhập các số phòng cách nhau bởi dấu phẩy.");
             return;
         }
-
-        const newRooms = numbers.map(number => ({
-            id: number,
-            type: selectedType.name,
-            status: 'available',
+        console.log(selectedType);
+        const newRooms: RoomRequest[] = numbers.map(number => ({
+            roomNumber: number,
+            typeRoomId: selectedType.id,
+            status: 'AVAILABLE',
             price: parseInt(price),
-            bookingInfo: null,
-            details: [
-                { id: `dt_${number}_1`, icon: 'bed-outline', label: '1 Giường' },
-                { id: `dt_${number}_2`, icon: 'people-outline', label: '2 người' },
-                { id: `dt_${number}_3`, icon: 'wifi', label: 'Wifi miễn phí' },
-            ],
-            usedServices: {},
-            pastBookings: [],
+            description: description,
+            hotelId: hotelId,
+            // details: [
+            //     { id: `dt_${number}_1`, icon: 'bed-outline', label: '1 Giường' },
+            //     { id: `dt_${number}_2`, icon: 'people-outline', label: '2 người' },
+            //     { id: `dt_${number}_3`, icon: 'wifi', label: 'Wifi miễn phí' },
+            // ],
+            // usedServices: {},
+            // pastBookings: [],
         }));
-        
+        console.log(newRooms);
+
+        const response = await addRoom(newRooms);
+
         // Gọi hàm onAddRooms (có thể là hàm thật hoặc hàm giả)
-        onAddRooms(newRooms); 
-        
+        onAddRooms(response);
+        Alert.alert("Thêm phòng thành công", "Phòng được thêm thành công!");
+
         // Sau khi gọi hàm giả, chúng ta không cần thêm Alert ở đây nữa
         // vì hàm giả đã làm điều đó.
-        
+
         // Quay lại màn hình trước đó
-        navigation.goBack();
+        // navigation.goBack();
     };
 
     return (
@@ -81,18 +105,18 @@ export default function AddRoomScreen({ route, navigation = mockNavigation }) {
                     <Ionicons name="close" size={28} color="#333" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Thêm phòng mới</Text>
-                <View style={{width: 28}} />
+                <View style={{ width: 28 }} />
             </View>
             <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
                 <Text style={styles.label}>1. Chọn loại phòng</Text>
                 <View style={styles.typeSelector}>
-                    {roomTypes.map(type => (
+                    {roomTypes?.data?.map(type => (
                         <TouchableOpacity
                             key={type.id}
                             style={[styles.typeButton, selectedType?.id === type.id && styles.typeButtonSelected]}
                             onPress={() => setSelectedType(type)}
                         >
-                            <Text style={[styles.typeButtonText, selectedType?.id === type.id && styles.typeButtonTextSelected]}>{type.name}</Text>
+                            <Text style={[styles.typeButtonText, selectedType?.id === type.id && styles.typeButtonTextSelected]}>{type.room == "DON" ? "Phòng Đơn" : type.room == "DOI" ? "Phòng Đôi" : "Phòng Gia Đình"}</Text>
                         </TouchableOpacity>
                     ))}
                 </View>
@@ -104,6 +128,15 @@ export default function AddRoomScreen({ route, navigation = mockNavigation }) {
                     keyboardType="numeric"
                     value={price}
                     onChangeText={setPrice}
+                />
+
+                <Text style={styles.label}>3. Nhập mô tả</Text>
+                <TextInput
+                    style={styles.textInput}
+                    placeholder="vd: Phòng 101 là phòng đơn, phòng 102 là phòng đôi, phòng 103 là phòng gia đình"
+                    multiline
+                    value={description}
+                    onChangeText={setDescription}
                 />
 
                 <Text style={styles.label}>3. Nhập số phòng (cách nhau bởi dấu phẩy)</Text>

@@ -1,6 +1,9 @@
+import { useHost } from '@/context/HostContext';
+import Room from '@/models/Room';
+import { getRoomByHotel } from '@/service/RoomAPI';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import { useFocusEffect, useNavigation } from 'expo-router';
+import React, { useCallback, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const sampleRooms = [
@@ -10,23 +13,23 @@ const sampleRooms = [
 ];
 
 const statusConfig = {
-    available: { text: 'Trống', color: '#28a745' },
-    occupied: { text: 'Có khách', color: '#dc3545' },
-    maintenance: { text: 'Bảo trì', color: '#6c757d' },
+    AVAILABLE: { text: 'Trống', color: '#28a745' },
+    USED: { text: 'Có khách', color: '#dc3545' },
+    MAINTENANCE: { text: 'Bảo trì', color: '#6c757d' },
 };
 
 const RoomCard = ({ room, onPress }) => {
     const statusInfo = statusConfig[room.status];
     if (!statusInfo) return null;
-
+    console.log("room", room);
     return (
         <TouchableOpacity style={styles.roomCard} onPress={onPress}>
             <View style={styles.cardContent}>
                 <View style={[styles.statusColorBar, { backgroundColor: statusInfo.color }]} />
                 <View style={styles.cardInfo}>
-                    <Text style={styles.roomNumber}>Phòng {room.id}</Text>
+                    <Text style={styles.roomNumber}>Phòng {room.roomNumber}</Text>
                     <Text style={styles.roomType}>{room.type}</Text>
-                    {room.status === 'occupied' && room.bookingInfo ? (
+                    {room.status === 'USED' && room.bookingInfo ? (
                         <Text style={styles.guestName}>{room.bookingInfo.guestName}</Text>
                     ) : (
                         <Text style={styles.price}>{room.price?.toLocaleString('vi-VN')}đ</Text>
@@ -106,29 +109,47 @@ const initialRooms = [
 ];
 
 export default function RoomListScreen() {
+    const { hotelId } = useHost();
     const navigation = useNavigation();
     // const allRooms = route.params?.rooms || sampleRooms;
     const allRooms = initialRooms || sampleRooms;
+    const [rooms, setRooms] = useState<Room[]>([]);
     const [activeFilter, setActiveFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
 
-    const filteredRooms = useMemo(() => {
-        let roomsToFilter = allRooms;
-        switch (activeFilter) {
-            case 'maintenance': roomsToFilter = allRooms.filter(r => r.status === 'maintenance'); break;
-            case 'available': roomsToFilter = allRooms.filter(r => r.status === 'available'); break;
-            case 'occupied': roomsToFilter = allRooms.filter(r => r.status === 'occupied'); break;
-        }
-        if (searchQuery.trim()) {
-            const lowercasedQuery = searchQuery.toLowerCase();
-            return roomsToFilter.filter(room => {
-                const guestName = room.bookingInfo ? room.bookingInfo.guestName.toLowerCase() : '';
-                const roomId = room.id.toLowerCase();
-                return roomId.includes(lowercasedQuery) || guestName.includes(lowercasedQuery);
-            });
-        }
-        return roomsToFilter;
-    }, [activeFilter, allRooms, searchQuery]);
+   
+
+    useFocusEffect(
+        useCallback(() => {
+            if (!hotelId) return;
+            fetchRooms(hotelId);
+        }, [])
+    );
+
+    const fetchRooms = async (hotelId: number) => {
+
+        const response = await getRoomByHotel(hotelId);
+        console.log("response", response);
+        setRooms(response);
+    };
+
+    // const filteredRooms = useMemo(() => {
+    //     let roomsToFilter = allRooms;
+    //     switch (activeFilter) {
+    //         case 'maintenance': roomsToFilter = allRooms.filter(r => r.status === 'maintenance'); break;
+    //         case 'available': roomsToFilter = allRooms.filter(r => r.status === 'available'); break;
+    //         case 'occupied': roomsToFilter = allRooms.filter(r => r.status === 'occupied'); break;
+    //     }
+    //     if (searchQuery.trim()) {
+    //         const lowercasedQuery = searchQuery.toLowerCase();
+    //         return roomsToFilter.filter(room => {
+    //             const guestName = room.bookingInfo ? room.bookingInfo.guestName.toLowerCase() : '';
+    //             const roomId = room.id.toLowerCase();
+    //             return roomId.includes(lowercasedQuery) || guestName.includes(lowercasedQuery);
+    //         });
+    //     }
+    //     return roomsToFilter;
+    // }, [activeFilter, allRooms, searchQuery]);
 
     const counts = useMemo(() => ({
         all: allRooms.length,
@@ -182,8 +203,8 @@ export default function RoomListScreen() {
             </View>
 
             <FlatList
-                data={filteredRooms}
-                keyExtractor={item => item.id}
+                data={rooms}
+                keyExtractor={item => item.id.toString()}
                 ListHeaderComponent={
                     <View style={styles.filterBar}>
                         <FilterButton name={`Tất cả (${counts.all})`} filterKey="all" />

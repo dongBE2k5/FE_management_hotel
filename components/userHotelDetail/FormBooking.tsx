@@ -1,4 +1,6 @@
 import RegisterResponse from '@/models/RegisterResponse';
+import { UtilityItem } from '@/models/Utility/Utility';
+import { getUtilityOfHotelByHotelIdAndType } from '@/service/HotelUtilityAPI';
 import { getUserById } from '@/service/UserAPI';
 import type { RootStackParamList } from '@/types/navigation';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -24,11 +26,13 @@ export default function FormBooking() {
     const [checkOut, setCheckOut] = useState<Date | null>(null);   // chưa chọn
     const [showIn, setShowIn] = useState(false);
     const [showOut, setShowOut] = useState(false);
-    const [specialRequests, setSpecialRequests] = useState<string[]>([]);
+    const [specialRequests, setSpecialRequests] = useState<UtilityItem[]>([]);
     const route = useRoute<RouteProp<RootStackParamList, 'FormBooking'>>();
     const { room, checkInDate, checkOutDate } = route.params;
     const [user, setUser] = useState<RegisterResponse | null>(null);
     const [price, setPrice] = useState<number>(0);
+    const [utility, setUtility] = useState<UtilityItem[]>([]);
+    // const [selected, setSelected] = useState<UtilityItem[]>([]);
     const router = useRouter();
     const navigation = useNavigation<FormBookingScreenNavigationProp>();
 
@@ -46,12 +50,29 @@ export default function FormBooking() {
             }
         };
 
+        const fetchUtilityOfHotel = async (hotelId: number) => {
+            const res = await getUtilityOfHotelByHotelIdAndType(hotelId, "OUTROOM");    
+            
+            console.log(res.data);
+            setUtility(res.data);
+        }
+
+        fetchUtilityOfHotel(room.hotel.id);
         getUser();
         setPrice(Number(room.price) * nights);
+        
 
     }, []);
+    useEffect(() => {
+        if(specialRequests.length > 0) {
+            const price = Number(room.price) * nights;
+            const specialRequestTotal = specialRequests.map(item => item.price * Number(item.quantity)).reduce((a, b) => a + b, 0);
+            setPrice(price + specialRequestTotal);
+        }
+    }, [specialRequests]);
     // type FormBookingNavProp = NativeStackNavigationProp<RootStackParamList, 'FormBooking'>;
     // const navigation = useNavigation<FormBookingNavProp>();
+    console.log("specialRequests", specialRequests);
     console.log(room);
 
     // const hotelName = 'Khách sạn Mường Thanh Grand Đà Nẵng';
@@ -282,8 +303,8 @@ export default function FormBooking() {
                     </View>
                 </View>
                 <View>
-                    <Text style={{ fontWeight: 'bold', marginTop: 10 }}>Yêu cầu đặc biệt</Text>
-                    <SpecialRequest onChange={setSpecialRequests} />
+                    <Text style={{ fontWeight: 'bold', marginTop: 10 }}>Dịch vụ khách sạn</Text>
+                    <SpecialRequest utility={utility} onChange={setSpecialRequests} />
                 </View>
 
 
@@ -395,6 +416,8 @@ export default function FormBooking() {
                                 checkInDate,
                                 checkOutDate,
                                 nights,
+                                specialRequests,
+                                price,
                             });
                         }}
                     >

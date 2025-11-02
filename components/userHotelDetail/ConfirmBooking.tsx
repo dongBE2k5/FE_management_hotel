@@ -5,6 +5,10 @@ import { createBooking } from '@/service/BookingAPI';
 import { getUserVouchers } from '@/service/UserVoucherAPI';
 import type { RootStackParamList } from '@/types/navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { BookingUtilityRequest } from '@/models/BookingUtility/BookingUtilityRequest';
+import { UtilityItem } from '@/models/Utility/Utility';
+import { createBookingUtility } from '@/service/BookingUtilityAPI';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -25,7 +29,9 @@ type ConfirmBookingProps = {
   room: Room,
   checkInDate: Date,
   checkOutDate: Date | null,
-  nights: number
+  nights: number,
+  specialRequests: UtilityItem[],
+  price: number,
 }
 
 export default function ConfirmBooking() {
@@ -33,7 +39,19 @@ export default function ConfirmBooking() {
 
   const router = useRouter();
   const route = useRoute<RouteProp<RootStackParamList, 'ConfirmBooking'>>();
-  const { room, checkInDate, checkOutDate, nights } = route.params;
+  const { room, checkInDate, checkOutDate, nights, specialRequests, price } = route.params;
+  console.log("specialRequests", specialRequests);
+  const [bookingUtility, setBookingUtility] = useState<BookingUtilityRequest[]>();
+  useEffect(() => {
+    // const bookingUtility = specialRequests.map(item => {
+    //   return {
+    //     utilityId: item.id,
+    //     quantity: Number(item.quantity)
+    //   }
+    // });
+    // console.log("bookingUtility", bookingUtility);
+    // setBookingUtility(bookingUtility);
+  }, [specialRequests]);
 
   type ConfirmBookingNavigationProp = NativeStackNavigationProp<
     RootStackParamList,
@@ -108,21 +126,37 @@ export default function ConfirmBooking() {
     // nếu có voucher app
     if (selectedGlobalVoucher?.id) voucherIds.push(selectedGlobalVoucher.id);
 
-    const booking: Booking = {
-      userId: Number(userId!),
-      roomId: room.id,
-      checkInDate: new Date(checkInDate),
-      checkOutDate: new Date(checkOutDate!),
-      totalPrice: finalPrice,
-      voucherIds: voucherIds.length > 0 ? voucherIds : undefined, // chỉ gửi nếu có
+      const booking: Booking = {
+        userId: Number(userId!),
+        roomId: room.id,
+        checkInDate: new Date(checkInDate),
+        checkOutDate: new Date(checkOutDate!),
+        totalPrice: price,
+      }
+      console.log("booking", booking);
+      const createdBooking = await createBooking(booking);
+      console.log("Đã tạo booking thành công:", createdBooking);
 
-    };
+      const bookingUtilityRequest: BookingUtilityRequest = {
+        bookingId: createdBooking.id,
+        utilityItemBooking: specialRequests.map(item => {
+          return {
+            utilityId: item.id,
+            quantity: Number(item.quantity)
+          }
+        })
+      }
+      const createdBookingUtility = await createBookingUtility(bookingUtilityRequest);
+      console.log("Đã tạo booking utility thành công:", createdBookingUtility);
 
-    try {
-      const data = await createBooking(booking);
-      if (selectedGlobalVoucher?.id) await useVoucher(selectedGlobalVoucher.id, totalPrice);
-      if (selectedHotelVoucher?.id) await useVoucher(selectedHotelVoucher.id, totalPrice);
-      router.replace("/(tabs)/booking");
+      // BƯỚC 2: KHỞI TẠO THANH TOÁN NGAY LẬP TỨC
+      if (createdBooking && createdBooking.id) {
+        // Gọi hàm thanh toán đã được tách ra
+        await initiatePayment(createdBooking.totalPrice, 'vnpay', createdBooking.id);
+      } else {
+        throw new Error("Tạo booking không trả về ID hợp lệ.");
+      }
+
     } catch (err) {
       console.error(err);
     }
@@ -136,7 +170,7 @@ export default function ConfirmBooking() {
       {/* Tên khách sạn */}
       <View style={styles.section}>
         <Text style={styles.label}>Khách sạn</Text>
-        <Text style={styles.value}>{room.hotelName}</Text>
+        <Text style={styles.value}>{room.hotel.name}</Text>
       </View>
       <View style={styles.section}>
         <Text style={styles.label}>Loại phòng</Text>
@@ -159,6 +193,17 @@ export default function ConfirmBooking() {
           <Text>Giá phòng</Text>
           <Text>{(totalPrice).toLocaleString('vi-VN')} VND</Text>
         </View>
+        {specialRequests.map((item: UtilityItem) => (
+
+          <View style={styles.row}>
+            {/* <Text>Yêu cầu đặc biệt</Text> */}
+              <Text style={{ width: '45%' }}>{item.name}</Text>
+              <Text style={{ width: '10%' }}>X{item.quantity}</Text>
+              <Text style={{ width: '45%', textAlign: 'right' }}>{(item.price * Number(item.quantity)).toLocaleString('vi-VN')} VND</Text>
+            {/* <Text>{specialRequests.map((item: UtilityItem) => item.price).join(', ')}</Text> */}
+          </View>
+        ))}
+
         <View style={styles.row}>
           <Text>Thuế & Phí</Text>
           <Text>{Number(0).toLocaleString('vi-VN')} VND</Text>
@@ -249,7 +294,7 @@ export default function ConfirmBooking() {
             </>
           ) : (
             <Text style={styles.newPrice}>
-              {totalPrice.toLocaleString('vi-VN')} VND
+              {price.toLocaleString('vi-VN')} VND
             </Text>
           )}
         </View>

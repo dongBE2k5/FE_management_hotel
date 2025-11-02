@@ -1,5 +1,12 @@
+import Room from '@/models/Room';
+import { UtilityItem } from '@/models/Utility/Utility';
+import { getAllUtilityByType } from '@/service/HotelUtilityAPI';
+import { getRoomById } from '@/service/RoomAPI';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { SvgXml } from "react-native-svg";
+
 import {
     Alert,
     FlatList,
@@ -410,8 +417,9 @@ const StatusBadge = ({ status }) => {
 
 // --- MÀN HÌNH CHÍNH ---
 export default function RoomDetailScreen({ route, navigation = mockNavigation }) {
+
     const {
-        roomId = '101', // Mặc định hiển thị phòng 101 (có khách)
+        roomId = '26', // Mặc định hiển thị phòng 101 (có khách)
         allRooms = mockAllRooms,
         allRoomTypes = mockAllRoomTypes,
         allServices = mockAllServices,
@@ -420,24 +428,50 @@ export default function RoomDetailScreen({ route, navigation = mockNavigation })
     const currentRoomData = allRooms.find(r => r.id === roomId);
 
     if (!currentRoomData) {
-        return (
-            <SafeAreaView style={styles.safeArea}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButtonAbsolute}><Ionicons name="arrow-back-circle" size={40} color="#333" /></TouchableOpacity>
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    <Text style={{ fontSize: 18, color: '#6c757d' }}>Không tìm thấy phòng {roomId}</Text>
-                </View>
-            </SafeAreaView>
-        );
+
     }
 
-    const currentRoomType = allRoomTypes.find(rt => rt.name === currentRoomData.type);
-
-    const [roomData, setRoomData] = useState(currentRoomData);
-    const [roomStatus, setRoomStatus] = useState(currentRoomData.status);
+    // const currentRoomType = allRoomTypes.find(rt => rt.name === currentRoomData.type);
+    const [hotelUtility, setHotelUtility] = useState<UtilityItem[]>();
+    const [roomData, setRoomData] = useState<Room>();
+    const [roomStatus, setRoomStatus] = useState();
     const [isEditModalVisible, setEditModalVisible] = useState(false);
     const [isHistoryModalVisible, setHistoryModalVisible] = useState(false);
     const [isServiceModalVisible, setServiceModalVisible] = useState(false);
 
+
+    useFocusEffect(
+        useCallback(() => {
+            if (!roomId) return;
+            fetchRoomById(roomId);
+            fetchHotelUtility("INROOM");
+        }, [])
+    );
+
+    const fetchRoomById = async (roomId: number) => {
+        const response = await getRoomById(roomId);
+        if (!response) {
+            return (
+                <SafeAreaView style={styles.safeArea}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButtonAbsolute}><Ionicons name="arrow-back-circle" size={40} color="#333" /></TouchableOpacity>
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 18, color: '#6c757d' }}>Không tìm thấy phòng {roomId}</Text>
+                    </View>
+                </SafeAreaView>
+            );
+        };
+        console.log("response", response);
+        setRoomData(response);
+
+    }
+    const fetchHotelUtility = async (type: string) => {
+        const response = await getAllUtilityByType(type);
+        if (!response) {
+            return;
+        }
+        setHotelUtility(response.data);
+        console.log("response", response);
+    }
     const handleAction = (action) => {
         switch (action) {
             case 'Manage Services': setServiceModalVisible(true); break;
@@ -463,9 +497,7 @@ export default function RoomDetailScreen({ route, navigation = mockNavigation })
         Alert.alert("Ghi nhận thành công", `Đã cập nhật dịch vụ với tổng chi phí ${totalCost.toLocaleString('vi-VN')}đ.`);
     };
 
-    const roomTypeImage = (currentRoomType?.imageUrls && currentRoomType.imageUrls.length > 0)
-        ? currentRoomType.imageUrls[0]
-        : 'https://via.placeholder.com/400x250.png?text=No+Image';
+    const roomTypeImage = 'https://via.placeholder.com/400x250.png?text=No+Image';
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -483,23 +515,29 @@ export default function RoomDetailScreen({ route, navigation = mockNavigation })
                     <View style={styles.roomInfoContainer}>
                         <View style={styles.roomInfoHeader}>
                             <View>
-                                <Text style={styles.roomType}>{roomData.type}</Text>
-                                <Text style={styles.roomNumber}>Phòng {roomData.id}</Text>
+                                <Text style={styles.roomType}>{roomData?.typeRoom == "DON" ? "Phòng đơn" : roomData?.typeRoom == "DOI" ? "Phòng đôi" : "Phòng gia đình"}</Text>
+                                <Text style={styles.roomNumber}>Phòng {roomData?.roomNumber}</Text>
                             </View>
                             <TouchableOpacity onPress={() => setEditModalVisible(true)} style={styles.editIcon}>
                                 <Ionicons name="pencil" size={24} color="#007bff" />
                             </TouchableOpacity>
                         </View>
-                        <Text style={styles.roomPrice}>{roomData.price.toLocaleString('vi-VN')}đ / đêm</Text>
+                        <Text style={styles.roomPrice}>
+                            {roomData?.price.toLocaleString('vi-VN')}đ / đêm</Text>
                     </View>
 
-                    {roomStatus === 'occupied' && <GuestInfoPanel bookingInfo={roomData.bookingInfo} />}
+                    {/* {roomStatus === 'USED' && <GuestInfoPanel bookingInfo={roomData.bookingInfo} />} */}
 
                     <View style={styles.detailsGrid}>
-                        {(roomData.details || []).map(item => (
+                        {hotelUtility && hotelUtility.map(item => (
                             <View key={item.id} style={styles.detailItem}>
-                                <Ionicons name={item.icon} size={24} color="#007bff" />
-                                <Text style={styles.detailText}>{item.label}</Text>
+                                <View style={{display: 'flex', flexWrap: 'nowrap', flexDirection: 'row', alignItems: 'center'}}>
+                                    {item.image && (
+                                        <SvgXml xml={item.image} width={16} height={16} />
+                                    )}
+
+                                    <Text style={styles.detailText}>{item.name}</Text>
+                                </View>
                             </View>
                         ))}
                     </View>
@@ -518,9 +556,9 @@ export default function RoomDetailScreen({ route, navigation = mockNavigation })
                 </View>
             </ScrollView>
 
-            <HistoryModal visible={isHistoryModalVisible} onClose={() => setHistoryModalVisible(false)} pastBookings={roomData.pastBookings || []} />
+            {/* <HistoryModal visible={isHistoryModalVisible} onClose={() => setHistoryModalVisible(false)} pastBookings={roomData.pastBookings || []} /> */}
             <EditInfoModal visible={isEditModalVisible} onClose={() => setEditModalVisible(false)} onSave={handleSaveInfo} currentData={roomData} />
-            <ServiceManagementModal visible={isServiceModalVisible} onClose={() => setServiceModalVisible(false)} onSave={handleSaveServices} roomNumber={roomData.id} initialServices={roomData.usedServices || {}} applicableServices={currentRoomType?.id || null} allServices={allServices || []} />
+            {/* <ServiceManagementModal visible={isServiceModalVisible} onClose={() => setServiceModalVisible(false)} onSave={handleSaveServices} roomNumber={roomData.id} initialServices={roomData.usedServices || {}} applicableServices={currentRoomType?.id || null} allServices={allServices || []} /> */}
         </SafeAreaView>
     );
 }
@@ -547,8 +585,8 @@ const styles = StyleSheet.create({
     guestPanelLabel: { fontSize: 15, color: '#6c757d', width: 100 },
     guestPanelValue: { fontSize: 15, fontWeight: '500', color: '#343a40', flex: 1 },
     detailsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 20 },
-    detailItem: { width: '48%', backgroundColor: '#fff', padding: 15, borderRadius: 12, alignItems: 'center', marginBottom: 10, borderWidth: 1, borderColor: '#e9ecef' },
-    detailText: { marginTop: 8, color: '#495057' },
+    detailItem: { width: '48%', display: 'flex', flexWrap: 'nowrap', backgroundColor: '#fff', padding: 15, borderRadius: 12, alignItems: 'center', marginBottom: 10, borderWidth: 1, borderColor: '#e9ecef' },
+    detailText: { color: '#495057', marginBottom: 0, marginLeft: 8 },
     panel: { backgroundColor: '#fff', borderRadius: 15, padding: 20, marginBottom: 20, borderWidth: 1, borderColor: '#e9ecef' },
     panelHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     panelTitle: { fontSize: 18, fontWeight: 'bold', color: '#343a40' },

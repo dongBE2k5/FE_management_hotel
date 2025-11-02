@@ -3,6 +3,7 @@ import * as Linking from "expo-linking";
 // Tạo URL từ Linking
 const linkingUrl = Linking.createURL("/");
 
+
 let ip = "192.168.1.6"; // fallback mặc định
 
 try {
@@ -15,11 +16,11 @@ try {
 
     } else {
         // ⚙️ fallback IP LAN của bạn (hoặc để localhost)
-        ip = "192.168.1.6";
+        ip = "192.168.93.159";
     }
 } catch (error) {
     console.warn("Invalid Linking URL, fallback to IP LAN:", error);
-    ip = "192.168.1.6";
+    ip = "192.168.93.159";
 }
 
 const BaseUrl = `http://${ip}:8080/api`;
@@ -27,5 +28,7 @@ const BaseUrl = `http://${ip}:8080/api`;
 const urlIP = `http://${ip}:8080`;
 // const urlIP = `https://prudish-leonie-noncapriciously.ngrok-free.dev`;
 // const getBaseUrl = ip;
-export default BaseUrl;
+export default  BaseUrl ;
+export const urlImage = `http://${ip}:8080/uploads/`;
+
 export {urlIP} ;
