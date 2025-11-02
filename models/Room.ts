@@ -13,6 +13,7 @@ interface Room {
   hotelName?: string;
   imageRoom: ImageRoom[];
   price: bigint;
+  typeOfRoomId: number;
 }
 
 export default Room

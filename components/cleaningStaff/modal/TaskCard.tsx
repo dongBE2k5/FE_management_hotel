@@ -1,9 +1,11 @@
 // components/TaskCard.js
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const TaskCard = ({ task, onAction }) => {
+  console.log("dâta ", task);
+
   // Cấu hình màu sắc
   const priorityColors = {
     urgent: '#E53E3E', // Đỏ
@@ -26,7 +28,7 @@ const TaskCard = ({ task, onAction }) => {
     <View style={styles.card}>
       {/* Viền ưu tiên */}
       <View style={[styles.priorityBar, { backgroundColor: barColor }]} />
-      
+
       <View style={styles.content}>
         <View style={styles.header}>
           <Ionicons name={iconName} size={20} color={barColor} />
@@ -35,11 +37,11 @@ const TaskCard = ({ task, onAction }) => {
 
         <Text style={styles.roomNumber}>Phòng {task.roomNumber}</Text>
         <Text style={styles.title}>{task.title}</Text>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={[styles.actionButton, { backgroundColor: currentButton.color }]}
           onPress={() => onAction(task.id, task.status)}
-          disabled={task.status === 'done'}
+          disabled={task.status === 'done' || task.actionable === false}// Vô hiệu hóa nếu đã xong hoặc không được phép
         >
           <Text style={[styles.buttonText, { color: currentButton.textColor }]}>{currentButton.text}</Text>
         </TouchableOpacity>

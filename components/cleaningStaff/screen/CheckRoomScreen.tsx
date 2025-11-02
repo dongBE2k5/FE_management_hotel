@@ -1,39 +1,43 @@
-import React, { useState, useMemo } from 'react';
-import { 
-    SafeAreaView, 
-    View, 
-    Text, 
-    StyleSheet, 
-    ScrollView, 
+import React, { useState, useMemo, useEffect } from 'react';
+import {
+    SafeAreaView,
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
     TouchableOpacity,
     Modal,
+    Alert, // Thêm Alert để thông báo lỗi
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from 'expo-router';
-
-// Dữ liệu giả cho danh sách cần kiểm tra
-const initialChecklist = [
-    { id: 'item_1', name: 'Giường', status: 'ok', quantity: 0 },
-    { id: 'item_2', name: 'Nước có sẵn', status: 'ok', quantity: 0 },
-    { id: 'item_3', name: 'Khăn tắm có sẵn', status: 'ok', quantity: 0 },
-    { id: 'item_4', name: 'Vật dụng khác', status: 'ok', quantity: 0 },
-    { id: 'item_5', name: 'Giường (phụ)', status: 'ok', quantity: 0 },
-];
+import { useNavigation } from 'expo-router'; // Import đã được sử dụng
+import { useRoute } from '@react-navigation/native';
+import { 
+    createDamagedItem, 
+    getRoomItemsByTypeRoomId,
+} from '@/service/RoomItemAPI'; // <-- Giả định 'updateStatusRequest' ở cùng file
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { updateStatusRequest } from '@/service/Realtime/WebSocketAPI';
 
 // --- COMPONENT: Modal nhập số lượng khi bị thiếu ---
 const MissingItemModal = ({ visible, onClose, onConfirm, item }) => {
     const [quantity, setQuantity] = useState(1);
 
+    useEffect(() => {
+        // Cập nhật số lượng về 1 mỗi khi mở modal cho item mới
+        if (visible) {
+            setQuantity(1);
+        }
+    }, [visible, item]);
+
     const handleConfirm = () => {
         onConfirm(item, quantity);
-        setQuantity(1); // Reset
     };
 
     const handleClose = () => {
         onClose();
-        setQuantity(1); // Reset
     };
-    
+
     return (
         <Modal
             visible={visible}
@@ -47,14 +51,14 @@ const MissingItemModal = ({ visible, onClose, onConfirm, item }) => {
                     <View style={styles.itemRow}>
                         <Text style={styles.itemNameText}>{item?.name}</Text>
                         <View style={styles.quantityControl}>
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={styles.quantityButton}
                                 onPress={() => setQuantity(q => Math.max(1, q - 1))}
                             >
                                 <Ionicons name="remove" size={24} color="#FF3B30" />
                             </TouchableOpacity>
                             <Text style={styles.quantityText}>{quantity}</Text>
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={styles.quantityButton}
                                 onPress={() => setQuantity(q => q + 1)}
                             >
@@ -67,7 +71,7 @@ const MissingItemModal = ({ visible, onClose, onConfirm, item }) => {
                             <Text style={styles.buttonText}>Hủy</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={[styles.button, styles.confirmButton]} onPress={handleConfirm}>
-                            <Text style={styles.buttonText}>Xác nhận</Text>
+                            <Text style={[styles.buttonText, { color: '#FFFFFF' }]}>Xác nhận</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -78,7 +82,7 @@ const MissingItemModal = ({ visible, onClose, onConfirm, item }) => {
 
 // --- COMPONENT: Modal xác nhận kiểm tra (Tóm tắt) ---
 const ConfirmCheckModal = ({ visible, onClose, onConfirm, checklist, time }) => {
-    
+
     // Lọc ra các mục không "OK" để hiển thị tóm tắt
     const itemsWithIssues = useMemo(
         () => checklist.filter(item => item.status !== 'ok'),
@@ -102,7 +106,7 @@ const ConfirmCheckModal = ({ visible, onClose, onConfirm, checklist, time }) => 
                 <View style={styles.modalContent}>
                     <Text style={styles.modalTitle}>Xác nhận kiểm tra phòng</Text>
                     <View style={styles.summaryList}>
-                        <Text style={styles.summaryTitle}>Danh sách vật dụng có trong phòng</Text>
+                        <Text style={styles.summaryTitle}>Tình trạng vật dụng</Text>
                         {itemsWithIssues.map(item => (
                             <View key={item.id} style={styles.summaryItem}>
                                 <Text style={styles.summaryItemName}>{item.name}</Text>
@@ -130,7 +134,7 @@ const ConfirmCheckModal = ({ visible, onClose, onConfirm, checklist, time }) => 
                             <Text style={styles.buttonText}>Hủy</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={[styles.button, styles.confirmButton]} onPress={onConfirm}>
-                            <Text style={styles.buttonText}>Xác nhận</Text>
+                            <Text style={[styles.buttonText, { color: '#FFFFFF' }]}>Xác nhận</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -139,18 +143,56 @@ const ConfirmCheckModal = ({ visible, onClose, onConfirm, checklist, time }) => 
     );
 };
 
-export default function CheckRoomScreen(id,status,priority,on) {
-        const navigation = useNavigation();
-    const [checklist, setChecklist] = useState(initialChecklist);
+export default function CheckRoomScreen() {
+    const navigation = useNavigation(); // Khởi tạo navigation
+    const route = useRoute();
+    // 'id' từ param chính là 'roomId'
+    const { id, roomNumber, roomTypeId, requestId, assignmentId } = route.params;
+    console.log("roomid",id, roomNumber, roomTypeId, requestId, assignmentId);
+    
+    const [checklist, setChecklist] = useState([]); // Khởi tạo mảng rỗng
     const [isMissingModalVisible, setMissingModalVisible] = useState(false);
     const [isConfirmModalVisible, setConfirmModalVisible] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
+    const [isLoading, setIsLoading] = useState(true); // Thêm state loading
+
+    useEffect(() => {
+        const loadItemData = async () => {
+            try {
+                setIsLoading(true);
+                const data = await getRoomItemsByTypeRoomId(roomTypeId);
+                
+                // Chuyển đổi dữ liệu API (RoomItem) sang định dạng state (checklist)
+                // API: { itemId, itemName, ... }
+                // State: { id, name, status: 'ok', quantity: 0 }
+                const formattedData = data.map(item => ({
+                    id: item.itemId,       // Ánh xạ itemId -> id
+                    name: item.itemName,   // Ánh xạ itemName -> name
+                    status: 'ok',          // Trạng thái mặc định
+                    quantity: 0,           // Số lượng bị ảnh hưởng (hư/thiếu)
+                }));
+                
+                setChecklist(formattedData);
+            } catch (error) {
+                console.error("Lỗi khi tải danh sách vật dụng:", error);
+                Alert.alert("Lỗi", "Không thể tải danh sách vật dụng. Vui lòng thử lại.");
+                navigation.goBack();
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadItemData();
+    }, [roomTypeId, navigation]); // Thêm navigation vào dependency array
 
     // Hàm cập nhật trạng thái
     const setItemStatus = (itemId, status) => {
-        setChecklist(prevList => 
-            prevList.map(item => 
-                item.id === itemId ? { ...item, status: status, quantity: status === 'ok' ? 0 : item.quantity } : item
+        setChecklist(prevList =>
+            prevList.map(item =>
+                item.id === itemId
+                    // Khi set về 'ok' hoặc 'broken', reset số lượng về 0
+                    ? { ...item, status: status, quantity: (status === 'ok' || status === 'broken') ? 0 : item.quantity }
+                    : item
             )
         );
     };
@@ -163,8 +205,8 @@ export default function CheckRoomScreen(id,status,priority,on) {
 
     // Xử lý khi xác nhận số lượng thiếu
     const handleConfirmMissing = (item, quantity) => {
-        setChecklist(prevList => 
-            prevList.map(i => 
+        setChecklist(prevList =>
+            prevList.map(i =>
                 i.id === item.id ? { ...i, status: 'missing', quantity: quantity } : i
             )
         );
@@ -178,20 +220,81 @@ export default function CheckRoomScreen(id,status,priority,on) {
     };
 
     // Xử lý khi nhấn nút xác nhận cuối cùng
-    const handleFinalConfirm = () => {
-      
-        // Xử lý logic gửi dữ liệu đi...
-        console.log("Dữ liệu kiểm tra cuối cùng:", checklist);
-        setConfirmModalVisible(false);
-     navigation.goBack();
+    const handleFinalConfirm = async () => {
+        const userIdStr = await AsyncStorage.getItem("userId");
+        const userId = userIdStr ? Number(userIdStr) : null;
+
+        if (!userId) {
+            Alert.alert("Lỗi", "Không xác định được người dùng. Vui lòng đăng nhập lại.");
+            return;
+        }
+
+        // 1. Lọc ra các mục có vấn đề (không phải 'ok')
+        const itemsWithIssues = checklist.filter(item => item.status !== 'ok');
+
+        // 2. Phân nhánh logic
+        try {
+            if (itemsWithIssues.length > 0) {
+                // TRƯỜNG HỢP 1: CÓ VẤN ĐỀ
+                
+                // 2a. Tạo mảng request hỏng hóc
+                const damagedItemRequests = itemsWithIssues.map(item => {
+                    let serverStatus = '';
+                    if (item.status === 'broken') {
+                        serverStatus = 'DAMAGED';
+                    } else if (item.status === 'missing') {
+                        serverStatus = 'MISSING';
+                    }
+
+                    return {
+                        roomId: id,
+                        itemId: item.id,
+                        quantityAffected: item.status === 'broken' ? 1 : item.quantity,
+                        status: serverStatus,
+                        image: null,
+                        reportedBy: userId,
+                        requestStaffId: requestId // Gửi kèm requestId từ param
+                    };
+                });
+
+                // 2b. Gửi request hỏng hóc
+                const promises = damagedItemRequests.map(request => createDamagedItem(request));
+                await Promise.all(promises);
+                
+                // 2c. Cập nhật request chính là "HAS_ISSUE"
+                await updateStatusRequest(requestId, "HAS_ISSUE", id, assignmentId);
+                
+                console.log("Đã báo cáo thành công các mục:", damagedItemRequests);
+                Alert.alert("Thành công", "Đã ghi nhận tình trạng phòng (Có vấn đề).");
+
+            } else {
+                // TRƯỜNG HỢP 2: KHÔNG CÓ VẤN ĐỀ
+                
+                // 2a. Cập nhật request chính là "NO_ISSUE"
+                console.log("cập nhận request",requestId,id,assignmentId);
+                await updateStatusRequest(requestId, "NO_ISSUE", id, assignmentId);
+                
+                console.log("Không có vấn đề, đã cập nhật request sang NO_ISSUE.");
+                Alert.alert("Thành công", "Đã ghi nhận tình trạng phòng (Tất cả OK).");
+            }
+        
+        } catch (error) {
+            // 3. Xử lý lỗi chung
+            console.error("Lỗi khi gửi báo cáo hỏng hóc hoặc cập nhật status:", error);
+            Alert.alert("Lỗi", "Thao tác thất bại. Vui lòng thử lại.");
+        } finally {
+            // 4. Luôn đóng modal và quay lại
+            setConfirmModalVisible(false);
+            navigation.goBack();
+        }
     };
 
     // Lấy thời gian hiện tại
     const currentTime = new Date().toLocaleTimeString('vi-VN', {
-        hour: '2-digit', 
-        minute: '2-digit', 
-        day: '2-digit', 
-        month: '2-digit', 
+        hour: '2-digit',
+        minute: '2-digit',
+        day: '2-digit',
+        month: '2-digit',
         year: 'numeric'
     });
 
@@ -199,7 +302,7 @@ export default function CheckRoomScreen(id,status,priority,on) {
         <SafeAreaView style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity style={styles.backButton}>
+                <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
                     <Ionicons name="arrow-back" size={24} color="#1A202C" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Chi tiết kiểm tra phòng</Text>
@@ -209,67 +312,76 @@ export default function CheckRoomScreen(id,status,priority,on) {
             {/* Thông tin phòng */}
             <View style={styles.roomInfo}>
                 <Ionicons name="keypad-outline" size={20} color="#0062E0" />
-                <Text style={styles.roomNumber}>Phòng 301</Text>
+                <Text style={styles.roomNumber}>Phòng {roomNumber}</Text>
             </View>
 
             {/* Danh sách */}
-            <ScrollView style={styles.scrollView}>
-                <Text style={styles.listTitle}>Danh sách kiểm tra</Text>
-                {checklist.map(item => (
-                    <View key={item.id} style={styles.checkItemCard}>
-                        <Text style={styles.checkItemName}>{item.name}</Text>
-                        <View style={styles.statusOptions}>
-                            {/* Nút OK */}
-                            <TouchableOpacity 
-                                style={[styles.statusButton, item.status === 'ok' && styles.okSelected]}
-                                onPress={() => handlePressStatus(item, 'ok')}
-                            >
-                                <Ionicons name="checkmark-circle" size={20} color={item.status === 'ok' ? '#34C759' : '#CBD5E0'} />
-                                <Text style={[styles.statusText, item.status === 'ok' && styles.okText]}>OK</Text>
-                            </TouchableOpacity>
-                            
-                            {/* Nút Thiếu */}
-                            <TouchableOpacity 
-                                style={[styles.statusButton, item.status === 'missing' && styles.missingSelected]}
-                                onPress={() => handlePressMissing(item)}
-                            >
-                                <Ionicons name="alert-circle" size={20} color={item.status === 'missing' ? '#FF9500' : '#CBD5E0'} />
-                                <Text style={[styles.statusText, item.status === 'missing' && styles.missingText]}>
-                                    {item.status === 'missing' && item.quantity > 0 ? `Thiếu ${item.quantity}` : 'Thiếu'}
-                                </Text>
-                            </TouchableOpacity>
+            {isLoading ? (
+                <View style={styles.loadingContainer}>
+                    <Text>Đang tải dữ liệu...</Text>
+                </View>
+            ) : (
+                <ScrollView style={styles.scrollView}>
+                    <Text style={styles.listTitle}>Danh sách kiểm tra</Text>
+                    {checklist.map(item => (
+                        <View key={item.id} style={styles.checkItemCard}>
+                            <Text style={styles.checkItemName}>{item.name}</Text>
+                            <View style={styles.statusOptions}>
+                                {/* Nút OK */}
+                                <TouchableOpacity
+                                    style={[styles.statusButton, item.status === 'ok' && styles.okSelected]}
+                                    onPress={() => handlePressStatus(item, 'ok')}
+                                >
+                                    <Ionicons name="checkmark-circle" size={20} color={item.status === 'ok' ? '#34C759' : '#CBD5E0'} />
+                                    <Text style={[styles.statusText, item.status === 'ok' && styles.okText]}>OK</Text>
+                                </TouchableOpacity>
 
-                            {/* Nút Hư */}
-                            <TouchableOpacity 
-                                style={[styles.statusButton, item.status === 'broken' && styles.brokenSelected]}
-                                onPress={() => handlePressStatus(item, 'broken')}
-                            >
-                                <Ionicons name="close-circle" size={20} color={item.status === 'broken' ? '#FF3B30' : '#CBD5E0'} />
-                                <Text style={[styles.statusText, item.status === 'broken' && styles.brokenText]}>Hư</Text>
-                            </TouchableOpacity>
+                                {/* Nút Thiếu */}
+                                <TouchableOpacity
+                                    style={[styles.statusButton, item.status === 'missing' && styles.missingSelected]}
+                                    onPress={() => handlePressMissing(item)}
+                                >
+                                    <Ionicons name="alert-circle" size={20} color={item.status === 'missing' ? '#FF9500' : '#CBD5E0'} />
+                                    <Text style={[styles.statusText, item.status === 'missing' && styles.missingText]}>
+                                        {item.status === 'missing' && item.quantity > 0 ? `Thiếu ${item.quantity}` : 'Thiếu'}
+                                    </Text>
+                                </TouchableOpacity>
+
+                                {/* Nút Hư */}
+                                <TouchableOpacity
+                                    style={[styles.statusButton, item.status === 'broken' && styles.brokenSelected]}
+                                    onPress={() => handlePressStatus(item, 'broken')}
+                                >
+                                    <Ionicons name="close-circle" size={20} color={item.status === 'broken' ? '#FF3B30' : '#CBD5E0'} />
+                                    <Text style={[styles.statusText, item.status === 'broken' && styles.brokenText]}>Hư</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
-                    </View>
-                ))}
-            </ScrollView>
+                    ))}
+                </ScrollView>
+            )}
 
             {/* Nút xác nhận */}
             <View style={styles.footer}>
-                <TouchableOpacity 
-                    style={styles.mainConfirmButton} 
+                <TouchableOpacity
+                    style={[styles.mainConfirmButton, isLoading && styles.disabledButton]} // Vô hiệu hóa khi đang tải
                     onPress={() => setConfirmModalVisible(true)}
+                    disabled={isLoading}
                 >
                     <Text style={styles.mainConfirmButtonText}>Xác nhận kiểm tra</Text>
                 </TouchableOpacity>
             </View>
 
             {/* Modals */}
-            <MissingItemModal 
-                visible={isMissingModalVisible}
-                onClose={() => setMissingModalVisible(false)}
-                onConfirm={handleConfirmMissing}
-                item={selectedItem}
-            />
-            <ConfirmCheckModal 
+            {selectedItem && ( // Chỉ render modal khi có selectedItem
+                <MissingItemModal
+                    visible={isMissingModalVisible}
+                    onClose={() => setMissingModalVisible(false)}
+                    onConfirm={handleConfirmMissing}
+                    item={selectedItem}
+                />
+            )}
+            <ConfirmCheckModal
                 visible={isConfirmModalVisible}
                 onClose={() => setConfirmModalVisible(false)}
                 onConfirm={handleFinalConfirm}
@@ -285,6 +397,11 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F5F8FA', // Nền xám siêu nhạt
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     header: {
         flexDirection: 'row',
@@ -350,13 +467,16 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     statusButton: {
+        flex: 1, // Giúp các nút chia đều không gian
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center', // Căn giữa nội dung nút
         paddingVertical: 8,
         paddingHorizontal: 12,
         borderRadius: 20,
         borderWidth: 1,
         borderColor: '#EDF2F7',
+        marginHorizontal: 4, // Thêm khoảng cách nhỏ giữa các nút
     },
     statusText: {
         marginLeft: 6,
@@ -398,6 +518,9 @@ const styles = StyleSheet.create({
         padding: 15,
         borderRadius: 12,
         alignItems: 'center',
+    },
+    disabledButton: {
+        backgroundColor: '#A0AEC0', // Màu xám khi bị vô hiệu hóa
     },
     mainConfirmButtonText: {
         color: '#FFFFFF',
@@ -472,6 +595,8 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginHorizontal: 15,
         color: '#1A202C',
+        minWidth: 30, // Đảm bảo số không bị nhảy layout
+        textAlign: 'center',
     },
     // Modal "Xác nhận"
     summaryList: {
@@ -479,6 +604,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         padding: 15,
         marginBottom: 15,
+        maxHeight: 200, // Thêm chiều cao tối đa và cho phép cuộn
     },
     summaryTitle: {
         fontSize: 14,
@@ -496,10 +622,12 @@ const styles = StyleSheet.create({
     summaryItemName: {
         fontSize: 16,
         color: '#4A5568',
+        flex: 1, // Cho phép tên xuống dòng
     },
     summaryItemStatus: {
         fontSize: 16,
         fontWeight: 'bold',
+        marginLeft: 10, // Thêm khoảng cách
     },
     statusBroken: {
         color: '#FF3B30',

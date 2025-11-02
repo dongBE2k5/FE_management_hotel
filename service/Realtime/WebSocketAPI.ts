@@ -1,16 +1,18 @@
-import { Client } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
-import axios from 'axios'; // Thêm import axios
 import { urlIP } from '@/constants/BaseURL';
+import { RoomAssignment } from '@/models/RoomAssignment';
+import { Client } from '@stomp/stompjs';
+import axios from 'axios'; // Thêm import axios
+import SockJS from 'sockjs-client';
 // -------------------------------------------------------------
 // !! THAY ĐỔI IP NÀY !!
 
 const BASE_URL = `${urlIP}/api/requests`;
+const BASE_URL_2 = `${urlIP}/api/assignment`;
 const WS_URL = `${urlIP}/ws`;
 // -------------------------------------------------------------
 
 // Định nghĩa các kiểu dữ liệu (Types)
-export type Status = 'PENDING' | 'ACCEPTED' | 'REJECTED';
+// export type Status = 'PENDING' | 'ACCEPTED' | 'REJECTED';
 
 export interface Request {
   id: number;
@@ -69,11 +71,7 @@ export const connectAndSubscribe = (
         const newRequest = JSON.parse(message.body) as Request;
         callbacks.onMessageReceived(newRequest);
       });
-      stompClient?.subscribe('/topic/booking', (message) => {
-        console.log('Nhận được booking message real-time!');
-        const newRequest = JSON.parse(message.body) as Request;
-        callbacks.onMessageReceived(newRequest);
-      });
+
     };
 
     stompClient.onStompError = (frame) => {
@@ -98,7 +96,7 @@ export const connectAndSubscribe = (
 /**
  * Ngắt kết nối WebSocket
  */
-export const disconnect = () => {
+export const disconnect = async () => {
   if (stompClient) {
     stompClient.deactivate();
     stompClient = null;
@@ -142,16 +140,20 @@ export const sendRequest = async (
   payload: RequestPayload,
   roomId?: number
 
-): Promise<Request> => {
-  const config = {
-    params: {
-      roomId: roomId 
-    }};
+) => {
+  try {
+    const response = await axios.post<Request>(BASE_URL, payload, roomId ? { params: { roomId } } : undefined);
+    console.log("📤 Gửi yêu cầu thành công:", response.data);
+    return response.data; // Trả về response.data
+  } catch (error) {
+    console.error("❌ Lỗi khi gửi yêu cầu kiểm tra phòng:", error.response?.data || error.message);
+    throw error;
+  }
+
   // Sử dụng axios.post
   // axios tự động throw error nếu status không phải 2xx
-const response = await axios.post<Request>(BASE_URL, payload, config);
 
-  return response.data; // Trả về response.data
+
 };
 
 /**
@@ -168,5 +170,41 @@ export const respondToRequest = async (
   );
 
   return response.data; // Trả về response.data
+};
+
+
+export const updateStatusRequest = async (
+  id: number,
+  newStatus: string,
+  roomId: number,
+  assignmentId?: number // có thể null
+): Promise<Request> => {
+  const params = new URLSearchParams({
+    status: newStatus,
+    roomId: roomId.toString(),
+  });
+
+  if (assignmentId) {
+    params.append("assignmentId", assignmentId.toString());
+  }
+
+  const response = await axios.put<Request>(
+    `${BASE_URL}/${id}/status?${params.toString()}`
+  );
+
+  return response.data;
+};
+
+
+export const fetchReceivedRequests = async (
+  userId: number
+): Promise<RoomAssignment[]> => {
+  try {
+    const response = await axios.get<RoomAssignment[]>(`${BASE_URL_2}/${userId}/user`);
+    return response.data.data;
+  } catch (error) {
+    console.error("Lỗi tải dữ liệu received requests:", error);
+    return [];
+  }
 };
 

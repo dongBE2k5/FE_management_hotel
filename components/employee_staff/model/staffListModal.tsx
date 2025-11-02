@@ -1,4 +1,4 @@
-import { connectAndSubscribe, disconnect, fetchInitialRequests ,sendRequest} from "@/service/Realtime/WebSocketAPI";
+import { connectAndSubscribe, disconnect, fetchInitialRequests, sendRequest } from "@/service/Realtime/WebSocketAPI";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
@@ -6,15 +6,38 @@ import { FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from "react
 import FeedbackModal from "./feedbackmodal"; // 👈 import modal mới
 
 
-export default function StaffListModal({ visible, onClose, staffList = [] }) {
+export default function StaffListModal({ visible, onClose, staffList = [], roomId }) {
+
   const [showFeedback, setShowFeedback] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [requests, setRequests] = useState([]);
-  const handleCall = (staff) => {
-    console.log(staff);
-    
-    setSelectedStaff(staff);
-    setShowFeedback(true); // 👈 mở modal feedback
+
+  const handleCall = async (staff) => {
+    try {
+      const userIdStr = await AsyncStorage.getItem("userId");
+      if (!userIdStr) {
+        console.warn("⚠️ Không tìm thấy userId trong AsyncStorage");
+        return;
+      }
+
+      const userId = Number(userIdStr);
+
+      const requestPayload = {
+        senderId: userId,
+        receiverId: staff.id,
+        content: "Yêu cầu kiểm tra phòng",
+
+      };
+      console.log(staff);
+      sendRequest(requestPayload, roomId);
+      setSelectedStaff(staff);
+      setShowFeedback(true); // 👈 mở modal feedback
+    } catch (error) {
+
+    }
+
+
+
   };
 
   useEffect(() => {
@@ -37,7 +60,7 @@ export default function StaffListModal({ visible, onClose, staffList = [] }) {
         // 1. Lấy dữ liệu ban đầu
         const initialRequests = await fetchInitialRequests(userId);
         if (isMounted) setRequests(initialRequests);
-
+        
         // 2. Thiết lập WebSocket
         connectAndSubscribe(userId, {
           onConnected: () => console.log("✅ WebSocket connected from StaffListModal"),

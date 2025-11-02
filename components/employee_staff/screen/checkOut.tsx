@@ -49,9 +49,10 @@ const transformDataForScreen = (bookingDetails, historyDetails, isPaid) => {
     id_booking: bookingDetails.id,
     name: bookingDetails.user?.fullName ?? 'N/A',
     phone: bookingDetails.user?.phone ?? 'N/A',
+     roomId: bookingDetails.room?.id ?? null, // 👈 thêm dòng này
     cccd: bookingDetails.user?.cccd ?? 'N/A',
-    roomType: bookingDetails.room?.type ?? 'N/A',
-    roomNumber: bookingDetails.room?.number ?? 'N/A',
+    roomType: bookingDetails.room?.typeRoom ?? 'N/A',
+    roomNumber: bookingDetails.room?.roomNumber ?? 'N/A',
     status: paymentStatusText,
     numberOfNights: `${bookingDetails.room?.nights ?? 0} đêm`,
     numberOfGuests: `${bookingDetails.numberOfGuests ?? 0} người`,
@@ -290,6 +291,7 @@ export default function Checkout() {
         visible={staffModalVisible}
         staffList={employeeList}
         onClose={() => setStaffModalVisible(false)}
+         roomId={bookingData?.roomId} 
       />
 
       <CostDetailModal
