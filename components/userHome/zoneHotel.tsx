@@ -36,7 +36,19 @@ export default function ZoneHotel() {
             index === self.findIndex(h => h.id === hotel.id)
     );
 
-
+    //bestchoice 
+    const [bestChoiceHotels, setBestChoiceHotels] = useState<Hotel[]>([]);
+    useEffect(() => {
+        const fetchBestChoiceHotels = async () => {
+            try {
+                const data = await getBestChoiceHotels();
+                setBestChoiceHotels(data);
+            } catch (err) {
+                console.error("Lỗi khi lấy Best Choice Hotels:", err);
+            }
+        };
+        fetchBestChoiceHotels();
+    }, []);
     useEffect(() => {
         const fetchHotels = async () => {
             try {
