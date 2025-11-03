@@ -189,6 +189,7 @@ export default function FeedbackModal({
       <CostDetailModal
         visible={showCostModal}
         onClose={() => setShowCostModal(false)}
+         costData={activeRequest?.costData} 
         onBackToConstdetailmodal={() => {
           // Đóng modal hiện tại (nếu có)
           setShowDamageModal(false);

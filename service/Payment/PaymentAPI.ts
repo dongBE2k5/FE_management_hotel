@@ -1,6 +1,6 @@
 import Payment from '@/models/Payment';
 import axios from 'axios';
-import BaseUrl from '../../constants/BaseURL';
+import BaseUrl, { BaseUrl2 } from '../../constants/BaseURL';
 // const { BaseUrl, getBaseUrl } = BaseURLObj;
 
 
@@ -17,7 +17,7 @@ async function createPayment(
 
 ): Promise<PaymentResponse | undefined> {
   try {
-    const parsed = new URL(BaseUrl);
+    const parsed = new URL(BaseUrl2);
     const ip = parsed.hostname;
     const params = new URLSearchParams();
     params.append('amount', orderTotal.toString());

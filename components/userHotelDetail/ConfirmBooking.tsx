@@ -23,6 +23,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { initiatePayment } from '../payment/PaymentButton';
 type ConfirmBookingProps = {
   room: Room,
   checkInDate: Date,
@@ -135,6 +136,7 @@ export default function ConfirmBooking() {
         })
       }
       const createdBookingUtility = await createBookingUtility(bookingUtilityRequest);
+      initiatePayment(finalPrice, 'vnpay', data.id);
       console.log("Đã tạo booking utility thành công:", createdBookingUtility);
       router.replace("/(tabs)/booking");
     } catch (err) {
