@@ -1,15 +1,21 @@
+import BookingDetailScreen from '@/components/userBooking/BookedDetail';
 import BookedList from '@/components/userBooking/BookedList';
+import { RootStackParamList } from '@/types/navigation';
 import { createStackNavigator } from '@react-navigation/stack';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 
 
-const Stack = createStackNavigator();
+const Stack = createStackNavigator<RootStackParamList>();
 
 export default function BookingNavigator() {
   return (
     //a
-    <BookedList />
+    // <BookedList />
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="BookedList" component={BookedList} />
+      <Stack.Screen name="BookedDetail" component={BookingDetailScreen} />
+    </Stack.Navigator>
   );
 }
 

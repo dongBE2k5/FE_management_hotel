@@ -1,7 +1,8 @@
 // file: app/_layout.js
 import { UserProvider, useUser } from '@/context/UserContext';
 import { Slot } from 'expo-router';
-import { ActivityIndicator, View } from 'react-native';
+import { View } from 'react-native';
+import { ActivityIndicator } from 'react-native-paper';
 
 // Component con để truy cập context
 function RootLayoutNav() {

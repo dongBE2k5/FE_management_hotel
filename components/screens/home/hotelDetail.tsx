@@ -36,7 +36,7 @@ export default function HotelDetail() {
         const getRoomTypeImage = async (id: number) => {
             try {
                 const data = await getRoomTypeImageByHotel(id);
-
+                console.log("data", data);
                 setRoomTypeImage(data);
             } catch (err) {
                 console.error(err);

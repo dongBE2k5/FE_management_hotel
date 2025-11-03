@@ -77,8 +77,8 @@ export default function ConfirmBooking() {
     };
     fetchData();
   }, []);
-
-  const totalPrice = Number(room.price) * nights;
+  const specialRequestTotal = specialRequests.map(item => item.price * Number(item.quantity)).reduce((a, b) => a + b, 0);
+  const totalPrice = Number(room.price) * nights + specialRequestTotal;
 
   const globalDiscount = selectedGlobalVoucher ? selectedGlobalVoucher.percent : 0;
   const hotelDiscount = selectedHotelVoucher ? selectedHotelVoucher.percent : 0;
@@ -254,7 +254,7 @@ export default function ConfirmBooking() {
             <>
               {/* Giá gốc gạch ngang */}
               <Text style={styles.oldPrice}>
-                {totalPrice.toLocaleString('vi-VN')} VND
+                {(totalPrice).toLocaleString('vi-VN')} VND
               </Text>
 
               {/* Giá sau giảm */}

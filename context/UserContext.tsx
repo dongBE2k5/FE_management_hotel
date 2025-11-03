@@ -92,36 +92,61 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
   // useEffect điều hướng (Giữ nguyên, logic này đúng)
   useEffect(() => {
-    if (isLoading) {
-      return;
-    }
+    if (isLoading) return;
+  
     const inGroupLayout = segments[0] ?? null;
+    console.log("🧭 inGroupLayout:", inGroupLayout);
+    console.log("👤 user:", user);
 
-    if (!user || !user.role) {
-      if (inGroupLayout !== '(tabs)') {
-        router.replace('/(tabs)');
-      }
+    if (!user?.role) {
+      router.push('/(tabs)');
       return;
     }
-
-    if (user.role === 'ROLE_EMPLOYEE' || user.role === 'ROLE_ADMIN') {
-      if (inGroupLayout !== '(employee)') {
-        router.replace('/(employee)');
-      }
-    } else if (user.role === 'ROLE_HOST') {
-      if (inGroupLayout !== '(host)') {
-        router.replace('/(host)');
-      }
-    } else if (user.role === 'ROLE_CLEANING') {
-      if (inGroupLayout !== '(cleaningStaff)') {
-        router.replace('/(cleaningStaff)');
-      }
-    } else {
-      if (inGroupLayout !== '(tabs)') {
-        router.replace('/(tabs)');
-      }
+  
+    switch (user.role) {
+      case 'ROLE_EMPLOYEE':
+      case 'ROLE_ADMIN':
+        router.push('/(employee)');
+        break;
+  
+      case 'ROLE_HOST':
+        router.push('/(host)');
+        break;
+  
+      case 'ROLE_CLEANING':
+        router.push('/(cleaningStaff)');
+        break;
+  
+      default:
+        router.push('/(tabs)');
+        break;
     }
-  }, [user, isLoading, segments]);
+  
+    // if (!user?.role) {
+    //   if (inGroupLayout !== '(tabs)') router.replace('/(tabs)');
+    //   return;
+    // }
+  
+    // switch (user.role) {
+    //   case 'ROLE_EMPLOYEE':
+    //   case 'ROLE_ADMIN':
+    //     if (inGroupLayout !== '(employee)') router.replace('/(employee)');
+    //     break;
+  
+    //   case 'ROLE_HOST':
+    //     if (inGroupLayout !== '(host)') router.replace('/(host)');
+    //     break;
+  
+    //   case 'ROLE_CLEANING':
+    //     if (inGroupLayout !== '(cleaningStaff)') router.replace('/(cleaningStaff)');
+    //     break;
+  
+    //   default:
+    //     if (inGroupLayout !== '(tabs)') router.replace('/(tabs)');
+    //     break;
+    // }
+  }, []);
+  
 
   if (isLoading) {
     return (

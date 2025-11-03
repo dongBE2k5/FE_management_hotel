@@ -110,6 +110,8 @@ export default function ZoneHotel() {
                     getAllHotel(),
                     getBestChoiceHotels()
                 ]);
+                console.log("filteredBestChoices", allBestChoices);
+
                 setHotels(allHotels);
                 setBestChoiceHotels(allBestChoices);
             } else {
@@ -117,6 +119,7 @@ export default function ZoneHotel() {
                     getHotelByLocation(id),
                     getBestChoiceHotels(Number(id))
                 ]);
+                console.log("filteredBestChoices", filteredBestChoices);
                 setHotels(filteredHotels);
                 setBestChoiceHotels(filteredBestChoices);
             }

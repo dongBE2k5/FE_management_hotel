@@ -1,8 +1,8 @@
 import BookingResponse from "@/models/Booking/BookingResponse";
 import { getBookingById } from "@/service/BookingAPI";
+import { RootStackParamList } from "@/types/navigation";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useNavigation } from "@react-navigation/native";
-import { router } from "expo-router";
+import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView, ScrollView } from "react-native-gesture-handler";
@@ -11,9 +11,13 @@ import RoomReviewForm from "./RoomReviewForm";
 type BookingDetailScreenProps = {
     bookingId: number;
 }
-export default function BookingDetailScreen({ bookingId }: BookingDetailScreenProps) {
+export default function BookingDetailScreen() {
+    const route = useRoute<RouteProp<RootStackParamList, 'BookedDetail'>>();
+    const bookingId = route.params.id;
+    console.log("bookingId", bookingId);
     const [booking, setBooking] = useState<BookingResponse>();
     const navigation = useNavigation();
+    console.log("Vào trang booking detail", bookingId);
     const getStatusLabel = (status: string) => {
         const statusData = {
             CHUA_THANH_TOAN: "Chờ thanh toán",
@@ -33,6 +37,7 @@ export default function BookingDetailScreen({ bookingId }: BookingDetailScreenPr
             if (bookingId) {
                 const data = await getBookingById(bookingId);
                 if (data) {
+                    console.log("Lấy đc data", data);
                     setBooking(data);
                 } else {
                     return "Không tìm thấy thông tin đặt phòng.";
@@ -54,7 +59,7 @@ export default function BookingDetailScreen({ bookingId }: BookingDetailScreenPr
                 />
                 {/* nút mũi tên*/}
                 <View style={styles.arrowContainer}>
-                    <Pressable onPress={() => router.replace("/(tabs)/booking")} hitSlop={10}>
+                    <Pressable onPress={() => navigation.goBack()} hitSlop={10}>
                         <Ionicons name="arrow-back" size={20} color="#009EDE" />
                     </Pressable>
 

@@ -2,19 +2,19 @@ import { useUser } from '@/context/UserContext';
 import UserLogin from '@/models/UserLogin';
 import { loginFunction } from '@/service/UserAPI';
 import { ProfileStackParamList } from '@/types/navigation';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useNavigation, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+  Alert,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  Alert,
 } from 'react-native';
-import Ionicons from '@expo/vector-icons/Ionicons';
 import LoginBanner from './bannerLogin';
 type LoginScreenNavigationProp = StackNavigationProp<
   ProfileStackParamList,
@@ -48,10 +48,10 @@ export default function Login() {
       if (res != null) {
         console.log('login res 2', res);
 
-        Alert.alert('Thành công', 'Đăng nhập thành công!', [
-          {
-            text: 'OK',
-            onPress: async () => {
+        // Alert.alert('Thành công', 'Đăng nhập thành công!', [
+        //   {
+        //     text: 'OK',
+        //     onPress: async () => {
               // 3. Lưu thông tin vào bộ nhớ
               await AsyncStorage.setItem('userId', res.id.toString());
               await AsyncStorage.setItem('userToken', res.accessToken);
@@ -63,9 +63,32 @@ export default function Login() {
 
               // 5. XÓA điều hướng tại đây. UserContext sẽ xử lý.
               // router.replace('/');
-            },
-          },
-        ]);
+              if (!res.role.name) {
+                router.push('/(tabs)');
+                return;
+              }
+            
+              switch (res.role.name) {
+                case 'ROLE_EMPLOYEE':
+                case 'ROLE_ADMIN':
+                  router.push('/(employee)');
+                  break;
+            
+                case 'ROLE_HOST':
+                  router.push('/(host)');
+                  break;
+            
+                case 'ROLE_CLEANING':
+                  router.push('/(cleaningStaff)');
+                  break;
+            
+                default:
+                  router.push('/(tabs)');
+                  break;
+              }
+        //     },
+        //   },
+        // ]);
       } else {
         Alert.alert(
           'Lỗi đăng nhập',

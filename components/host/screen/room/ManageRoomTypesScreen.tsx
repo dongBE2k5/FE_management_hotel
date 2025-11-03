@@ -57,7 +57,7 @@ const RoomTypeDefault = [
     },
 ]
 // --- Modal đã sửa lỗi ---
-const TypeEditorModal = ({ visible, onClose, type, onAdd, onSave }) => {
+const TypeEditorModal = ({ visible, onClose, type, onAdd, onSave, roomTypes }) => {
     const [imageUrls, setImageUrls] = useState<string[]>([]);
     const [existingImages, setExistingImages] = useState<any[]>([]); // ảnh cũ (từ DB)
     const [newImages, setNewImages] = useState<string[]>([]); // ảnh mới chọn
@@ -70,6 +70,9 @@ const TypeEditorModal = ({ visible, onClose, type, onAdd, onSave }) => {
     console.log("existingImages123", existingImages);
     console.log("newImages123", newImages);
     console.log("deletedImageIds123", deletedImageIds);
+    console.log("selectedType123", type);
+    console.log("roomTypes123", roomTypes);
+    
     // Khi mở modal
     useFocusEffect(
         useCallback(() => {
@@ -84,6 +87,7 @@ const TypeEditorModal = ({ visible, onClose, type, onAdd, onSave }) => {
                 setImageUrls([]);
                 setNewImages([]);
                 setExistingImages([]);
+                setSelectedType(null);
             }
         }, [visible, type])
     );
@@ -153,7 +157,6 @@ const TypeEditorModal = ({ visible, onClose, type, onAdd, onSave }) => {
             } else {
                 await onAdd(formData);
             }
-
             Alert.alert("✅ Thành công", isEditing ? "Cập nhật loại phòng thành công" : "Thêm loại phòng thành công");
             onClose();
         } catch (error) {
@@ -185,7 +188,9 @@ const TypeEditorModal = ({ visible, onClose, type, onAdd, onSave }) => {
                                 <TouchableOpacity
                                     key={rt.id}
                                     style={[styles.typeButton, (selectedType?.id ?? type?.id) === rt.id && styles.typeButtonSelected]}
-                                    onPress={() => isEditing ? console.log(123)
+                                    // disabled={roomTypes.some(item => item.id == rt.id)}
+                                    onPress={() => isEditing ? (console.log("type123aa ", type),
+                                     setSelectedType(type))
                                      : setSelectedType(rt)}
                                 >
                                     <Text style={[styles.typeButtonText, (selectedType?.id ?? type?.id) === rt.id && styles.typeButtonTextSelected]}>
@@ -302,7 +307,7 @@ export default function ManageRoomTypesScreen({ route, navigation = mockNavigati
             if (!hotelId) return;
             console.log("hotelId", hotelId);
             const typeOfRoom = await getTypeOfRoomByHotel(hotelId);
-            console.log(typeOfRoom.data);
+            // console.log("typeOfRoom", typeOfRoom.data[0].imageRooms[0].image);
             setRoomTypes(typeOfRoom.data);
         };
         fetchRoomTypes();
@@ -335,7 +340,7 @@ export default function ManageRoomTypesScreen({ route, navigation = mockNavigati
                 ListEmptyComponent={<View style={styles.emptyContainer}><Text style={styles.emptyText}>Chưa có loại phòng nào.</Text></View>}
                 renderItem={({ item }) => (
                     <View style={styles.typeItem}>
-                        <Image source={{ uri: item.imageRooms?.[0].image || 'https://via.placeholder.com/100' }} style={styles.typeImage} />
+                        <Image source={{ uri: urlImage + item.imageRooms?.[0]?.image || 'https://via.placeholder.com/100' }} style={styles.typeImage} />
                         <View style={styles.typeNameContainer}>
                             <Text style={styles.typeName}>{item.room == "DON" ? "Phòng đơn" : item.room == "DOI" ? "Phòng đôi" : "Phòng gia đình"}</Text>
                             <Text style={styles.imageCount}>{item.applicableServices?.length || 0} dịch vụ áp dụng</Text>
@@ -355,7 +360,7 @@ export default function ManageRoomTypesScreen({ route, navigation = mockNavigati
             <TouchableOpacity style={styles.fab} onPress={() => { setSelectedType(null); setModalVisible(true); }}>
                 <Ionicons name="add" size={30} color="#fff" />
             </TouchableOpacity>
-            <TypeEditorModal visible={modalVisible} onClose={() => setModalVisible(false)} onSave={handleSaveType} type={selectedType} allServices={services} onAdd={handleAddType} />
+            <TypeEditorModal visible={modalVisible} onClose={() => setModalVisible(false)} onSave={handleSaveType} type={selectedType}  onAdd={handleAddType} roomTypes={roomTypes} />
         </SafeAreaView>
     );
 }

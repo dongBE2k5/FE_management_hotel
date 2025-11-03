@@ -10,9 +10,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Image, Modal, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const allRoomTypes = [
-    { id: 1, name: "INROOM" },
-    { id: 2, name: "MINIBAR" },
-    { id: 3, name: "OUTROOM" },
+    { id: 1, name: "DON" },
+    { id: 2, name: "DOI" },
+    { id: 3, name: "GIA_DINH" },
 ];
 
 export default function Service() {
@@ -312,6 +312,7 @@ const ServiceEditorModal = ({ visible, onClose, onSave, service, onAdd }) => {
             const fetchUtility = async () => {
                 const utility = await getUtilityOfHotelById(service.id);
                 console.log("utility", utility.data.utilities);
+                typeOfRoomIdList = [];
                 if(utility.data.utilities.length > 0) {
                     utility.data.utilities.forEach((item: any) => {
                         typeOfRoomIdList.push(Number(item.typeOfRoomId));
@@ -331,6 +332,8 @@ const ServiceEditorModal = ({ visible, onClose, onSave, service, onAdd }) => {
             setCategory(null);
             setImage(null);
             setApplicableRoomTypes([])
+            typeOfRoomIdList = [];
+
         }
 
     }, [service, visible]);
@@ -497,11 +500,13 @@ const ServiceEditorModal = ({ visible, onClose, onSave, service, onAdd }) => {
                             ))}
                         </View>
 
+                        {category != "OUTROOM" && category != "MINIBAR" && 
+                        <>
                         <Text style={styles.inputLabel}>Áp dụng cho Loại phòng</Text>
                         <View style={styles.serviceSelectionContainer}>
                             {allRoomTypes.map(type => (
                                 <View key={type.id} style={styles.serviceToggleItem}>
-                                    <Text style={styles.serviceName}>{type.name}</Text>
+                                    <Text style={styles.serviceName}>{type.name == "DON" ? "Phòng Đơn" : type.name == "DOI" ? "Phòng Đôi" : "Phòng Gia Đình"}</Text>
                                     <Switch
                                         value={applicableRoomTypes.includes(type.id)}
                                         onValueChange={() => toggleRoomTypeSelection(type.id)}
@@ -509,6 +514,8 @@ const ServiceEditorModal = ({ visible, onClose, onSave, service, onAdd }) => {
                                 </View>
                             ))}
                         </View>
+                        </>
+                        }
 
                         <View style={styles.modalActions}>
                             <TouchableOpacity

@@ -7,7 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 export default function BookingDetail() {
   const { id } = useLocalSearchParams();
   const bookingId = Number(id);
-  console.log(bookingId);
+  console.log("bookingId", bookingId);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

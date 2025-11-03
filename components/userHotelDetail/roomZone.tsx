@@ -13,8 +13,7 @@ export default function RoomZone({ utilityOfTypeRoom, roomTypeImage }: RoomZoneP
         console.log("utilityOfTypeRoomImage: ", urlImage + utilityOfTypeRoom[0].imageUrl
         );
     }
-    console.log("roomTypeImage:");
-    console.log(roomTypeImage);
+    console.log("roomTypeImage: " + roomTypeImage);
 
     return (
         <View style={{ backgroundColor: '#EFEFEF', borderRadius: 15, width: '100%', height: 400 }}>
@@ -39,7 +38,7 @@ export default function RoomZone({ utilityOfTypeRoom, roomTypeImage }: RoomZoneP
                     contentContainerStyle={{ alignItems: 'center' }} // căn giữa nếu muốn
                 >
                     {roomTypeImage.map((image) => (
-                        <Image key={image.id} style={{ width: 300, height: 150, marginRight: 10 }} source={{ uri: image.image }} />
+                        <Image key={image.id} style={{ width: 300, height: 150, marginRight: 10 }} source={{ uri: urlImage + image.image }} />
                     ))}
 
                 </ScrollView>

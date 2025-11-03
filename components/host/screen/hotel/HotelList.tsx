@@ -16,6 +16,7 @@ export default function HotelList() {
 
     useFocusEffect(
         useCallback(() => {
+            console.log("Vào trang HotelList");
             fetchHotels(); // Gọi lại API mỗi khi vào lại trang
         }, [])
     );
@@ -25,6 +26,8 @@ export default function HotelList() {
             // const userId = 1;   
             if (!userId) return;
             const res = await getAllHotelsByUser(Number(userId));
+            console.log("res", res);
+            if(!res) return;
             setHotels(res.data || []);
         } catch (error) {
             console.error("Lỗi khi tải danh sách khách sạn:", error);

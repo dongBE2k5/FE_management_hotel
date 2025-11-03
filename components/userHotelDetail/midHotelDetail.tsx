@@ -1,25 +1,24 @@
+import VoucherCard from "@/components/userHome/voucherCard";
+import Rate from '@/models/Rate';
 import Room from '@/models/Room';
 import RoomTypeImage from '@/models/RoomTypeImage';
 import { TypeOfRoomUtility } from '@/models/TypeOfRoomUtility/TypeOfRoomUtilityResponse';
+import Voucher from "@/models/Voucher";
 import { getTypeOfRoomUtilityOfHotelByHotelIdAndType } from '@/service/HotelUtilityAPI';
+import { getAverageRate, getRatesByHotel } from '@/service/RateAPI';
 import { getRoomAvailableByHotel } from '@/service/RoomAPI';
+import { getUserVouchers, saveUserVoucher } from '@/service/UserVoucherAPI';
+import { getAllVouchers } from '@/service/VoucherAPI';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import React, { useEffect, useState } from 'react';
-import { Button, Image, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert } from 'react-native';
+import { Alert, Button, Image, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RoomCard from "./roomCard";
 import RoomZone from './roomZone';
-import { getRatesByHotel, getAverageRate } from '@/service/RateAPI';
-import Rate from '@/models/Rate';
-import { getVouchersByHotel } from "@/service/VoucherAPI";
-import Voucher from "@/models/Voucher";
-import VoucherCard from "@/components/userHome/voucherCard";
-import { getUserVouchers, saveUserVoucher } from '@/service/UserVoucherAPI';
-import { getAllVouchers } from '@/service/VoucherAPI';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type RoomProps = {
     roomTypeImage: RoomTypeImage[],
@@ -33,6 +32,7 @@ const today = new Date();
 const tomorrow = new Date(today);
 tomorrow.setDate(today.getDate() + 1);
 export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
+    console.log("roomTypeImage MidHotelDetail", roomTypeImage);
     const [rates, setRates] = useState<Rate[]>([]);
     const [averageRate, setAverageRate] = useState<number>(0);
     // Những điều khách thích nhất
@@ -72,7 +72,7 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
     const utilityOfTypeRoom3 = utility!.filter((utility: TypeOfRoomUtility) => utility.typeOfRoomId
     == 3);
 
-
+    console.log("utilityOfTypeRoom1", utilityOfTypeRoom1);
 
     
     // useEffect(() => {

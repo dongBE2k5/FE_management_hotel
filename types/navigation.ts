@@ -4,6 +4,8 @@ import { UtilityItem } from "@/models/Utility/Utility";
 // src/types/navigation.ts
 export type RootStackParamList = {
   Home: undefined;
+  BookedList: undefined;
+  BookedDetail: { id: number };
   HotelDetail: { hotelId: number }; // có params thì khai báo ở đây
   Saved: undefined;
   RoomCard: { rooms: Room[]; checkInDate: Date; checkOutDate?: Date | null };

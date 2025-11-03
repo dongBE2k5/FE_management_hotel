@@ -120,7 +120,7 @@ async function getAllHotelsByUser(userId: number): Promise<Hotel[]> {
 async function updateHotel(id: number, hotel: HotelRequest): Promise<Hotel> {
   const res = await axios.put(`${BaseUrl}/hotels/${id}`, hotel);
   console.log(res.data);
-  if (res.status !== 201) {
+  if (res.status !== 200) {
     throw new Error(`HTTP error! status: ${res.status}`);
   }
   console.log(res.data);
@@ -154,7 +154,7 @@ export async function searchHotels(
     if (maxPrice != null) params.append("maxPrice", maxPrice.toString());
 
     const url = `${BaseUrl}/hotels/search?${params.toString()}`;
-    console.log("🔍 Search URL:", url);
+    console.log("🔍 Search UR:", url);
 
     const res = await fetch(url);
     console.log("API status:", res.status);
@@ -181,7 +181,7 @@ async function find(id: Number): Promise<Hotel> {
   const data: Hotel = await res.json();
   return data;
 }
-export { find,createHotel, findHotelById, getAllHotel, getAllHotelsByUser, getHotelByLocation, updateHotel };
+export { createHotel, find, findHotelById, getAllHotel, getAllHotelsByUser, getHotelByLocation, updateHotel };
 
 
 

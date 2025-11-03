@@ -1,9 +1,9 @@
+import { useHost } from '@/context/HostContext';
 import { getAllBookingsByHotelId } from '@/service/BookingAPI';
 import { connectAndSubscribeBooking, disconnect } from '@/service/Realtime/BookingWS';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
     FlatList,
     SafeAreaView,
@@ -47,6 +47,7 @@ export default function ListRoom() {
     });
 
     const [data, setData] = useState([]);
+    const hotelId = useHost();
     useFocusEffect(
         useCallback(() => {
             let isMounted = true;
@@ -61,8 +62,8 @@ export default function ListRoom() {
                     // ];
                     // setData(mockApiResponse.map(mapBookingData));
     
-                    const hotelIdStr = await AsyncStorage.getItem('hotelID'); // ✅ await
-                    const hotelId = hotelIdStr ? Number(hotelIdStr) : null;
+                    // const hotelIdStr = await AsyncStorage.getItem('hotelID'); // ✅ await
+                    // const hotelId = hotelIdStr ? Number(hotelIdStr) : null;
                     if (!hotelId) {
                         console.error("Hotel ID không hợp lệ.");
                         return;
@@ -81,7 +82,7 @@ export default function ListRoom() {
     
                     setData(formattedData);
                 } catch (error) {
-                    console.error("Lỗi:", error);
+                    console.log("Lỗi", error);
                 }
             };
     

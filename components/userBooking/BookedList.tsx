@@ -2,8 +2,8 @@ import BookingResponse from "@/models/Booking/BookingResponse";
 import { getBookingsByUserId, updateBookingStatus } from "@/service/BookingAPI";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
-import { router } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import { useNavigation } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -23,7 +23,7 @@ export default function BookedList() {
   const filteredBookings = filterStatus
     ? bookings.filter((b) => b.status === filterStatus)
     : bookings;
-
+  const navigation = useNavigation();
   const fetchBookings = async () => {
     try {
       setLoading(true);
@@ -63,17 +63,17 @@ export default function BookedList() {
     }, [])
   );
 
-  useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(prev => prev - 1), 1000);
-      return () => clearTimeout(timer);
-    }
+  // useEffect(() => {
+  //   if (countdown > 0) {
+  //     const timer = setTimeout(() => setCountdown(prev => prev - 1), 1000);
+  //     return () => clearTimeout(timer);
+  //   }
 
-    if (countdown === 0) {
-      // fetch lại bookings khi countdown về 0
-      fetchBookings();
-    }
-  }, [countdown]);
+  //   if (countdown === 0) {
+  //     // fetch lại bookings khi countdown về 0
+  //     fetchBookings();
+  //   }
+  // }, [countdown]);
 
 
   const getStatusLabel = (status: string) => {
@@ -174,8 +174,8 @@ export default function BookedList() {
           <View style={styles.buttonRow}>
             <TouchableOpacity
               style={[styles.detailButton, { flex: 1 }]}
-              onPress={() => router.push(`/booking/${item.id}`)}
-            >
+              onPress={() => navigation.navigate('BookedDetail', { id: item.id })}
+              >
               <Text style={styles.detailText}>Xem chi tiết</Text>
             </TouchableOpacity>
 

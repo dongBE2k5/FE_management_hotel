@@ -1,19 +1,19 @@
 import Account from '@/components/screens/profile/account';
-import InFormationAccount from '@/components/screens/profile/informationDisplay';
-import ForgotPasswordScreen from '@/components/screens/profile/ForgotPasswordScreen';
-import ResetPasswordScreen from '@/components/screens/profile/ResetPasswordScreen';
 import ChangePasswordScreen from '@/components/screens/profile/ChangePasswordScreen';
+import ForgotPasswordScreen from '@/components/screens/profile/ForgotPasswordScreen';
+import InFormationAccount from '@/components/screens/profile/informationDisplay';
 import LoggedAccount from '@/components/screens/profile/logged';
 import Login from '@/components/screens/profile/loginDisplay';
 import Register from '@/components/screens/profile/registerDisplay';
+import ResetPasswordScreen from '@/components/screens/profile/ResetPasswordScreen';
 import { getCurrentUser } from '@/service/UserAPI';
 import type { ProfileStackParamList } from '@/types/navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { createStackNavigator } from "@react-navigation/stack";
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { StyleSheet } from 'react-native';
 import { HomeScreen } from '.';
 
 const Stack = createStackNavigator<ProfileStackParamList>();
@@ -23,28 +23,30 @@ function Profile() {
   const navigation = useNavigation<ProfileNavProp>();
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const checkLogin = async () => {
-      const token = await AsyncStorage.getItem('userToken');
-      if (token) {
-        const user = await getCurrentUser(token);
-        if (user) {
-          navigation.replace('LoggedAccount');
+console.log("Profile");
+
+  useFocusEffect(
+    useCallback(() => {
+      const checkLogin = async () => {
+        const token = await AsyncStorage.getItem('userToken');
+        if (token) {
+          const user = await getCurrentUser(token);
+          console.log("user.Login", user);
+  
+          if (user) {
+            navigation.replace('LoggedAccount');
+          } else {
+            await AsyncStorage.multiRemove(['userToken', 'userId']);
+            navigation.replace('Account');
+          }
         } else {
-          await AsyncStorage.multiRemove(['userToken', 'userId']);
           navigation.replace('Account');
         }
-      } else {
-        navigation.replace('Account');
-      }
-      setLoading(false);
-    };
-    checkLogin();
-  }, []);
-
-  return null; // chỉ điều hướng
-
-
+        setLoading(false);
+      };
+      checkLogin();
+    }, [])
+  );
 }
 
 export default function ProfileNavigator() {
@@ -59,7 +61,7 @@ export default function ProfileNavigator() {
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
-           <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+      <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
     </Stack.Navigator>
   );
 }
