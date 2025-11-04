@@ -88,6 +88,17 @@ export default function Checkout() {
     name: employee.user.fullName,
     phone: employee.user.phone,
   });
+  const formService = (service) => ({
+    bookingId: service.bookingId,
+    service:service.utilityItemBookingResponse.map((item) => ({
+      name:item.name,
+      quantity:item.quantity,
+      price:item.price,
+    })),
+    
+    
+
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -121,7 +132,7 @@ export default function Checkout() {
           .map(staffData));
         
         // ✨ LƯU DỊCH VỤ VÀO STATE
-        setServices(servicesData || []); // Đảm bảo là mảng
+        setServices(formService(servicesData) || []); // Đảm bảo là mảng
 
         const isPaid = payments.some(payment => payment.status === 'success');
 

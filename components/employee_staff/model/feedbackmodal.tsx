@@ -223,6 +223,7 @@ export default function FeedbackModal({
         visible={showDamageModal}
         damagedItems={damagedItems} // 👈 TRUYỀN DATA HƯ HỎNG VÀO ĐÂY
         onClose={() => {
+          onReportReceived(damagedItems);
           setShowDamageModal(false);
           setShowCostModal(false);
           // setResult(null); // Không còn dùng state này

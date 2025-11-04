@@ -3,13 +3,12 @@ import UserLogin from '@/models/UserLogin';
 import { loginFunction } from '@/service/UserAPI';
 import { ProfileStackParamList } from '@/types/navigation';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import Ionicons from '@expo/vector-icons/Ionicons';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useNavigation, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  Alert,
   Alert,
   StyleSheet,
   Text,

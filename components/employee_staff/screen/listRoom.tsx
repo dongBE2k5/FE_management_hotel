@@ -1,7 +1,8 @@
-import { useHost } from '@/context/HostContext';
+
 import { getAllBookingsByHotelId } from '@/service/BookingAPI';
 import { connectAndSubscribeBooking, disconnect } from '@/service/Realtime/BookingWS';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
@@ -58,7 +59,7 @@ export default function ListRoom() {
     });
 
     const [data, setData] = useState([]);
-    const hotelId = useHost();
+
     useFocusEffect(
         useCallback(() => {
             let isMounted = true;

@@ -1,16 +1,15 @@
 import { connectAndSubscribe, disconnect, fetchInitialRequests, sendRequest } from "@/service/Realtime/WebSocketAPI";
-import { getRoomItemsByResquset } from "@/service/RoomItemAPI";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import { FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import FeedbackModal from "./feedbackmodal"; // 👈 import modal mới
 
-export default function StaffListModal({ visible, onClose, staffList = [], roomId }) {
+export default function StaffListModal({ visible, onClose, staffList = [], roomId, onReportReceived }) {
   const [showFeedback, setShowFeedback] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [requests, setRequests] = useState([]);
-  
+
   // 🔽 THÊM STATE MỚI: Dùng để lưu request vừa nhận từ WebSocket
   const [activeRequest, setActiveRequest] = useState(null);
 
@@ -31,10 +30,10 @@ export default function StaffListModal({ visible, onClose, staffList = [], roomI
         content: "Yêu cầu kiểm tra phòng",
       };
       console.log(staff);
-      
+
       // 🔽 RESET state cũ trước khi mở modal
-      setActiveRequest(null); 
-      
+      setActiveRequest(null);
+
       sendRequest(requestPayload, roomId);
       setSelectedStaff(staff);
       setShowFeedback(true); // 👈 mở modal feedback
@@ -71,12 +70,12 @@ export default function StaffListModal({ visible, onClose, staffList = [], roomI
           onError: (error) => console.error("⚠️ WebSocket error:", error),
           onMessageReceived: (newRequest) => {
             console.log("📩 Nhận request realtime:", newRequest);
-            
+
             if (isMounted) {
               setRequests((prev) => [newRequest, ...prev]);
-              
+
               // 🔽 ĐÂY LÀ CHÌA KHÓA: Cập nhật request đang hoạt động
-              setActiveRequest(newRequest); 
+              setActiveRequest(newRequest);
             }
           },
         });
@@ -152,6 +151,7 @@ export default function StaffListModal({ visible, onClose, staffList = [], roomI
         roomNumber={roomId} // 👈 Truyền roomId vào
         activeRequest={activeRequest} // 👈 **TRUYỀN PROP QUAN TRỌNG NHẤT**
         onClose={() => {
+
           setShowFeedback(false);
           setActiveRequest(null); // 👈 Reset khi đóng
         }}
@@ -160,6 +160,12 @@ export default function StaffListModal({ visible, onClose, staffList = [], roomI
           setActiveRequest(null); // 👈 Reset khi đóng
           onClose(); // đóng StaffListModal cha
         }}
+        onReportReceived={(receivedDamagedItems) => { // 👈 CALLBACK CHÍNH
+          if (onReportReceived) {
+            onReportReceived(receivedDamagedItems); // Gửi dữ liệu ngược lên Checkout
+          }
+        }}
+
       />
     </>
   );
