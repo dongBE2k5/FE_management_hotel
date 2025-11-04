@@ -20,7 +20,8 @@ const formatCurrency = (value) => {
 };
 
 export default function CostDetailModal({ visible, onClose, costData }) {
-  // Nếu chưa có dữ liệu costData hoặc dữ liệu trống
+  console.log("tiền", costData);
+
   if (!costData || Object.keys(costData).length === 0) {
     return (
       <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -39,10 +40,18 @@ export default function CostDetailModal({ visible, onClose, costData }) {
     );
   }
 
+  // --- TÍNH TOÁN ĐÃ CẬP NHẬT (bao gồm số lượng) ---
   const roomPrice = costData?.roomDetails?.price ?? 0;
+  
+  // ✨ SỬA: Nhân giá với số lượng (mặc định là 1 nếu không có)
   const servicesTotal =
-    costData?.services?.reduce((sum, s) => sum + (s.price ?? 0), 0) ?? 0;
-  const totalAmount = roomPrice + servicesTotal;
+    costData?.services?.reduce((sum, s) => sum + ((s.price ?? 0) * (s.quantity ?? 1)), 0) ?? 0;
+
+  // ✨ SỬA: Nhân giá với số lượng (mặc định là 1 nếu không có)
+  const damagedItemsTotal =
+    costData?.damagedItems?.reduce((sum, item) => sum + ((item.price ?? 0) * (item.quantity ?? 1)), 0) ?? 0;
+
+  const totalAmount = roomPrice + servicesTotal + damagedItemsTotal;
 
   const handlePayment = async () => {
     try {
@@ -80,7 +89,7 @@ export default function CostDetailModal({ visible, onClose, costData }) {
               <>
                 <Text style={styles.sectionTitle}>Tiền phòng</Text>
                 <View style={styles.rowBetween}>
-                  <View>
+                  <View style={styles.itemDetails}>
                     <Text style={styles.bold}>{costData.roomDetails.name}</Text>
                     {costData.roomDetails.description ? (
                       <Text style={styles.subText}>{costData.roomDetails.description}</Text>
@@ -96,14 +105,48 @@ export default function CostDetailModal({ visible, onClose, costData }) {
               <>
                 <Text style={styles.sectionTitle}>Dịch vụ đã dùng</Text>
                 {costData.services.map((service, i) => (
-                  <View style={styles.rowBetween} key={i}>
-                    <View>
-                      <Text style={styles.bold}>{service.name}</Text>
+                  <View style={styles.rowBetween} key={`service-${i}`}>
+                    <View style={styles.itemDetails}>
+                      <View style={styles.itemNameRow}>
+                        <Text style={styles.bold}>{service.name}</Text>
+                        {/* ✨ MỚI: Hiển thị số lượng */}
+                        {(service.quantity ?? 0) > 0 && (
+                          <Text style={styles.quantityText}> (x{service.quantity})</Text>
+                        )}
+                      </View>
                       {service.description ? (
                         <Text style={styles.subText}>{service.description}</Text>
                       ) : null}
                     </View>
-                    <Text style={styles.price}>{formatCurrency(service.price)}</Text>
+                    {/* ✨ SỬA: Hiển thị tổng tiền (giá * số lượng) */}
+                    <Text style={styles.price}>{formatCurrency((service.price ?? 0) * (service.quantity ?? 1))}</Text>
+                  </View>
+                ))}
+              </>
+            )}
+            
+            {/* Vật dụng đền bù */}
+            {Array.isArray(costData.damagedItems) && costData.damagedItems.length > 0 && (
+              <>
+                <Text style={styles.sectionTitle}>Vật dụng đền bù</Text>
+                {costData.damagedItems.map((item, i) => (
+                  <View style={styles.rowBetween} key={`damage-${i}`}>
+                    <View style={styles.itemDetails}>
+                      <View style={styles.itemNameRow}>
+                        <Text style={styles.bold}>{item.name}</Text>
+                         {/* ✨ MỚI: Hiển thị số lượng */}
+                        {(item.quantity ?? 0) > 0 && (
+                           <Text style={styles.quantityText}> (x{item.quantity})</Text>
+                        )}
+                      </View>
+                      {item.description ? (
+                        <Text style={styles.subText}>{item.description}</Text>
+                      ) : null}
+                    </View>
+                     {/* ✨ SỬA: Hiển thị tổng tiền (giá * số lượng) */}
+                    <Text style={[styles.price, { color: "red" }]}>
+                      {formatCurrency((item.price ?? 0) * (item.quantity ?? 1))}
+                    </Text>
                   </View>
                 ))}
               </>
@@ -162,16 +205,32 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 8,
   },
+  // ✨ MỚI: Style cho nhóm Tên + Số lượng
+  itemNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  itemDetails: {
+    flex: 1, // Cho phép mô tả xuống dòng nếu cần
+  },
   bold: {
     fontWeight: "600",
+  },
+  // ✨ MỚI: Style cho số lượng
+  quantityText: {
+    fontWeight: "600",
+    color: "#555",
+    fontSize: 14, // Cỡ chữ bằng tên
   },
   subText: {
     color: "#666",
     fontSize: 12,
+    flexShrink: 1, // Cho phép text co lại nếu quá dài
   },
   price: {
     color: "green",
     fontWeight: "600",
+    marginLeft: 8, // Thêm khoảng cách
   },
   divider: {
     height: 1,

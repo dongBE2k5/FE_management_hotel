@@ -23,12 +23,12 @@ try {
     ip = "192.168.68.118";
 }
 
-// const BaseUrl = `http://${ip}:8080/api`;
+const BaseUrl = `http://${ip}:8080/api`;
 export const BaseUrl2 = `http://${ip}:8080/api`;
-const BaseUrl = `https://prudish-leonie-noncapriciously.ngrok-free.dev/api`;
+// const BaseUrl = `https://prudish-leonie-noncapriciously.ngrok-free.dev/api`;
 
-// const urlIP = `http://${ip}:8080`;
-const urlIP = `https://prudish-leonie-noncapriciously.ngrok-free.dev`;
+const urlIP = `http://${ip}:8080`;
+// const urlIP = `https://prudish-leonie-noncapriciously.ngrok-free.dev`;
 // const getBaseUrl = ip;
 export default  BaseUrl ;
 export const urlImage = `${urlIP}/uploads/`;
