@@ -2,7 +2,7 @@ import { urlImage } from '@/constants/BaseURL';
 import { useHost } from '@/context/HostContext';
 import TypeOfRoomResponse from '@/models/TypeOfRoom/TypeOfRoomResponse';
 import { Utility, UtilityItem } from '@/models/Utility/Utility';
-import { createUtilityOfHotel, deleteUtilityOfHotel, getUtilityByHotel, getUtilityOfHotelById, updateUtilityOfHotel, updateUtilityOfHotelById } from '@/service/HotelUtilityAPI';
+import { createUtilityOfHotel, deleteUtilityOfHotel, getUtilityByHotel, getUtilityOfHotelById, updateUtilityIsUsed, updateUtilityOfHotel, updateUtilityOfHotelById } from '@/service/HotelUtilityAPI';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from "expo-image-picker";
 import { useFocusEffect } from 'expo-router';
@@ -30,15 +30,16 @@ export default function Service() {
     const fetchData = async () => {
         try {
             // 🔹 Lấy tất cả tiện ích
-            console.log("render");
-
             const utilitiesRes = await getUtilityByHotel(hotelId!);
             setUtilities(utilitiesRes);
+            const utilityUsed: number[] = [];
             utilitiesRes.data.forEach((item) => {
                 if (item.isUsed == "USED") {
-                    setSelectedServices([...selectedServices, item.id]);
+                    utilityUsed.push(item.id);
                 }
             });
+            setSelectedServices(utilityUsed);
+            console.log("utilityUsed", utilityUsed);
             
             // 🔹 Lấy danh sách tiện ích đã được gán cho khách sạn
             // const hotelUtilitiesRes = await getUtilityOfHotel(hotelId);
@@ -112,12 +113,15 @@ const handlePriceChange = (serviceId: number, value: string) => {
     }));
 };
 
-const toggleServiceSelection = (serviceId: number) => {
-    if (selectedServices.includes(serviceId)) {
-        setSelectedServices(selectedServices.filter(id => id !== serviceId));
-    } else {
-        setSelectedServices([...selectedServices, serviceId]);
+const toggleServiceSelection = async (service: UtilityItem) => {
+    try {
+        service.isUsed == "USED" ? await updateUtilityIsUsed(service.id, "UNUSED") : await updateUtilityIsUsed(service.id, "USED");
+        setSelectedServices(selectedServices.filter(id => id !== service.id));
+    } catch (error) {
+        console.error("Lỗi khi cập nhật trạng thái dịch vụ:", error);
+        Alert.alert("Lỗi", "Không thể cập nhật trạng thái dịch vụ. Vui lòng thử lại.");
     }
+    handleReload();
 };
 
 // 🟢 Hàm gửi dữ liệu về API
@@ -225,7 +229,7 @@ return (
 
                                 <Switch
                                     value={isSelected}
-                                    onValueChange={() => toggleServiceSelection(service.id)}
+                                    onValueChange={() => toggleServiceSelection(service as UtilityItem)}
                                     trackColor={{ false: "#ddd", true: "#a8d0ff" }}
                                     thumbColor={isSelected ? "#007bff" : "#f4f3f4"}
                                 />
