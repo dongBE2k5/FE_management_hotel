@@ -1,12 +1,14 @@
 import Room from '@/models/Room';
-import { UtilityItem } from '@/models/Utility/Utility';
-import { getAllUtilityByType } from '@/service/HotelUtilityAPI';
-import { getRoomById } from '@/service/RoomAPI';
+import { getTypeOfRoomUtilityOfHotelByHotelIdAndType } from '@/service/HotelUtilityAPI';
+import { getRoomById, updateRoom } from '@/service/RoomAPI';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { SvgXml } from "react-native-svg";
 
+import { urlImage } from '@/constants/BaseURL';
+import { useHost } from '@/context/HostContext';
+import RoomRequest from '@/models/Room/RoomRequest';
+import { TypeOfRoomUtility } from '@/models/TypeOfRoomUtility/TypeOfRoomUtilityResponse';
 import {
     Alert,
     FlatList,
@@ -87,21 +89,36 @@ const GuestInfoPanel = ({ bookingInfo }) => {
 
 // --- COMPONENT: Modal Chỉnh Sửa Thông Tin ---
 const EditInfoModal = ({ visible, onClose, onSave, currentData }) => {
-    const [editableData, setEditableData] = useState(null);
+    const [editableData, setEditableData] = useState<Room>(null);
     const roomTypes = ['Phòng Standard', 'Phòng Superior', 'Phòng Deluxe', 'Phòng Suite'];
-
+    console.log("currentData", currentData);
+    const allRoomTypes = [
+        { id: 1, name: "DON" },
+        { id: 2, name: "DOI" },
+        { id: 3, name: "GIA_DINH" },
+    ]
     useEffect(() => {
         if (visible && currentData) {
             setEditableData(currentData);
         }
     }, [currentData, visible]);
-
+    console.log("editableData", editableData);
+    
     const handleSave = () => {
-        const finalData = { ...editableData, price: parseInt(editableData.price, 10) || 0 };
-        onSave(finalData);
+        if (!editableData) return;
+        const finalData : RoomRequest = {
+            roomNumber: editableData.roomNumber,
+            price: Number(editableData.price),
+            description: editableData.description,
+            typeRoomId: editableData.typeOfRoomId,
+            hotelId: editableData.hotel.id,
+            status: editableData.status,
+        }
+        console.log("finalData", finalData);
+        // }}
+        onSave(Number(editableData.id), finalData);
     };
 
-    if (!editableData) return null;
 
     return (
         <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
@@ -111,17 +128,21 @@ const EditInfoModal = ({ visible, onClose, onSave, currentData }) => {
                     <ScrollView keyboardShouldPersistTaps="handled">
                         <View style={styles.textInputRow}>
                             <Text style={styles.inputLabel}>Số phòng</Text>
-                            <TextInput style={styles.textInput} value={editableData.id} onChangeText={text => setEditableData(prev => ({ ...prev, id: text }))} />
+                            <TextInput style={styles.textInput} value={editableData?.roomNumber} onChangeText={text => setEditableData(prev => ({ ...prev, roomNumber: text }))} />
                         </View>
                         <View style={styles.textInputRow}>
                             <Text style={styles.inputLabel}>Giá phòng (/đêm)</Text>
-                            <TextInput style={styles.textInput} value={String(editableData.price)} onChangeText={text => setEditableData(prev => ({ ...prev, price: text }))} keyboardType="numeric" />
+                            <TextInput style={styles.textInput} value={String(editableData?.price)} onChangeText={text => setEditableData(prev => ({ ...prev, price: text }))} keyboardType="numeric" />
+                        </View>
+                        <View style={styles.textInputRow}>
+                            <Text style={styles.inputLabel}>Mô tả</Text>
+                            <TextInput style={styles.textInput} value={editableData?.description} onChangeText={text => setEditableData(prev => ({ ...prev, description: text }))} multiline={true} numberOfLines={4} textAlignVertical="top" />
                         </View>
                         <Text style={styles.inputLabel}>Loại phòng</Text>
                         <View style={styles.roomTypeSelectorContainer}>
-                            {roomTypes.map(type => (
-                                <TouchableOpacity key={type} style={[styles.roomTypeButton, editableData.type === type && styles.roomTypeButtonSelected]} onPress={() => setEditableData(prev => ({ ...prev, type: type }))}>
-                                    <Text style={[styles.roomTypeButtonText, editableData.type === type && styles.roomTypeButtonTextSelected]}>{type}</Text>
+                            {allRoomTypes.map(type => (
+                                <TouchableOpacity key={type.id} style={[styles.roomTypeButton, editableData?.typeOfRoomId === type.id && styles.roomTypeButtonSelected]} onPress={() => setEditableData(prev => ({ ...prev, typeOfRoomId: type.id }))}>
+                                    <Text style={[styles.roomTypeButtonText, editableData?.typeOfRoomId === type.id && styles.roomTypeButtonTextSelected]}>{type.name == "DON" ? "Phòng Đơn" : type.name == "DOI" ? "Phòng Đôi" : "Phòng Gia Đình"}</Text>
                                 </TouchableOpacity>
                             ))}
                         </View>
@@ -432,23 +453,38 @@ export default function RoomDetailScreen({ route, navigation = mockNavigation })
     }
 
     // const currentRoomType = allRoomTypes.find(rt => rt.name === currentRoomData.type);
-    const [hotelUtility, setHotelUtility] = useState<UtilityItem[]>();
+    const [hotelUtility, setHotelUtility] = useState<TypeOfRoomUtility[]>();
     const [roomData, setRoomData] = useState<Room>();
     const [roomStatus, setRoomStatus] = useState();
     const [isEditModalVisible, setEditModalVisible] = useState(false);
     const [isHistoryModalVisible, setHistoryModalVisible] = useState(false);
     const [isServiceModalVisible, setServiceModalVisible] = useState(false);
-
+    const {hotelId} = useHost()
+    const [isFresh, setIsFresh] = useState(false);
 
     useFocusEffect(
         useCallback(() => {
             if (!roomId) return;
-            fetchRoomById(roomId);
-            fetchHotelUtility("INROOM");
-        }, [])
+            fetchRoomByIdAndHotelUtility(roomId);
+        }, [isFresh, roomId])
     );
+    const fetchHotelUtility = async (typeOfRoomId: number, type: string) => {
+        if (!hotelId) return;
+        const response = await getTypeOfRoomUtilityOfHotelByHotelIdAndType(hotelId, type);
+        if (!response) {
+            return;
+        }
+        setHotelUtility(response.data.utilities.filter((utility: TypeOfRoomUtility) => utility.typeOfRoomId
+        == typeOfRoomId));
+        console.log("roomData?.typeOfRoomId", typeOfRoomId);
+        console.log("response.data.utilities", JSON.stringify(response.data.utilities));
+        console.log(urlImage + response.data.utilities[0].imageUrl);
+        
+        console.log("response", response.data.utilities.filter((utility: TypeOfRoomUtility) => utility.typeOfRoomId
+        == typeOfRoomId));
+    }
 
-    const fetchRoomById = async (roomId: number) => {
+    const fetchRoomByIdAndHotelUtility = async (roomId: number) => {
         const response = await getRoomById(roomId);
         if (!response) {
             return (
@@ -460,18 +496,10 @@ export default function RoomDetailScreen({ route, navigation = mockNavigation })
                 </SafeAreaView>
             );
         };
-        console.log("response", response);
         setRoomData(response);
-
+        fetchHotelUtility(response.typeOfRoomId, "INROOM");
     }
-    const fetchHotelUtility = async (type: string) => {
-        const response = await getAllUtilityByType(type);
-        if (!response) {
-            return;
-        }
-        setHotelUtility(response.data);
-        console.log("response", response);
-    }
+    
     const handleAction = (action) => {
         switch (action) {
             case 'Manage Services': setServiceModalVisible(true); break;
@@ -485,19 +513,29 @@ export default function RoomDetailScreen({ route, navigation = mockNavigation })
         }
     };
 
-    const handleSaveInfo = (updatedData) => {
-        setRoomData(prev => ({ ...prev, ...updatedData }));
-        setEditModalVisible(false);
+    const handleSaveInfo = async (id: number, updatedData: RoomRequest) => {
+        console.log("updatedData", updatedData);
+        const response = await updateRoom(id, updatedData);
+        if (!response) {
+            Alert.alert("Lỗi", "Không thể cập nhật thông tin phòng.");
+            return;
+        }
+        
         Alert.alert("Thành công", "Đã cập nhật thông tin phòng.");
+        // setRoomData(response.data);
+        setEditModalVisible(false);
+        handleReload();
     };
-
+    const handleReload = () => {
+        setIsFresh(prev => !prev);
+    };
     const handleSaveServices = (services, totalCost) => {
         setRoomData(prev => ({ ...prev, usedServices: services }));
         setServiceModalVisible(false);
         Alert.alert("Ghi nhận thành công", `Đã cập nhật dịch vụ với tổng chi phí ${totalCost.toLocaleString('vi-VN')}đ.`);
     };
 
-    const roomTypeImage = 'https://via.placeholder.com/400x250.png?text=No+Image';
+    const roomTypeImage = 'https://media.istockphoto.com/id/627892060/photo/hotel-room-suite-with-view.jpg?s=612x612&w=0&k=20&c=YBwxnGH3MkOLLpBKCvWAD8F__T-ypznRUJ_N13Zb1cU=';
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -532,11 +570,9 @@ export default function RoomDetailScreen({ route, navigation = mockNavigation })
                         {hotelUtility && hotelUtility.map(item => (
                             <View key={item.id} style={styles.detailItem}>
                                 <View style={{display: 'flex', flexWrap: 'nowrap', flexDirection: 'row', alignItems: 'center'}}>
-                                    {item.image && (
-                                        <SvgXml xml={item.image} width={16} height={16} />
-                                    )}
+                                    <Image source={{ uri: urlImage + item.imageUrl }} style={styles.detailImage} />
 
-                                    <Text style={styles.detailText}>{item.name}</Text>
+                                    <Text style={styles.detailText}>{item.utilityName}</Text>
                                 </View>
                             </View>
                         ))}
@@ -632,4 +668,5 @@ const styles = StyleSheet.create({
     timelineContent: { marginLeft: 15 },
     timelineEvent: { fontSize: 16, fontWeight: '500' },
     timelineTime: { fontSize: 13, color: '#888', marginTop: 4 },
+    detailImage: { width: 20, height: 20, marginRight: 5 },
 });

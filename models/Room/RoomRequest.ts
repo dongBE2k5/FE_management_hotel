@@ -1,7 +1,10 @@
 interface RoomRequest {
     roomNumber: string;
-    type: string;
-    status: string;
     price: number;
     description: string;
+    typeRoomId: number;
+    hotelId: number;
+    status: string;
 }
+
+export default RoomRequest;
