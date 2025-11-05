@@ -18,8 +18,8 @@ type UserContextType = {
 
 const UserContext = createContext<UserContextType>({
   user: null,
-  refreshUser: async () => {},
-  setUser: () => {},
+  refreshUser: async () => { },
+  setUser: () => { },
   isLoading: true,
 });
 
@@ -35,44 +35,24 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       const role = await AsyncStorage.getItem('role');
 
       if (role && userId) {
-        // SỬA LỖI: Bước 1. Luôn lấy thông tin User làm cốt lõi
-        const res = await getUserById(userId);
+        const [userRes, employeeRes] = await Promise.all([
+          getUserById(userId),
+          (role === 'ROLE_EMPLOYEE' || role === 'ROLE_CLEANING' || role === 'ROLE_ADMIN')
+            ? getEmployeeByUser(Number(userId))
+            : Promise.resolve(null),
+        ]);
 
-        if (res) {
-          // Lấy user thành công -> set user
-          setUser({ ...res, role });
-
-          // SỬA LỖI: Bước 2. Tác vụ phụ: Lấy hotelID (chỉ sau khi đã lấy user thành công)
-          // Bọc trong try...catch riêng để nếu lỗi thì không ảnh hưởng đến việc login
-          if (
-            role === 'ROLE_EMPLOYEE' ||
-            role === 'ROLE_CLEANING' ||
-            role === 'ROLE_ADMIN'
-          ) {
-            try {
-              const employee = await getEmployeeByUser(Number(userId)); // Giờ ta chắc chắn userId có giá trị
-              if (employee) {
-                await AsyncStorage.setItem(
-                  'hotelID',
-                  employee.hotelId.toString()
-                );
-              }
-            } catch (employeeError) {
-              console.error(
-                'Lỗi khi lấy thông tin hotel của nhân viên:',
-                employeeError
-              );
-              // Không làm gì cả, user vẫn được đăng nhập
-            }
+        if (userRes) {
+          setUser({ ...userRes, role });
+          if (employeeRes?.hotelId) {
+            await AsyncStorage.setItem('hotelID', employeeRes.hotelId.toString());
           }
         } else {
-          // API getUserById thất bại (ví dụ: user bị xóa)
           setUser(null);
-          await AsyncStorage.removeItem('userId');
-          await AsyncStorage.removeItem('role');
-          await AsyncStorage.removeItem('hotelID'); // Xóa luôn hotelID
+          await AsyncStorage.multiRemove(['userId', 'role', 'hotelID']);
         }
-      } else {
+      }
+      else {
         // Không có role hoặc userId trong Storage
         setUser(null);
       }
@@ -98,55 +78,41 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     console.log("🧭 inGroupLayout:", inGroupLayout);
     console.log("👤 user:", user);
 
-    if (!user?.role) {
-      router.push('/(tabs)');
+    if (!user || !user.role) {
+      if (inGroupLayout !== '(tabs)') {
+
+        router.replace('/(tabs)');
+
+      }
       return;
     }
-  
-    switch (user.role) {
-      case 'ROLE_EMPLOYEE':
-      case 'ROLE_ADMIN':
-        router.push('/(employee)');
-        break;
-  
-      case 'ROLE_HOST':
-        router.push('/(host)');
-        break;
-  
-      case 'ROLE_CLEANING':
-        router.push('/(cleaningStaff)');
-        break;
-  
-      default:
-        router.push('/(tabs)');
-        break;
+
+    if (user.role === 'ROLE_EMPLOYEE' || user.role === 'ROLE_ADMIN') {
+      if (inGroupLayout !== '(employee)') {
+        setTimeout(() => {
+          router.replace('/(employee)');
+        }, 0);
+      }
+    } else if (user.role === 'ROLE_HOST') {
+      if (inGroupLayout !== '(host)') {
+        setTimeout(() => {
+          router.replace('/(host)');
+        }, 0);
+      }
+    } else if (user.role === 'ROLE_CLEANING') {
+      if (inGroupLayout !== '(cleaningStaff)') {
+        setTimeout(() => {
+          router.replace('/(cleaningStaff)');
+        }, 0);
+      }
+    } else {
+      if (inGroupLayout !== '(tabs)') {
+        setTimeout(() => {
+          router.replace('/(tabs)');
+        }, 0);
+      }
     }
-  
-    // if (!user?.role) {
-    //   if (inGroupLayout !== '(tabs)') router.replace('/(tabs)');
-    //   return;
-    // }
-  
-    // switch (user.role) {
-    //   case 'ROLE_EMPLOYEE':
-    //   case 'ROLE_ADMIN':
-    //     if (inGroupLayout !== '(employee)') router.replace('/(employee)');
-    //     break;
-  
-    //   case 'ROLE_HOST':
-    //     if (inGroupLayout !== '(host)') router.replace('/(host)');
-    //     break;
-  
-    //   case 'ROLE_CLEANING':
-    //     if (inGroupLayout !== '(cleaningStaff)') router.replace('/(cleaningStaff)');
-    //     break;
-  
-    //   default:
-    //     if (inGroupLayout !== '(tabs)') router.replace('/(tabs)');
-    //     break;
-    // }
-  }, []);
-  
+  }, [user, isLoading, segments]);
 
   if (isLoading) {
     return (

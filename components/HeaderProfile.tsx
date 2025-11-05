@@ -12,7 +12,7 @@ const HeaderProfile = () => (
       />
       <View>
         <Text style={styles.greeting}>Xin chào,</Text>
-        <Text style={styles.adminName}>Admin</Text>
+        <Text style={styles.adminName}></Text>
       </View>
     </View>
     <TouchableOpacity style={styles.notificationBell}>

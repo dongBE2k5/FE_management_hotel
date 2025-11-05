@@ -23,8 +23,8 @@ try {
     ip = "192.168.68.125";
 }
 
-// const BaseUrl = `http://${ip}:8080/api`;
-export const BaseUrl = `http://${ip}:8080/api`;
+const BaseUrl = `http://${ip}:8080/api`;
+export const BaseUrl2 = `http://${ip}:8080/api`;
 // const BaseUrl = `https://prudish-leonie-noncapriciously.ngrok-free.dev/api`;
 
 const urlIP = `http://${ip}:8080`;

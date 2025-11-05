@@ -9,4 +9,14 @@ const createBookingUtility = async (bookingUtilityRequest: BookingUtilityRequest
     }
     return res.data;
 }
-export { createBookingUtility };
+
+const geyBookingUtilityByBookingId = async (bookingId: number) => {
+    const res = await axios.get(`${BaseUrl}/booking-utility/${bookingId}/booking`);
+    if (res.status !== 200) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    return res.data;
+}
+export { createBookingUtility,
+    geyBookingUtilityByBookingId
+ };

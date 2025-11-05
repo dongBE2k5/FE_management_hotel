@@ -107,7 +107,7 @@ export default function DamageConfirmModal({
                   onPress={() => {
                     onClose?.();
                     setTimeout(() => {
-                      onBackToConstdetailmodal?.();
+                      onBackToConstdetailmodal?.((totalCost));
                     }, 300);
                   }}
                 >

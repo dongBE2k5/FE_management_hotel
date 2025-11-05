@@ -19,7 +19,7 @@ export default function FeedbackModal({
   onCloseAll,
   staffName = "Nguyễn Văn B",
   roomNumber = "P.???", // 👈 Nhận từ prop
-  activeRequest,       // 👈 NHẬN PROP MỚI
+  activeRequest,      // 👈 NHẬN PROP MỚI
 }) {
   // THÊM STATE MỚI:
   const [isLoadingItems, setIsLoadingItems] = useState(false); // Dùng khi tải item hỏng
@@ -27,12 +27,13 @@ export default function FeedbackModal({
 
   const [showCostModal, setShowCostModal] = useState(false);
   const [showDamageModal, setShowDamageModal] = useState(false);
+  const [tempCostData, setTempCostData] = useState(null);
 
   // Interface cho data (bạn đã cung cấp)
   // interface DamagedItemResponse {
-  //     requestStaffId: number;
-  //     id: number;
-  //     ...
+  //     requestStaffId: number;
+  //     id: number;
+  //     ...
   // }
 
   // ✨ THÊM useEffect MỚI: Lắng nghe 'visible' và 'activeRequest'
@@ -54,7 +55,7 @@ export default function FeedbackModal({
             setIsLoadingItems(false); // Tải xong chi tiết
           }
         } else {
-          // Trường hợp 'NO_ISSUE'
+          // Trường hợp 'NO_ISSUE' hoặc 'RECEIVED'
           setDamagedItems([]);
           setIsLoadingItems(false);
         }
@@ -93,7 +94,22 @@ export default function FeedbackModal({
       );
     }
 
-    // 2. CÓ PHẢN HỒI: NO_ISSUE (Thành công)
+    // 2. MỚI: ĐÃ NHẬN YÊU CẦU (nhưng chưa xử lý xong)
+    if (activeRequest.status === "RECEIVED") {
+      return (
+        <>
+          <Text style={styles.header}>Đã nhận thông tin</Text>
+          {/* Bạn có thể dùng icon khác nếu muốn */}
+          <Ionicons name="person-outline" size={40} color="#0062E0" style={{ marginVertical: 16 }} />
+          <Text style={styles.waitText}>
+            <Text style={styles.bold}>{staffName}</Text> đã nhận được yêu cầu
+            và đang tiến hành kiểm tra phòng <Text style={styles.bold}>{roomNumber}</Text>...
+          </Text>
+        </>
+      );
+    }
+
+    // 3. CÓ PHẢN HỒI: NO_ISSUE (Thành công)
     if (activeRequest.status === "NO_ISSUE") {
       return (
         <TouchableOpacity
@@ -118,9 +134,9 @@ export default function FeedbackModal({
       );
     }
 
-    // 3. CÓ PHẢN HỒI: HAS_ISSUE (Thất bại / Có vấn đề)
+    // 4. CÓ PHẢN HỒI: HAS_ISSUE (Thất bại / Có vấn đề)
     if (activeRequest.status === "HAS_ISSUE") {
-      // 3.1. Đang tải chi tiết vật dụng hỏng
+      // 4.1. Đang tải chi tiết vật dụng hỏng
       if (isLoadingItems) {
         return (
           <>
@@ -137,7 +153,7 @@ export default function FeedbackModal({
         );
       }
       
-      // 3.2. Đã tải xong chi tiết
+      // 4.2. Đã tải xong chi tiết
       return (
         <TouchableOpacity
           style={[styles.resultBox, { borderColor: "red" }]}
@@ -149,7 +165,7 @@ export default function FeedbackModal({
             <View style={{ marginLeft: 8, flex: 1 }}>
                <Text style={{ flexWrap: "wrap", flexShrink: 1 }}>
                 Phản hồi từ <Text style={styles.bold}>{staffName}</Text> về phòng <Text style={styles.bold}>{roomNumber}</Text>
-              </Text>
+               </Text>
               <Text style={[styles.bold, { color: "red", marginTop: 4 }]}>
                 Phòng có vấn đề! Vui lòng xem chi tiết
               </Text>
@@ -189,7 +205,7 @@ export default function FeedbackModal({
       <CostDetailModal
         visible={showCostModal}
         onClose={() => setShowCostModal(false)}
-         costData={activeRequest?.costData} 
+        costData={tempCostData} 
         onBackToConstdetailmodal={() => {
           // Đóng modal hiện tại (nếu có)
           setShowDamageModal(false);
@@ -218,10 +234,16 @@ export default function FeedbackModal({
           // Không cần làm gì phức tạp, vì activeRequest vẫn là "HAS_ISSUE"
           // Logic renderModalContent() sẽ tự động hiển thị lại
         }}
-        onBackToConstdetailmodal={() => {
+        onBackToConstdetailmodal={(costDataFromDamage) => {
           // 🔹 Đóng toàn bộ FeedbackModal
           onClose();
           onCloseAll?.();
+            console.log(costDataFromDamage);
+            
+            
+              setTempCostData(costDataFromDamage);
+              
+          
           // 🔹 Mở lại CostDetailModal sau khi đóng xong FeedbackModal
           setTimeout(() => {
             setShowCostModal(true);
