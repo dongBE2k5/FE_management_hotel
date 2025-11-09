@@ -167,13 +167,15 @@ export default function Checkout() {
                             getRoomItemsByBooking(bookingId), // 👈 Sử dụng API mới
                             getBookingUtilityByBookingId(bookingId)
                         ]);
-
+                          console.log("báo hư",damageData);
+                          
                         // Format và set state
                         fetchedDamages = (damageData || []).map(item => ({
                             name: item.itemName,
                             quantity: item.quantityAffected, // 🔔 Lưu ý: Đảm bảo API trả về 'quantityAffected'
                             price: item.price,
-                            description: item.status === 'MISSING' ? 'Báo thiếu' : 'Báo hỏng'
+                            description: item.status === 'MISSING' ? 'Báo thiếu' : 'Báo hỏng',
+                            image:item.image
                         }));
 
                         fetchedServices = formService(utilityData?.utilityItemBookingResponse || []);
