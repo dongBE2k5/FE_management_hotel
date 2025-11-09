@@ -1,4 +1,3 @@
-
 import { getAllBookingsByHotelId } from '@/service/BookingAPI';
 import { connectAndSubscribeBooking, disconnect } from '@/service/Realtime/BookingWS';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +14,8 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+// 1. Import Toast
+import Toast from 'react-native-toast-message';
 
 // Cấu hình cho các trạng thái
 const statusConfig = {
@@ -32,7 +33,6 @@ const formatDate = (date) => {
     return `${d.getDate()}/${d.getMonth() + 1}`;
 };
 
-// 🔽 THÊM HÀM MỚI ĐỂ FORMAT NGÀY GIỜ
 const formatDateTime = (date) => {
     if (!date) return '';
     const d = new Date(date);
@@ -55,7 +55,7 @@ export default function ListRoom() {
         price: booking.totalPrice || 0,
         amountPaid: booking.amountPaid || 0,
         status: booking.status || 'CHUA_THANH_TOAN',
-        createdAt: booking.createdAt || null, // 👈 Đã có
+        createdAt: booking.createdAt || null,
     });
 
     const [data, setData] = useState([]);
@@ -74,27 +74,61 @@ export default function ListRoom() {
                     const [bookings] = await Promise.all([
                         getAllBookingsByHotelId(hotelId),
                     ]);
-    
+
                     const sortedData = bookings.sort(
                         (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
                     );
-    
+
                     const formattedData = sortedData.map(mapBookingData);
-    
+
                     setData(formattedData);
                 } catch (error) {
                     console.log("Lỗi", error);
                 }
             };
-    
+
             const setupWs = async () => {
                 connectAndSubscribeBooking({
                     onConnected: () => console.log('✅ WebSocket connected from ListRoom'),
                     onDisconnected: () => console.log('❌ WebSocket disconnected from ListRoom'),
                     onError: (error) => console.error('⚠️ WebSocket error:', error),
+
+                    // 2. Sửa onMessageReceived để gọi Toast
                     onMessageReceived: (newRequest) => {
                         console.log("📩 Nhận request realtime:", newRequest);
                         fetchBookings();
+                        try {
+                            // Nếu backend gửi JSON string, parse lại
+                            const data = typeof newRequest === 'string' ? JSON.parse(newRequest) : newRequest;
+                            const message = data?.message || '';
+                            const type = data?.type || '';
+                                console.log("type",type);
+                                
+                            // --- LOGIC THÔNG BÁO TOAST ---
+                            if (type === 'NEW_BOOKING' || message.startsWith("New booking")) {
+                                Toast.show({
+                                    type: 'success',
+                                    text1: 'Booking mới 🛎️',
+                                    text2: `Có một booking mới vừa được tạo${data.bookingId ? ` (ID: ${data.bookingId})` : ''}.`,
+                                });
+                            }
+                            else if (type === 'PAYMENT_SUCCESS' || message.startsWith("Payment")) {
+                                Toast.show({
+                                    type: 'info',
+                                    text1: 'Thanh toán thành công 💸',
+                                    text2: `Khách hàng đã hoàn tất thanh toán cho booking${data.bookingId ? ` (ID: ${data.bookingId})` : ''}.`,
+                                });
+                            }
+                            else {
+                                Toast.show({
+                                    type: 'default',
+                                    text1: 'Thông báo',
+                                    text2: message || 'Có sự kiện mới từ hệ thống.',
+                                });
+                            }
+                        } catch (error) {
+                            console.warn("⚠️ Không parse được message:", newRequest, error);
+                        }
                     },
                 });
             };
@@ -105,21 +139,20 @@ export default function ListRoom() {
                 disconnect();
             };
         }, [])
-        
+
     );
 
     const navigation = useNavigation();
     const [activeFilter, setActiveFilter] = useState('ALL');
     const [searchQuery, setSearchQuery] = useState(''); // State cho thanh tìm kiếm
 
-    // 🔽 SỬA LOGIC LỌC (REQUEST 1)
     const { filteredBookings, counts } = useMemo(() => {
         const calculatedCounts = {
             ALL: data.length,
-            PENDING_GROUP: data.filter(b => 
-                b.status === 'CHUA_THANH_TOAN' || 
-                b.status === 'DA_COC' || 
-                b.status === 'DA_THANH_TOAN' // 👈 THÊM VÀO ĐÂY
+            PENDING_GROUP: data.filter(b =>
+                b.status === 'CHUA_THANH_TOAN' ||
+                b.status === 'DA_COC' ||
+                b.status === 'DA_THANH_TOAN'
             ).length,
             CHECK_IN: data.filter(b => b.status === 'CHECK_IN').length,
             COMPLETED_GROUP: data.filter(b => b.status === 'CHECK_OUT' || b.status === 'DA_HUY').length,
@@ -129,10 +162,10 @@ export default function ListRoom() {
         // Lọc theo tab
         switch (activeFilter) {
             case 'PENDING_GROUP':
-                list = data.filter(b => 
-                    b.status === 'CHUA_THANH_TOAN' || 
-                    b.status === 'DA_COC' || 
-                    b.status === 'DA_THANH_TOAN' // 👈 THÊM VÀO ĐÂY
+                list = data.filter(b =>
+                    b.status === 'CHUA_THANH_TOAN' ||
+                    b.status === 'DA_COC' ||
+                    b.status === 'DA_THANH_TOAN'
                 );
                 break;
             case 'CHECK_IN':
@@ -140,6 +173,9 @@ export default function ListRoom() {
                 break;
             case 'COMPLETED_GROUP':
                 list = data.filter(b => b.status === 'CHECK_OUT' || b.status === 'DA_HUY');
+                break;
+            default:
+                list = data;
                 break;
         }
 
@@ -170,11 +206,9 @@ export default function ListRoom() {
         </TouchableOpacity>
     );
 
-    // 🔽 SỬA LOGIC PAYMENTPROGRESS (REQUEST 2)
     const PaymentProgress = ({ item }) => {
         const { amountPaid, price, status } = item;
-        
-        // Luôn hiển thị 100% nếu đã thanh toán, check-in, check-out
+
         const percentage = useMemo(() => {
             if (status === 'DA_THANH_TOAN' || status === 'CHECK_IN' || status === 'CHECK_OUT') {
                 return 100;
@@ -189,7 +223,6 @@ export default function ListRoom() {
         if (status === 'DA_COC') barColor = '#17a2b8';
         if (status === 'DA_THANH_TOAN' || status === 'CHECK_IN' || status === 'CHECK_OUT') barColor = '#28a745';
 
-        // Luôn hiển thị số tiền đã trả = tổng tiền nếu đã thanh toán xong
         const paidText = (status === 'DA_THANH_TOAN' || status === 'CHECK_IN' || status === 'CHECK_OUT')
             ? price.toLocaleString('vi-VN')
             : amountPaid.toLocaleString('vi-VN');
@@ -207,7 +240,6 @@ export default function ListRoom() {
         );
     };
 
-    // 🔽 SỬA BOOKINGCARD ĐỂ THÊM CREATEDAT (REQUEST 3)
     const BookingCard = ({ item }) => {
         const statusInfo = statusConfig[item.status] || statusConfig.DA_HUY;
         return (
@@ -222,8 +254,7 @@ export default function ListRoom() {
                         </View>
                     </View>
                     <View style={styles.infoRow}><Ionicons name="calendar-outline" size={20} color="#666" style={styles.infoIcon} /><Text style={styles.dateInfo}>{item.dateInfo}</Text></View>
-                    
-                    {/* 🔽 THÊM DÒNG NGÀY TẠO */}
+
                     <View style={styles.infoRow}>
                         <Ionicons name="create-outline" size={20} color="#666" style={styles.infoIcon} />
                         <Text style={styles.dateInfo}>Ngày tạo: {formatDateTime(item.createdAt)}</Text>

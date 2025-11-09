@@ -6,4 +6,5 @@ export interface BookingUtilityResponse {
 export interface UtilityItemBookingResponse {
   utilityName: string;
   quantity: number;
+  price: number;
 }

@@ -3,6 +3,7 @@ import { UserProvider, useUser } from '@/context/UserContext';
 import { Slot } from 'expo-router';
 import { View } from 'react-native';
 import { ActivityIndicator } from 'react-native-paper';
+import Toast from 'react-native-toast-message';
 
 // Component con để truy cập context
 function RootLayoutNav() {
@@ -26,6 +27,7 @@ export default function RootLayout() {
     <UserProvider>
 
       <RootLayoutNav />
+      <Toast />
     </UserProvider>
   );
 }

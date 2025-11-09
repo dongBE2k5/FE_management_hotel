@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import { FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import FeedbackModal from "./feedbackmodal"; // 👈 import modal mới
 
-export default function StaffListModal({ visible, onClose, staffList = [], roomId, onReportReceived }) {
+export default function StaffListModal({ visible, onClose, staffList = [], roomId,bookingId, onReportReceived }) {
   const [showFeedback, setShowFeedback] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [requests, setRequests] = useState([]);
@@ -34,7 +34,7 @@ export default function StaffListModal({ visible, onClose, staffList = [], roomI
       // 🔽 RESET state cũ trước khi mở modal
       setActiveRequest(null);
 
-      sendRequest(requestPayload, roomId);
+      sendRequest(requestPayload, roomId,bookingId);
       setSelectedStaff(staff);
       setShowFeedback(true); // 👈 mở modal feedback
     } catch (error) {
@@ -150,6 +150,7 @@ export default function StaffListModal({ visible, onClose, staffList = [], roomI
         staffName={selectedStaff?.name}
         roomNumber={roomId} // 👈 Truyền roomId vào
         activeRequest={activeRequest} // 👈 **TRUYỀN PROP QUAN TRỌNG NHẤT**
+        bookingId={bookingId}
         onClose={() => {
 
           setShowFeedback(false);
@@ -160,9 +161,9 @@ export default function StaffListModal({ visible, onClose, staffList = [], roomI
           setActiveRequest(null); // 👈 Reset khi đóng
           onClose(); // đóng StaffListModal cha
         }}
-        onReportReceived={(receivedDamagedItems) => { // 👈 CALLBACK CHÍNH
+        onReportReceived={(receivedDamagedItems,receivedServices) => { // 👈 CALLBACK CHÍNH
           if (onReportReceived) {
-            onReportReceived(receivedDamagedItems); // Gửi dữ liệu ngược lên Checkout
+            onReportReceived(receivedDamagedItems,receivedServices); // Gửi dữ liệu ngược lên Checkout
           }
         }}
 

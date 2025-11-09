@@ -17,7 +17,7 @@ export default function HomeLayout() {
             <Stack.Navigator screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="CleaningStaffScreen" component={CleaningStaffScreen} />
                 <Stack.Screen name="CheckRoomScreen" component={CheckRoomScreen} />
-            
+                
             </Stack.Navigator>
         </View>
     </>

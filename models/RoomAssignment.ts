@@ -13,5 +13,6 @@ interface RoomAssignment {
      assignedAt :  string ,
      acceptedAt:  string ,
      completedAt : string
+     bookingId : number
 }
 export { RoomAssignment };
