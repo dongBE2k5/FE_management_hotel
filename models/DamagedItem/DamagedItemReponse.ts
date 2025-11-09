@@ -11,5 +11,6 @@ interface DamagedItemResponse {
     reportedBy: number;
     reportedAt: number;
     price:number;
+    bookingId:number;
 }
 export { DamagedItemResponse };

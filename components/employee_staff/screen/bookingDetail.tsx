@@ -201,10 +201,13 @@ export default function BookingDetail() {
 
             {/* ✨ SỬA LẠI LOGIC HIỂN THỊ NÚT */}
             {isCheckedOut ? (
-                // 1. Đã check-out: Hiển thị badge
-                <View style={[styles.checkinBtn, { backgroundColor: '#6c757d' }]}>
-                    <Text style={styles.checkinText}>Đã hoàn tất Check-out</Text>
-                </View>
+                // 1. Đã check-out: Hiển thị nút "Kiểm tra thông tin check out"
+                <TouchableOpacity
+                    style={[styles.checkinBtn, { backgroundColor: '#6c757d' }]} // Màu xám
+                    onPress={() => navigation.navigate("checkout", { bookingId: bookingData.id_booking })}
+                >
+                    <Text style={styles.checkinText}>Kiểm tra thông tin check out</Text>
+                </TouchableOpacity>
             ) : isCheckedIn ? (
                 // 2. Đã check-in: Hiển thị nút Check-out
                 <TouchableOpacity

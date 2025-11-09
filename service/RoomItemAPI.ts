@@ -54,3 +54,16 @@ export async function getRoomItemsByResquset(requestId: number): Promise<ApiResp
         return null;
     }
 }
+
+
+export async function getRoomItemsByBooking(bookingId: number): Promise<ApiResponse<DamagedItemResponse[]> | null> {
+    try {
+        const { data } = await axios.get(`${BaseUrl}/damaged-items/booking/${bookingId}`);
+        console.log(`Lấy danh sách item thành công theo loại phòng id :${bookingId} `);
+
+        return data.data;
+
+    } catch (error) {
+        return null;
+    }
+}

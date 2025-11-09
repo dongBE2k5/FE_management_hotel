@@ -149,8 +149,12 @@ export default function ListRoom() {
     const { filteredBookings, counts } = useMemo(() => {
         const calculatedCounts = {
             ALL: data.length,
+            // 👈 SỬA: Chỉ đếm CHUA_THANH_TOAN
             PENDING_GROUP: data.filter(b =>
-                b.status === 'CHUA_THANH_TOAN' ||
+                b.status === 'CHUA_THANH_TOAN'
+            ).length,
+            // 👈 THÊM MỚI: Đếm DA_COC và DA_THANH_TOAN
+            PAID_GROUP: data.filter(b =>
                 b.status === 'DA_COC' ||
                 b.status === 'DA_THANH_TOAN'
             ).length,
@@ -162,8 +166,14 @@ export default function ListRoom() {
         // Lọc theo tab
         switch (activeFilter) {
             case 'PENDING_GROUP':
+                // 👈 SỬA: Chỉ lọc CHUA_THANH_TOAN
                 list = data.filter(b =>
-                    b.status === 'CHUA_THANH_TOAN' ||
+                    b.status === 'CHUA_THANH_TOAN'
+                );
+                break;
+            // 👈 THÊM MỚI: Lọc DA_COC và DA_THANH_TOAN
+            case 'PAID_GROUP':
+                list = data.filter(b =>
                     b.status === 'DA_COC' ||
                     b.status === 'DA_THANH_TOAN'
                 );
@@ -295,6 +305,8 @@ export default function ListRoom() {
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterContainer}>
                         <FilterButton title="Tất cả" filterKey="ALL" count={counts.ALL} />
                         <FilterButton title="Chờ xử lý" filterKey="PENDING_GROUP" count={counts.PENDING_GROUP} />
+                        {/* 👈 THÊM MỚI: Nút lọc "Đã thanh toán" */}
+                        <FilterButton title="Đã thanh toán" filterKey="PAID_GROUP" count={counts.PAID_GROUP} />
                         <FilterButton title="Đang ở" filterKey="CHECK_IN" count={counts.CHECK_IN} />
                         <FilterButton title="Hoàn tất" filterKey="COMPLETED_GROUP" count={counts.COMPLETED_GROUP} />
                     </ScrollView>
