@@ -5,7 +5,7 @@ import {
     deleteHotelPaymentType,
     getHotelPaymentTypesByHotelId,
     updateHotelPaymentType
-} from "@/service/Payment/HotelPaymentType";
+} from "@/service/Payment/HotelPaymentTypeAPI";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {

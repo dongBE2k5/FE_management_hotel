@@ -15,7 +15,6 @@ import { HostStack } from "@/types/navigation";
 
 import BookingDetail from "@/components/employee_staff/screen/bookingDetail";
 import Checkout from "@/components/employee_staff/screen/checkOut";
-import KycFormScreen from "@/components/host/screen/CCCDScannerScreen";
 import { useFocusEffect } from "expo-router";
 
 const Stack = createStackNavigator<HostStack>();
@@ -68,15 +67,15 @@ useFocusEffect(
   return (
     <View style={styles.container}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {/* <>
+      <>
             <Stack.Screen name="HotelList" component={HotelList} />
             <Stack.Screen name="hostBookings" component={HostBookings} />
             <Stack.Screen name="hotelEdit" component={EditHotel} />
             <Stack.Screen name="CreateHotel" component={CreateHotel} />
             <Stack.Screen name="bookingDetail" component={BookingDetail} />
             <Stack.Screen name="checkout" component={Checkout} />
-          </> */}
-        {isHost ? (
+          </>
+        {/* {isHost ? (
           // 🏨 Nếu là host => hiển thị các màn hình quản lý khách sạn
           <>
             <Stack.Screen name="HotelList" component={HotelList} />
@@ -92,7 +91,7 @@ useFocusEffect(
   
             <Stack.Screen name="KycFormScreen" component={KycFormScreen} />
           </>
-        )}
+        )} */}
       </Stack.Navigator>
     </View>
   );

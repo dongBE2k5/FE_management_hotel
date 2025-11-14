@@ -50,12 +50,12 @@ const mockAllRooms = [
             { bookingId: 'booking_001', guestName: 'Trần Thị B', checkIn: '14:00 20/09/2025', checkOut: '12:00 22/09/2025', timeline: [{ id: 't1', event: 'Check-in', time: '14:00 20/09/2025' }, { id: 't2', event: 'Dùng dịch vụ giặt ủi', time: '10:30 21/09/2025' }, { id: 't3', event: 'Check-out', time: '12:00 22/09/2025' }] }
         ]
     },
-    {
-        id: '201', type: 'Phòng Deluxe', status: 'available', price: 2500000,
-        bookingInfo: null,
-        details: [{ id: 'dt2_1', icon: 'bed-outline', label: '1 Giường King' }, { id: 'dt2_2', icon: 'people-outline', label: '2 người' }, { id: 'dt2_3', icon: 'wifi', label: 'Wifi miễn phí' }],
-        usedServices: {}, pastBookings: []
-    },
+    // {
+    //     id: '201', type: 'Phòng Deluxe', status: 'available', price: 2500000,
+    //     bookingInfo: null,
+    //     details: [{ id: 'dt2_1', icon: 'bed-outline', label: '1 Giường King' }, { id: 'dt2_2', icon: 'people-outline', label: '2 người' }, { id: 'dt2_3', icon: 'wifi', label: 'Wifi miễn phí' }],
+    //     usedServices: {}, pastBookings: []
+    // },
 ];
 
 // --- NAVIGATION GIẢ ---
@@ -441,7 +441,7 @@ export default function RoomDetailScreen({ route, navigation = mockNavigation })
 
     const {
         roomId = '26', // Mặc định hiển thị phòng 101 (có khách)
-        allRooms = mockAllRooms,
+        allRooms = [],
         allRoomTypes = mockAllRoomTypes,
         allServices = mockAllServices,
     } = route?.params || {};

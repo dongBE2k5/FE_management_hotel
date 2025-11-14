@@ -6,7 +6,7 @@ import { UtilityItem } from '@/models/Utility/Utility';
 import Voucher from '@/models/Voucher';
 import { createBooking } from '@/service/BookingAPI';
 import { createBookingUtility } from '@/service/BookingUtilityAPI';
-import { getHotelPaymentTypesByHotelIdAndTypeOfRoomId } from '@/service/Payment/HotelPaymentType';
+import { getHotelPaymentTypesByHotelIdAndTypeOfRoomId } from '@/service/Payment/HotelPaymentTypeAPI';
 import { getUserVouchers } from '@/service/UserVoucherAPI';
 import { useVoucher } from '@/service/VoucherAPI';
 import type { RootStackParamList } from '@/types/navigation';

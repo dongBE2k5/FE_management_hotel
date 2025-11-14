@@ -11,6 +11,15 @@ async function getHotelPaymentTypesByHotelIdAndTypeOfRoomId(hotelId: number, typ
     return response.data;
 }
 
+async function getHotelPaymentTypesByHotelId(hotelId: number) {
+  const response = await axios.get(`${BaseUrl}/hotel-payment-type/hotel/${hotelId}`);
+  if (response.status !== 200) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  console.log("Hotel payment types by hotel id and type of room id:", response.data);
+  return response.data;
+}
+
 async function createHotelPaymentType(hotelId: number, paymentTypeId: number, depositPercent: number, selectedRoomType: number[]) {
     try {
       const response = await axios.post(`${BaseUrl}/hotel-payment-type`, {
@@ -95,5 +104,5 @@ async function createHotelPaymentType(hotelId: number, paymentTypeId: number, de
   }
   
 
-export { createHotelPaymentType, deleteHotelPaymentType, getHotelPaymentTypesByHotelIdAndTypeOfRoomId, updateHotelPaymentType };
+export { createHotelPaymentType, deleteHotelPaymentType, getHotelPaymentTypesByHotelId, getHotelPaymentTypesByHotelIdAndTypeOfRoomId, updateHotelPaymentType };
 
