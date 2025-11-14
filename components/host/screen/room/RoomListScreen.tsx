@@ -123,7 +123,7 @@ export default function RoomListScreen() {
         useCallback(() => {
             if (!hotelId) return;
             fetchRooms(hotelId);
-        }, [])
+        }, [hotelId])
     );
 
     const fetchRooms = async (hotelId: number) => {

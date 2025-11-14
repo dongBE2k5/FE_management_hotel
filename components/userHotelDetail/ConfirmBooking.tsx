@@ -1,10 +1,12 @@
 import Booking from '@/models/Booking/Booking';
 import { BookingUtilityRequest } from '@/models/BookingUtility/BookingUtilityRequest';
+import HotelPaymentTypeResponse from '@/models/Payment/HotelPaymentTypeResponse';
 import Room from '@/models/Room';
 import { UtilityItem } from '@/models/Utility/Utility';
 import Voucher from '@/models/Voucher';
 import { createBooking } from '@/service/BookingAPI';
 import { createBookingUtility } from '@/service/BookingUtilityAPI';
+import { getHotelPaymentTypesByHotelIdAndTypeOfRoomId } from '@/service/Payment/HotelPaymentType';
 import { getUserVouchers } from '@/service/UserVoucherAPI';
 import { useVoucher } from '@/service/VoucherAPI';
 import type { RootStackParamList } from '@/types/navigation';
@@ -23,7 +25,6 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import { initiatePayment } from '../payment/PaymentButton';
 type ConfirmBookingProps = {
   room: Room,
   checkInDate: Date,
@@ -37,7 +38,7 @@ export default function ConfirmBooking() {
 
   const router = useRouter();
   const route = useRoute<RouteProp<RootStackParamList, 'ConfirmBooking'>>();
-  const { room, checkInDate, checkOutDate, nights, specialRequests,  } = route.params;
+  const { room, checkInDate, checkOutDate, nights, specialRequests, } = route.params;
 
   type ConfirmBookingNavigationProp = NativeStackNavigationProp<
     RootStackParamList,
@@ -68,25 +69,43 @@ export default function ConfirmBooking() {
     null
   );
   const [availableVouchers, setAvailableVouchers] = useState<Voucher[]>([])
+  const [paymentTypes, setPaymentTypes] = useState<HotelPaymentTypeResponse[]>([]);
+  const [selectedPayment, setSelectedPayment] = useState<HotelPaymentTypeResponse | null>(null);
+  // const [paymentAmount, setPaymentAmount] = useState<number | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
+
 
   useEffect(() => {
     const fetchData = async () => {
       const userId = await AsyncStorage.getItem("userId");
       const userVouchers = await getUserVouchers(Number(userId));
       console.log("User vouchers từ backend:", userVouchers);
+      console.log("room", room);
+      const paymentTypes = await getHotelPaymentTypesByHotelIdAndTypeOfRoomId(Number(room.hotel?.id), Number(room.typeOfRoomId));
+      setPaymentTypes(paymentTypes.data);
+      setPaymentMethod("CASH");
+      setSelectedPayment({ id: 1, hotelId: 1, paymentType: "FULL", depositPercent: 100, roomTypeIds: null });
       setAvailableVouchers(userVouchers);
     };
     fetchData();
   }, []);
   const specialRequestTotal = specialRequests.map(item => item.price * Number(item.quantity)).reduce((a, b) => a + b, 0);
+  console.log("specialRequestTotal", specialRequestTotal);
+
   const totalPrice = Number(room.price) * nights + specialRequestTotal;
+  console.log("room.price", room.price);
+  console.log("totalPrice", (Number(room.price) * nights) + Number(specialRequestTotal));
 
   const globalDiscount = selectedGlobalVoucher ? selectedGlobalVoucher.percent : 0;
   const hotelDiscount = selectedHotelVoucher ? selectedHotelVoucher.percent : 0;
   // tổng phần trăm giảm cộng lại (giới hạn 100%)
-  const totalDiscount = Math.min(globalDiscount + hotelDiscount, 100);
+  let finalPrice = totalPrice;
 
-  const finalPrice = totalPrice - (totalPrice * totalDiscount / 100);
+  const totalDiscount = Math.min(globalDiscount + hotelDiscount, 100);
+  if (globalDiscount || hotelDiscount) {
+    finalPrice = totalPrice - (totalPrice * totalDiscount / 100);
+
+  }
   //hàm thanh toán
   const handleConfirmPayment = async () => {
     if (selectedGlobalVoucher && totalPrice < selectedGlobalVoucher.priceCondition) {
@@ -102,6 +121,10 @@ export default function ConfirmBooking() {
       );
       return;
     }
+    if (!paymentMethod) {
+      alert("Vui lòng chọn phương thức thanh toán");
+      return;
+    }
 
     const userId = await AsyncStorage.getItem('userId');
 
@@ -111,7 +134,7 @@ export default function ConfirmBooking() {
 
     // nếu có voucher app
     if (selectedGlobalVoucher?.id) voucherIds.push(selectedGlobalVoucher.id);
-
+    const pricePaid = selectedPayment?.paymentType === "FULL" ? finalPrice : ((finalPrice * (selectedPayment?.depositPercent ?? 0) / 100))
     const booking: Booking = {
       userId: Number(userId!),
       roomId: room.id,
@@ -119,10 +142,16 @@ export default function ConfirmBooking() {
       checkOutDate: new Date(checkOutDate!),
       totalPrice: finalPrice,
       voucherIds: voucherIds.length > 0 ? voucherIds : undefined, // chỉ gửi nếu có
+      hotelPaymentTypeId: selectedPayment?.id ?? undefined,
+      paidPrice: paymentMethod === "CASH" ? null : pricePaid,
+      paymentMethod: paymentMethod,
 
     };
 
     try {
+      console.log(selectedPayment);
+
+      console.log("booking", booking);
       const data = await createBooking(booking);
       if (selectedGlobalVoucher?.id) await useVoucher(selectedGlobalVoucher.id, totalPrice);
       if (selectedHotelVoucher?.id) await useVoucher(selectedHotelVoucher.id, totalPrice);
@@ -136,9 +165,9 @@ export default function ConfirmBooking() {
         })
       }
       const createdBookingUtility = await createBookingUtility(bookingUtilityRequest);
-      initiatePayment(finalPrice, 'vnpay', data.id);
+      // initiatePayment(finalPrice, 'vnpay', data.id);
       console.log("Đã tạo booking utility thành công:", createdBookingUtility);
-      router.replace("/(tabs)/booking");
+      // router.replace("/(tabs)/booking");
     } catch (err) {
       console.error(err);
     }
@@ -173,7 +202,7 @@ export default function ConfirmBooking() {
         <Text style={styles.label}>Chi tiết phí</Text>
         <View style={styles.row}>
           <Text>Giá phòng</Text>
-          <Text>{(totalPrice).toLocaleString('vi-VN')} VND</Text>
+          <Text>{(Number(room.price) * nights).toLocaleString('vi-VN')} VND</Text>
         </View>
         {specialRequests.map((item: UtilityItem) => (
 
@@ -276,13 +305,76 @@ export default function ConfirmBooking() {
           )}
         </View>
       </View>
+      <View>
+        <Text style={[styles.label, { marginBottom: 10 }]}>
+          Phương thức thanh toán
+        </Text>
 
+        <TouchableOpacity
+          style={[
+            styles.paymentOption,
+            paymentMethod === "CASH" && styles.selectedOption
+          ]}
+          onPress={() => setPaymentMethod("CASH")}
+        >
+          <Text>💵 Tiền mặt</Text>
+        </TouchableOpacity>
 
+        <TouchableOpacity
+          style={[
+            styles.paymentOption,
+            paymentMethod === "VNPAY" && styles.selectedOption
+          ]}
+          onPress={() => setPaymentMethod("VNPAY")}
+        >
+          <Text>📱 Thanh toán VNPay</Text>
+        </TouchableOpacity>
 
-
+        <TouchableOpacity
+          style={[
+            styles.paymentOption,
+            paymentMethod === "BANK" && styles.selectedOption
+          ]}
+          onPress={() => setPaymentMethod("BANK")}
+        >
+          <Text>🏦 Chuyển khoản ngân hàng</Text>
+        </TouchableOpacity>
+      </View>
+      {paymentMethod != "CASH" && (
+        <>
+          <Text style={[styles.label, { marginBottom: 10 }]}>Kiểu thanh toán</Text>
+          <View style={styles.chipContainer}>
+            <TouchableOpacity
+              style={[styles.chip, selectedPayment?.id === 1 && styles.chipActive]}
+              onPress={() => {
+                setSelectedPayment({ id: 1, hotelId: 1, paymentType: "FULL", depositPercent: 100, roomTypeIds: null });
+              }}
+            >
+              <Text style={[styles.chipText, selectedPayment?.id === 1 && styles.chipTextActive]}>
+                Thanh Toán 100%
+              </Text>
+            </TouchableOpacity>
+            {paymentTypes.map((item: HotelPaymentTypeResponse) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.chip, selectedPayment?.id === item.id && styles.chipActive]}
+                onPress={() => {
+                  setSelectedPayment(item);
+                }}
+              >
+                <Text style={[styles.chipText, selectedPayment?.id === item.id && styles.chipTextActive]}>
+                  Đặt Cọc - {item.depositPercent}%
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          {selectedPayment && (
+            <Text style={[styles.label, { marginBottom: 10 }]}>Số tiền cần thanh toán: {selectedPayment.paymentType === "FULL" ? finalPrice.toLocaleString('vi-VN') : (finalPrice * (selectedPayment.depositPercent / 100)).toLocaleString('vi-VN')} VND</Text>
+          )}
+        </>)}
       {/* Nút thanh toán */}
       <TouchableOpacity style={styles.payBtn} onPress={handleConfirmPayment}>
-        <Text style={styles.payText}>Thanh toán</Text>
+        <Text style={styles.payText}>{paymentMethod != "CASH" ? "Thanh toán" : "Đặt trước"}</Text>
       </TouchableOpacity>
 
       {/* ===== Modal chọn voucher ks ===== */}
@@ -518,5 +610,38 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
+  chip: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#2d6aff"
+  },
+  chipActive: {
+    backgroundColor: "#2d6aff"
+  },
+  chipText: {
+    color: "#2d6aff",
+    fontWeight: "600"
+  },
+  chipTextActive: {
+    color: "#fff"
+  },
+  chipContainer: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 14,
+    justifyContent: "center"
+  },
+  paymentOption: {
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  selectedOption: { borderColor: "#1a73e8" }
+
 
 });

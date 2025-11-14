@@ -562,6 +562,7 @@ export default function RoomDetailScreen({ route, navigation = mockNavigation })
                         </View>
                         <Text style={styles.roomPrice}>
                             {roomData?.price.toLocaleString('vi-VN')}đ / đêm</Text>
+                            <Text >Mô tả: {roomData?.description}</Text>
                     </View>
 
                     {/* {roomStatus === 'USED' && <GuestInfoPanel bookingInfo={roomData.bookingInfo} />} */}

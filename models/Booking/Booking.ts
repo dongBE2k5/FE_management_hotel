@@ -4,6 +4,9 @@ interface Booking {
   checkInDate: Date;
   checkOutDate: Date;
   totalPrice: number;
-  voucherIds?: number[]; 
+  voucherIds?: number[];
+  hotelPaymentTypeId?: number;
+  paidPrice?: number | null;
+  paymentMethod?: string;
 }
 export default Booking;

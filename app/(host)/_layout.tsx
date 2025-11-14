@@ -37,6 +37,42 @@ export default function TabLayout() {
               ),
             }}
           />
+          <Tabs.Screen
+            name="service"
+            options={{
+              title: 'Dịch vụ',
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="list" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="voucher"
+            options={{
+              title: 'Voucher',
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="ticket" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="profile"
+            options={{
+              title: 'Thông tin',
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="person" size={size} color={color} />
+              ),
+            }}  
+          />
+          <Tabs.Screen
+            name="payment"
+            options={{
+              title: 'Thanh toán',
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="cash" size={size} color={color} />
+              ),
+            }}
+          />
 
 
         </Tabs>
