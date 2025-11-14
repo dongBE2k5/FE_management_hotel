@@ -6,6 +6,7 @@ interface DamagedItemRequest {
     image: null | string;
     reportedBy: number;
     requestStaffId: number;
+    bookingId: number;
 }
 export { DamagedItemRequest };
 

@@ -9,7 +9,7 @@ import SuccessModal from "../model/sucsessModal";
 
 // HÀM BIẾN ĐỔI DỮ LIỆU BOOKING CHÍNH
 const transformApiData = (booking) => {
-    //  (Phần logic API đã được chuyển vào hàm handleCheckInConfirm)
+    //  (Phần logic API đã được chuyển vào hàm handleCheckInConfirm)
     const checkInDate = booking.checkInDate ? new Date(booking.checkInDate) : null;
     const checkOutDate = booking.checkOutDate ? new Date(booking.checkOutDate) : null;
     let nights = 0;
@@ -19,7 +19,7 @@ const transformApiData = (booking) => {
 
     return {
         id_booking: booking.id ?? 'N/A',
-        status: booking.status ?? 'pending_checkin',
+        status: booking.status ?? 'pending_checkin', // 👈 Trạng thái này RẤT QUAN TRỌNG
         payment_status: booking.paymentStatus ?? 'unpaid',
         customer: {
             id: booking.user?.id ?? 'N/A',
@@ -41,15 +41,14 @@ const transformApiData = (booking) => {
             room_total: booking.totalPrice ?? 0,
         },
         services: booking.services ?? [],
-        // Không cần history ở đây nữa vì ta gọi API riêng
     };
 };
 
-// HÀM BIẾN ĐỔI DỮ LIỆU LỊCH SỬ - ĐÃ SỬA LẠI
+// (Hàm mapHistoryData giữ nguyên)
 const mapHistoryData = (historyItem) => {
     const time = new Date(historyItem.createdAt).toLocaleString('vi-VN');
     let statusText = "Không xác định";
-    let color = 'black'; // Màu mặc định
+    let color = 'black'; 
 
     switch (historyItem.newStatus) {
         case "CHUA_THANH_TOAN":
@@ -57,11 +56,11 @@ const mapHistoryData = (historyItem) => {
             break;
         case "DA_THANH_TOAN":
             statusText = "Đã thanh toán";
-            color = '#0077aa'; // Màu link
+            color = '#0077aa'; 
             break;
         case "DA_COC":
             statusText = "Đã cọc";
-            color = '#0077aa'; // Màu link
+            color = '#0077aa'; 
             break;
         case "CHECK_IN":
             statusText = "Đã check-in";
@@ -76,15 +75,14 @@ const mapHistoryData = (historyItem) => {
             color = 'gray';
             break;
         default:
-            statusText = historyItem.newStatus; // Hiển thị trạng thái gốc nếu không khớp
+            statusText = historyItem.newStatus; 
     }
 
-    // Trả về đối tượng mà UI cần
     return {
         time: time,
         status: statusText,
         color: color,
-        link: historyItem.newStatus === "DA_THANH_TOAN" || historyItem.newStatus === "DA_COC" // Ví dụ
+        link: historyItem.newStatus === "DA_THANH_TOAN" || historyItem.newStatus === "DA_COC"
     };
 };
 
@@ -95,14 +93,14 @@ export default function BookingDetail() {
     const { bookingId } = route.params;
 
     const [bookingData, setBookingData] = useState(null);
-    const [history, setHistory] = useState([]); // TẠO STATE MỚI CHO LỊCH SỬ
+    const [history, setHistory] = useState([]); 
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showCheckInModal, setShowCheckInModal] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [showMiniBar, setShowMiniBar] = useState(false);
 
-    // Hàm gọi API để tải dữ liệu, có thể được gọi lại để làm mới
+    // (Hàm fetchBookingDetails giữ nguyên)
     const fetchBookingDetails = async () => {
         if (!bookingId) {
             setError("Không tìm thấy ID đặt phòng.");
@@ -110,21 +108,17 @@ export default function BookingDetail() {
             return;
         }
         try {
-            // Khi làm mới thì không cần set isLoading
             if (!bookingData) setIsLoading(true);
             setError(null);
 
-            // Gọi đồng thời cả 2 API để tăng tốc
             const [rawData, rawHistoryData] = await Promise.all([
                 getBookingById(bookingId),
                 getHistoryBookingsByBookingId(bookingId)
             ]);
 
-            // Xử lý và set state cho thông tin chính
             const formattedData = transformApiData(rawData);
             setBookingData(formattedData);
 
-            // Xử lý và set state cho lịch sử
             const formattedHistory = rawHistoryData.map(mapHistoryData);
             setHistory(formattedHistory);
 
@@ -140,7 +134,7 @@ export default function BookingDetail() {
         fetchBookingDetails();
     }, [bookingId]);
 
-    // HÀM XỬ LÝ KHI XÁC NHẬN CHECK-IN
+    // (Hàm handleCheckInConfirm giữ nguyên)
     const handleCheckInConfirm = async () => {
         try {
             const userId = await AsyncStorage.getItem("userId");
@@ -149,14 +143,11 @@ export default function BookingDetail() {
                 return;
             }
 
-            // Gọi API để cập nhật trạng thái
             await updateBookingStatus(bookingId, "CHECK_IN", Number(userId));
 
-            // Đóng modal và hiển thị thông báo thành công
             setShowCheckInModal(false);
             setShowSuccess(true);
             
-            // Tải lại dữ liệu để cập nhật giao diện (cả trạng thái và lịch sử)
             await fetchBookingDetails();
 
         } catch (err) {
@@ -192,7 +183,11 @@ export default function BookingDetail() {
     }
 
     const isCheckedIn = bookingData?.status === 'CHECK_IN';
-    const isCheckedOut = bookingData?.status === 'CHECK_OUT'; // THÊM BIẾN KIỂM TRA CHECK_OUT
+    const isCheckedOut = bookingData?.status === 'CHECK_OUT';
+    
+    // ✨ BIẾN MỚI: Kiểm tra đã thanh toán 100% chưa
+    const isPaid = bookingData?.status === 'DA_THANH_TOAN';
+
     const serviceTotal = (bookingData?.services ?? []).reduce((total, service) => total + (service.price || 0), 0);
 
     return (
@@ -204,14 +199,17 @@ export default function BookingDetail() {
                 <Text style={styles.headerTitle}>Chi tiết đặt phòng</Text>
             </View>
 
-            {/* CẬP NHẬT LOGIC HIỂN THỊ NÚT */}
+            {/* ✨ SỬA LẠI LOGIC HIỂN THỊ NÚT */}
             {isCheckedOut ? (
-                // Nếu đã check-out, hiển thị box thông báo
-                <View style={[styles.checkinBtn, { backgroundColor: '#6c757d' }]}>
-                    <Text style={styles.checkinText}>Đã hoàn tất Check-out</Text>
-                </View>
+                // 1. Đã check-out: Hiển thị nút "Kiểm tra thông tin check out"
+                <TouchableOpacity
+                    style={[styles.checkinBtn, { backgroundColor: '#6c757d' }]} // Màu xám
+                    onPress={() => navigation.navigate("checkout", { bookingId: bookingData.id_booking })}
+                >
+                    <Text style={styles.checkinText}>Kiểm tra thông tin check out</Text>
+                </TouchableOpacity>
             ) : isCheckedIn ? (
-                // Nếu đã check-in, hiển thị nút Check-out
+                // 2. Đã check-in: Hiển thị nút Check-out
                 <TouchableOpacity
                     style={[styles.checkinBtn, { backgroundColor: "#c02727" }]}
                     onPress={() => navigation.navigate("checkout", { bookingId: bookingData.id_booking })}
@@ -219,10 +217,24 @@ export default function BookingDetail() {
                     <Text style={styles.checkinText}>Check-out</Text>
                 </TouchableOpacity>
             ) : (
-                // Nếu chưa check-in, hiển thị nút Check-in
+                // 3. Chưa check-in: Hiển thị nút Check-in (với logic mới)
                 <TouchableOpacity
-                    style={[styles.checkinBtn, { backgroundColor: "#32d35d" }]}
-                    onPress={() => setShowCheckInModal(true)}
+                    style={[
+                        styles.checkinBtn, 
+                        // Đặt màu dựa trên trạng thái đã thanh toán
+                        isPaid ? { backgroundColor: "#32d35d" } : { backgroundColor: "#6c757d" }
+                    ]}
+                    onPress={() => {
+                        // Thêm kiểm tra khi nhấn
+                        if (isPaid) {
+                            setShowCheckInModal(true); // Chỉ mở modal nếu đã thanh toán
+                        } else {
+                            Alert.alert(
+                                "Chưa thể Check-in",
+                                "Khách hàng phải ở trạng thái 'Đã thanh toán' (100%) mới có thể Check-in."
+                            );
+                        }
+                    }}
                 >
                     <Text style={styles.checkinText}>Check-in</Text>
                 </TouchableOpacity>
@@ -265,7 +277,6 @@ export default function BookingDetail() {
                 {isCheckedIn && (
                     <TouchableOpacity style={styles.checkinBox}><Text style={styles.checkinBoxText}>Đã Check in</Text></TouchableOpacity>
                 )}
-                {/* THÊM BADGE CHO TRẠNG THÁI CHECK_OUT */}
                 {isCheckedOut && (
                     <TouchableOpacity style={styles.checkoutBox}><Text style={styles.checkoutBoxText}>Đã Check out</Text></TouchableOpacity>
                 )}
@@ -325,7 +336,7 @@ export default function BookingDetail() {
     );
 }
 
-// Giữ nguyên phần styles
+// (Styles giữ nguyên)
 const styles = StyleSheet.create({
     centered: {
         flex: 1,
@@ -393,7 +404,6 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         textAlign: "center",
     },
-    // THÊM STYLE CHO BADGE CHECKOUT
     checkoutBox: {
         marginTop: 8,
         width: 140,

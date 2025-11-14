@@ -15,12 +15,13 @@ import { HostStack } from "@/types/navigation";
 
 import BookingDetail from "@/components/employee_staff/screen/bookingDetail";
 import Checkout from "@/components/employee_staff/screen/checkOut";
+import KycFormScreen from "@/components/host/screen/CCCDScannerScreen";
 import { useFocusEffect } from "expo-router";
 
 const Stack = createStackNavigator<HostStack>();
 
 export default function HomeLayout() {
-  const [isHost, setIsHost] = useState<boolean | null>(true); // null: chưa xác định
+  const [isHost, setIsHost] = useState<boolean | null>(false); // null: chưa xác định
   const [loading, setLoading] = useState(false);
 // app/(host)/index.tsx
 useFocusEffect(
@@ -50,7 +51,7 @@ useFocusEffect(
       }
     };
 
-    // fetchHostStatus();
+    fetchHostStatus();
   }, [])
 );
 
@@ -67,15 +68,15 @@ useFocusEffect(
   return (
     <View style={styles.container}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <>
-            <Stack.Screen name="HotelList" component={HotelList} options={{ headerShown: true, title: "Danh sách khách sạn" }} />
+      {/* <>
+            <Stack.Screen name="HotelList" component={HotelList} />
             <Stack.Screen name="hostBookings" component={HostBookings} />
             <Stack.Screen name="hotelEdit" component={EditHotel} />
             <Stack.Screen name="CreateHotel" component={CreateHotel} />
             <Stack.Screen name="bookingDetail" component={BookingDetail} />
             <Stack.Screen name="checkout" component={Checkout} />
-          </>
-        {/* {isHost ? (
+          </> */}
+        {isHost ? (
           // 🏨 Nếu là host => hiển thị các màn hình quản lý khách sạn
           <>
             <Stack.Screen name="HotelList" component={HotelList} />
@@ -88,11 +89,10 @@ useFocusEffect(
         ) : (
           // 🧾 Nếu chưa là host => hiển thị quy trình KYC
           <>
-            <Stack.Screen name="CCCDScannerScreen" component={CCCDScannerScreen} />
-            <Stack.Screen name="CameraCaptureView" component={CameraCaptureScreen} />
+  
             <Stack.Screen name="KycFormScreen" component={KycFormScreen} />
           </>
-        )} */}
+        )}
       </Stack.Navigator>
     </View>
   );

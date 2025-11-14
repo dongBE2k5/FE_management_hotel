@@ -3,13 +3,12 @@ import UserLogin from '@/models/UserLogin';
 import { loginFunction } from '@/service/UserAPI';
 import { ProfileStackParamList } from '@/types/navigation';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import Ionicons from '@expo/vector-icons/Ionicons';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useNavigation, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  Alert,
   Alert,
   StyleSheet,
   Text,
@@ -52,10 +51,10 @@ export default function Login() {
     
         await AsyncStorage.multiRemove(['userId', 'role', 'userToken']);
 
-        Alert.alert('Thành công', 'Đăng nhập thành công!', [
-          {
-            text: 'OK',
-            onPress: async () => {
+        // Alert.alert('Thành công', 'Đăng nhập thành công!', [
+        //   {
+        //     text: 'OK',
+        //     onPress: async () => {
               // 3. Lưu thông tin vào bộ nhớ
               await AsyncStorage.multiSet([
                 ['userId', res.id.toString()],
@@ -68,9 +67,9 @@ export default function Login() {
 
               // 5. XÓA điều hướng tại đây. UserContext sẽ xử lý.
               router.replace('/');
-            },
-          },
-        ]);
+        //     },
+        //   },
+        // ]);
       } else {
         Alert.alert(
           'Lỗi đăng nhập',

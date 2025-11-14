@@ -1,30 +1,34 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import {
-    SafeAreaView,
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
-    Modal,
-    Alert, // Thêm Alert để thông báo lỗi
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from 'expo-router'; // Import đã được sử dụng
-import { useRoute } from '@react-navigation/native';
-import { 
-    createDamagedItem, 
-    getRoomItemsByTypeRoomId,
-} from '@/service/RoomItemAPI'; // <-- Giả định 'updateStatusRequest' ở cùng file
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createBookingUtility } from '@/service/BookingUtilityAPI'; // <-- IMPORT MỚI
+import { getUtilityOfHotelByHotelIdAndType } from '@/service/HotelUtilityAPI'; // <-- IMPORT MỚI
 import { updateStatusRequest } from '@/service/Realtime/WebSocketAPI';
+import {
+    createDamagedItem,
+    getRoomItemsByTypeRoomId,
+} from '@/service/RoomItemAPI';
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRoute } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker'; 
+import { useNavigation } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+    Alert,
+    Image,
+    Modal,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 
-// --- COMPONENT: Modal nhập số lượng khi bị thiếu ---
+// --- COMPONENT: MissingItemModal (Không thay đổi) ---
 const MissingItemModal = ({ visible, onClose, onConfirm, item }) => {
+    // ... (Giữ nguyên code của bạn)
     const [quantity, setQuantity] = useState(1);
 
     useEffect(() => {
-        // Cập nhật số lượng về 1 mỗi khi mở modal cho item mới
         if (visible) {
             setQuantity(1);
         }
@@ -80,13 +84,18 @@ const MissingItemModal = ({ visible, onClose, onConfirm, item }) => {
     );
 };
 
-// --- COMPONENT: Modal xác nhận kiểm tra (Tóm tắt) ---
-const ConfirmCheckModal = ({ visible, onClose, onConfirm, checklist, time }) => {
+// --- COMPONENT: ConfirmCheckModal (Sửa đổi để thêm Minibar) ---
+const ConfirmCheckModal = ({ visible, onClose, onConfirm, checklist, minibarItems, time }) => {
 
-    // Lọc ra các mục không "OK" để hiển thị tóm tắt
     const itemsWithIssues = useMemo(
         () => checklist.filter(item => item.status !== 'ok'),
         [checklist]
+    );
+
+    // <-- THÊM MỚI: Lọc minibar đã sử dụng -->
+    const usedMinibarItems = useMemo(
+        () => minibarItems.filter(item => item.quantity > 0),
+        [minibarItems]
     );
 
     const getStatusText = (item) => {
@@ -105,11 +114,16 @@ const ConfirmCheckModal = ({ visible, onClose, onConfirm, checklist, time }) => 
             <View style={styles.modalOverlay}>
                 <View style={styles.modalContent}>
                     <Text style={styles.modalTitle}>Xác nhận kiểm tra phòng</Text>
+                    
+                    {/* Tóm tắt vật dụng */}
                     <View style={styles.summaryList}>
                         <Text style={styles.summaryTitle}>Tình trạng vật dụng</Text>
                         {itemsWithIssues.map(item => (
                             <View key={item.id} style={styles.summaryItem}>
                                 <Text style={styles.summaryItemName}>{item.name}</Text>
+                                {item.image && (
+                                    <Ionicons name="camera" size={20} color="#718096" style={{ marginRight: 10 }} />
+                                )}
                                 <Text style={[
                                     styles.summaryItemStatus,
                                     item.status === 'broken' && styles.statusBroken,
@@ -121,6 +135,20 @@ const ConfirmCheckModal = ({ visible, onClose, onConfirm, checklist, time }) => 
                         ))}
                         {itemsWithIssues.length === 0 && (
                             <Text style={styles.summaryAllOk}>Tất cả vật dụng đều OK</Text>
+                        )}
+                    </View>
+
+                    {/* <-- THÊM MỚI: Tóm tắt Minibar --> */}
+                    <View style={styles.summaryList}>
+                        <Text style={styles.summaryTitle}>Minibar đã sử dụng</Text>
+                        {usedMinibarItems.map(item => (
+                            <View key={item.id} style={styles.summaryItem}>
+                                <Text style={styles.summaryItemName}>{item.name}</Text>
+                                <Text style={styles.summaryItemStatus}>Số lượng: {item.quantity}</Text>
+                            </View>
+                        ))}
+                        {usedMinibarItems.length === 0 && (
+                            <Text style={styles.summaryAllOk}>Không sử dụng minibar</Text>
                         )}
                     </View>
 
@@ -144,58 +172,80 @@ const ConfirmCheckModal = ({ visible, onClose, onConfirm, checklist, time }) => 
 };
 
 export default function CheckRoomScreen() {
-    const navigation = useNavigation(); // Khởi tạo navigation
+    const navigation = useNavigation();
     const route = useRoute();
-    // 'id' từ param chính là 'roomId'
-    const { id, roomNumber, roomTypeId, requestId, assignmentId } = route.params;
-    console.log("roomid",id, roomNumber, roomTypeId, requestId, assignmentId);
+    // <-- SỬA ĐỔI: Lấy hotelId từ params
+    const { id, roomNumber, roomTypeId, requestId, assignmentId, bookingId, hotelId } = route.params;
+    console.log("hotelid",hotelId);
     
-    const [checklist, setChecklist] = useState([]); // Khởi tạo mảng rỗng
+    const [checklist, setChecklist] = useState([]);
+    const [minibarItems, setMinibarItems] = useState([]); // <-- THÊM MỚI: State cho Minibar
     const [isMissingModalVisible, setMissingModalVisible] = useState(false);
     const [isConfirmModalVisible, setConfirmModalVisible] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
-    const [isLoading, setIsLoading] = useState(true); // Thêm state loading
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const loadItemData = async () => {
             try {
                 setIsLoading(true);
-                const data = await getRoomItemsByTypeRoomId(roomTypeId);
                 
-                // Chuyển đổi dữ liệu API (RoomItem) sang định dạng state (checklist)
-                // API: { itemId, itemName, ... }
-                // State: { id, name, status: 'ok', quantity: 0 }
-                const formattedData = data.map(item => ({
-                    id: item.itemId,       // Ánh xạ itemId -> id
-                    name: item.itemName,   // Ánh xạ itemName -> name
-                    status: 'ok',          // Trạng thái mặc định
-                    quantity: 0,           // Số lượng bị ảnh hưởng (hư/thiếu)
+                // <-- SỬA ĐỔI: Gọi song song cả 2 API -->
+                const [damageData, minibarData] = await Promise.all([
+                    getRoomItemsByTypeRoomId(roomTypeId),
+                    getUtilityOfHotelByHotelIdAndType(hotelId, 'MINIBAR')
+                ]);
+
+                // Xử lý data vật dụng (checklist)
+                const formattedDamageData = damageData.map(item => ({
+                    id: item.itemId,
+                    name: item.itemName,
+                    status: 'ok',
+                    quantity: 0,
+                    image: null, 
                 }));
+                setChecklist(formattedDamageData);
                 
-                setChecklist(formattedData);
+                // <-- THÊM MỚI: Xử lý data minibar -->
+                const formattedMinibarData = minibarData.data.map(item => ({
+                    id: item.id, // Đây là utilityId
+                    name: item.name,
+                    quantity: 0, // Mặc định là 0 (không sử dụng)
+                    price: item.price,
+                }));
+                setMinibarItems(formattedMinibarData);
+
+
             } catch (error) {
-                console.error("Lỗi khi tải danh sách vật dụng:", error);
-                Alert.alert("Lỗi", "Không thể tải danh sách vật dụng. Vui lòng thử lại.");
+                console.error("Lỗi khi tải danh sách vật dụng hoặc minibar:", error);
+                Alert.alert("Lỗi", "Không thể tải dữ liệu. Vui lòng thử lại.");
                 navigation.goBack();
             } finally {
                 setIsLoading(false);
             }
         };
 
+        // <-- SỬA ĐỔI: Thêm hotelId vào dependency
         loadItemData();
-    }, [roomTypeId, navigation]); // Thêm navigation vào dependency array
+    }, [roomTypeId, navigation, hotelId]);
 
-    // Hàm cập nhật trạng thái
+    // Hàm cập nhật trạng thái vật dụng (checklist)
     const setItemStatus = (itemId, status) => {
         setChecklist(prevList =>
             prevList.map(item =>
                 item.id === itemId
-                    // Khi set về 'ok' hoặc 'broken', reset số lượng về 0
-                    ? { ...item, status: status, quantity: (status === 'ok' || status === 'broken') ? 0 : item.quantity }
+                    ? {
+                        ...item,
+                        status: status,
+                        quantity: (status === 'ok' || status === 'broken') ? 0 : item.quantity,
+                        image: (status === 'ok') ? null : item.image
+                    }
                     : item
             )
         );
     };
+
+    // --- (Các hàm xử lý vật dụng: handlePressMissing, handleConfirmMissing, handleTakePhoto, handlePressStatus giữ nguyên) ---
 
     // Xử lý khi nhấn "Thiếu"
     const handlePressMissing = (item) => {
@@ -207,19 +257,82 @@ export default function CheckRoomScreen() {
     const handleConfirmMissing = (item, quantity) => {
         setChecklist(prevList =>
             prevList.map(i =>
-                i.id === item.id ? { ...i, status: 'missing', quantity: quantity } : i
+                i.id === item.id ? { ...i, status: 'missing', quantity: quantity, image: null } : i
             )
         );
         setMissingModalVisible(false);
         setSelectedItem(null);
     };
 
-    // Xử lý khi nhấn "OK" hoặc "Hư"
-    const handlePressStatus = (item, status) => {
-        setItemStatus(item.id, status);
+    // Hàm chụp ảnh
+    const handleTakePhoto = async (item) => {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert("Lỗi", "Bạn cần cấp quyền truy cập camera để chụp ảnh.");
+            return;
+        }
+        try {
+            let result = await ImagePicker.launchCameraAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true, 
+                aspect: [4, 3],
+                quality: 0.7, 
+                base64: false, 
+            });
+
+            if (!result.canceled) {
+                const imageUri = result.assets[0].uri;
+                setChecklist(prevList =>
+                    prevList.map(i =>
+                        i.id === item.id ? { ...i, status: 'broken', quantity: 0, image: imageUri } : i
+                    )
+                );
+            } else {
+                setItemStatus(item.id, 'broken');
+            }
+        } catch (error) {
+            console.log("Lỗi khi mở camera:", error);
+            Alert.alert("Lỗi", "Không thể mở camera. Vui lòng thử lại.");
+            setItemStatus(item.id, 'broken'); 
+        }
     };
 
-    // Xử lý khi nhấn nút xác nhận cuối cùng
+    // Xử lý khi nhấn "OK" hoặc "Hư"
+    const handlePressStatus = (item, status) => {
+        if (status === 'broken') {
+            Alert.alert(
+                "Xác nhận đồ hư",
+                `Bạn có muốn chụp ảnh ${item.name} bị hư không?`,
+                [
+                    {
+                        text: "Bỏ qua", 
+                        onPress: () => setItemStatus(item.id, 'broken'), 
+                        style: "cancel"
+                    },
+                    {
+                        text: "Chụp ảnh", 
+                        onPress: () => handleTakePhoto(item) 
+                    }
+                ]
+            );
+        } else {
+            setItemStatus(item.id, status);
+        }
+    };
+
+    // <-- THÊM MỚI: Hàm xử lý số lượng Minibar -->
+    const handleMinibarQuantityChange = (itemId, newQuantity) => {
+        // Đảm bảo số lượng không âm
+        const clampedQuantity = Math.max(0, newQuantity); 
+        setMinibarItems(prevItems =>
+            prevItems.map(item =>
+                item.id === itemId ? { ...item, quantity: clampedQuantity } : item
+            )
+        );
+    };
+
+
+    // <-- SỬA ĐỔI: Xử lý khi nhấn nút xác nhận cuối cùng (Logic tổng) -->
     const handleFinalConfirm = async () => {
         const userIdStr = await AsyncStorage.getItem("userId");
         const userId = userIdStr ? Number(userIdStr) : null;
@@ -229,67 +342,88 @@ export default function CheckRoomScreen() {
             return;
         }
 
-        // 1. Lọc ra các mục có vấn đề (không phải 'ok')
+        // 1. Lọc vật dụng hỏng/thiếu
         const itemsWithIssues = checklist.filter(item => item.status !== 'ok');
+        
+        // 2. Lọc minibar đã sử dụng
+        const usedMinibarItems = minibarItems.filter(item => item.quantity > 0);
 
-        // 2. Phân nhánh logic
+        let isSuccess = false; // Cờ để kiểm tra gửi API thành công
+
         try {
+            const apiPromises = []; // Mảng chứa các_tác_vụ_gọi_API
+
+            // 3a. Chuẩn bị request Báo cáo hỏng hóc
             if (itemsWithIssues.length > 0) {
-                // TRƯỜNG HỢP 1: CÓ VẤN ĐỀ
-                
-                // 2a. Tạo mảng request hỏng hóc
                 const damagedItemRequests = itemsWithIssues.map(item => {
                     let serverStatus = '';
-                    if (item.status === 'broken') {
-                        serverStatus = 'DAMAGED';
-                    } else if (item.status === 'missing') {
-                        serverStatus = 'MISSING';
-                    }
+                    if (item.status === 'broken') serverStatus = 'DAMAGED';
+                    else if (item.status === 'missing') serverStatus = 'MISSING';
 
                     return {
-                        roomId: id,
-                        itemId: item.id,
-                        quantityAffected: item.status === 'broken' ? 1 : item.quantity,
-                        status: serverStatus,
-                        image: null,
-                        reportedBy: userId,
-                        requestStaffId: requestId // Gửi kèm requestId từ param
+                        data: {
+                            roomId: id,
+                            itemId: item.id,
+                            quantityAffected: item.status === 'broken' ? 1 : item.quantity,
+                            status: serverStatus,
+                            reportedBy: userId,
+                            requestStaffId: requestId,
+                            bookingId: bookingId,
+                        },
+                        image: item.image, // URI hoặc null
                     };
                 });
-
-                // 2b. Gửi request hỏng hóc
-                const promises = damagedItemRequests.map(request => createDamagedItem(request));
-                await Promise.all(promises);
                 
-                // 2c. Cập nhật request chính là "HAS_ISSUE"
+                // Thêm các promise hỏng hóc vào mảng
+                damagedItemRequests.forEach(req => {
+                    apiPromises.push(createDamagedItem(req.data, req.image));
+                });
+            }
+
+            // 3b. Chuẩn bị request Minibar
+            if (usedMinibarItems.length > 0) {
+                const bookingUtilityRequest = {
+                    bookingId: bookingId, 
+                    utilityItemBooking: usedMinibarItems.map(item => ({
+                        utilityId: item.id,
+                        quantity: item.quantity,
+                    })),
+                };
+                
+                // Thêm promise minibar vào mảng
+                apiPromises.push(createBookingUtility(bookingUtilityRequest));
+            }
+            
+            // 4. Gửi đồng thời tất cả các báo cáo (hỏng hóc, minibar)
+            if (apiPromises.length > 0) {
+                await Promise.all(apiPromises);
+                console.log("Đã gửi thành công các báo cáo (hỏng hóc/minibar).");
+            }
+
+            // 5. Cập nhật trạng thái cuối cùng của Request (chỉ_dựa_trên_đồ_hỏng)
+            // Đây là 4 trường hợp bạn đã mô tả
+            if (itemsWithIssues.length > 0) {
                 await updateStatusRequest(requestId, "HAS_ISSUE", id, assignmentId);
-                
-                console.log("Đã báo cáo thành công các mục:", damagedItemRequests);
                 Alert.alert("Thành công", "Đã ghi nhận tình trạng phòng (Có vấn đề).");
-
             } else {
-                // TRƯỜNG HỢP 2: KHÔNG CÓ VẤN ĐỀ
-                
-                // 2a. Cập nhật request chính là "NO_ISSUE"
-                console.log("cập nhận request",requestId,id,assignmentId);
                 await updateStatusRequest(requestId, "NO_ISSUE", id, assignmentId);
-                
-                console.log("Không có vấn đề, đã cập nhật request sang NO_ISSUE.");
                 Alert.alert("Thành công", "Đã ghi nhận tình trạng phòng (Tất cả OK).");
             }
-        
+            
+            isSuccess = true;
+
         } catch (error) {
-            // 3. Xử lý lỗi chung
             console.error("Lỗi khi gửi báo cáo hỏng hóc hoặc cập nhật status:", error);
             Alert.alert("Lỗi", "Thao tác thất bại. Vui lòng thử lại.");
         } finally {
-            // 4. Luôn đóng modal và quay lại
+            // 6. Đóng modal và quay lại (chỉ khi thành công)
             setConfirmModalVisible(false);
-            navigation.goBack();
+            if (isSuccess) {
+                navigation.goBack();
+            }
         }
     };
 
-    // Lấy thời gian hiện tại
     const currentTime = new Date().toLocaleTimeString('vi-VN', {
         hour: '2-digit',
         minute: '2-digit',
@@ -322,10 +456,16 @@ export default function CheckRoomScreen() {
                 </View>
             ) : (
                 <ScrollView style={styles.scrollView}>
+                    {/* DANH SÁCH VẬT DỤNG */}
                     <Text style={styles.listTitle}>Danh sách kiểm tra</Text>
                     {checklist.map(item => (
                         <View key={item.id} style={styles.checkItemCard}>
-                            <Text style={styles.checkItemName}>{item.name}</Text>
+                            <View style={styles.itemHeader}>
+                                <Text style={styles.checkItemName}>{item.name}</Text>
+                                {item.image && (
+                                    <Image source={{ uri: item.image }} style={styles.thumbnail} />
+                                )}
+                            </View>
                             <View style={styles.statusOptions}>
                                 {/* Nút OK */}
                                 <TouchableOpacity
@@ -354,8 +494,60 @@ export default function CheckRoomScreen() {
                                 >
                                     <Ionicons name="close-circle" size={20} color={item.status === 'broken' ? '#FF3B30' : '#CBD5E0'} />
                                     <Text style={[styles.statusText, item.status === 'broken' && styles.brokenText]}>Hư</Text>
+                                    {item.status === 'broken' && item.image && (
+                                        <Ionicons name="camera" size={16} color="#FF3B30" style={{ marginLeft: 5 }} />
+                                    )}
                                 </TouchableOpacity>
                             </View>
+                        </View>
+                    ))}
+
+                    {/* <-- THÊM MỚI: DANH SÁCH MINIBAR --> */}
+                    <Text style={styles.listTitle}>Minibar</Text>
+                    {minibarItems.map(item => (
+                        <View key={item.id} style={styles.checkItemCard}>
+                            <Text style={styles.checkItemName}>{item.name}</Text>
+                            
+                            {/* Toggle Buttons */}
+                            <View style={styles.statusOptions}>
+                                <TouchableOpacity
+                                    style={[styles.statusButton, item.quantity === 0 && styles.okSelected]} // Style "OK"
+                                    onPress={() => handleMinibarQuantityChange(item.id, 0)}
+                                >
+                                    <Ionicons name="checkmark-circle" size={20} color={item.quantity === 0 ? '#34C759' : '#CBD5E0'} />
+                                    <Text style={[styles.statusText, item.quantity === 0 && styles.okText]}>Không sử dụng</Text>
+                                </TouchableOpacity>
+                                
+                                <TouchableOpacity
+                                    style={[styles.statusButton, item.quantity > 0 && styles.brokenSelected]} // Style "Hư"
+                                    onPress={() => handleMinibarQuantityChange(item.id, item.quantity > 0 ? 0 : 1)} // Toggle
+                                >
+                                    <Ionicons name="card" size={20} color={item.quantity > 0 ? '#FF3B30' : '#CBD5E0'} />
+                                    <Text style={[styles.statusText, item.quantity > 0 && styles.brokenText]}>Đã sử dụng</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* Bộ chọn số lượng (chỉ hiện khi đã sử dụng) */}
+                            {item.quantity > 0 && (
+                                <View style={styles.minibarQuantityWrapper}>
+                                    <Text style={styles.minibarQuantityLabel}>Số lượng:</Text>
+                                    <View style={styles.quantityControl}>
+                                        <TouchableOpacity
+                                            style={styles.quantityButton}
+                                            onPress={() => handleMinibarQuantityChange(item.id, item.quantity - 1)}
+                                        >
+                                            <Ionicons name="remove" size={24} color="#FF3B30" />
+                                        </TouchableOpacity>
+                                        <Text style={styles.quantityText}>{item.quantity}</Text>
+                                        <TouchableOpacity
+                                            style={styles.quantityButton}
+                                            onPress={() => handleMinibarQuantityChange(item.id, item.quantity + 1)}
+                                        >
+                                            <Ionicons name="add" size={24} color="#34C759" />
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            )}
                         </View>
                     ))}
                 </ScrollView>
@@ -364,7 +556,7 @@ export default function CheckRoomScreen() {
             {/* Nút xác nhận */}
             <View style={styles.footer}>
                 <TouchableOpacity
-                    style={[styles.mainConfirmButton, isLoading && styles.disabledButton]} // Vô hiệu hóa khi đang tải
+                    style={[styles.mainConfirmButton, isLoading && styles.disabledButton]}
                     onPress={() => setConfirmModalVisible(true)}
                     disabled={isLoading}
                 >
@@ -373,7 +565,7 @@ export default function CheckRoomScreen() {
             </View>
 
             {/* Modals */}
-            {selectedItem && ( // Chỉ render modal khi có selectedItem
+            {selectedItem && (
                 <MissingItemModal
                     visible={isMissingModalVisible}
                     onClose={() => setMissingModalVisible(false)}
@@ -386,17 +578,19 @@ export default function CheckRoomScreen() {
                 onClose={() => setConfirmModalVisible(false)}
                 onConfirm={handleFinalConfirm}
                 checklist={checklist}
+                minibarItems={minibarItems} // <-- THÊM MỚI: Truyền state minibar
                 time={currentTime.replace(', ', ' ')}
             />
         </SafeAreaView>
     );
 }
 
-// --- STYLESHEET ---
+// --- STYLESHEET (Thêm style cho Minibar) ---
 const styles = StyleSheet.create({
+    // ... (Toàn bộ style cũ của bạn giữ nguyên) ...
     container: {
         flex: 1,
-        backgroundColor: '#F5F8FA', // Nền xám siêu nhạt
+        backgroundColor: '#F5F8FA',
     },
     loadingContainer: {
         flex: 1,
@@ -456,27 +650,41 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.05,
         shadowRadius: 2,
     },
+    itemHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 15,
+    },
     checkItemName: {
         fontSize: 16,
         fontWeight: '600',
         color: '#1A202C',
-        marginBottom: 15,
+        flex: 1, 
+    },
+    thumbnail: {
+        width: 50,
+        height: 50,
+        borderRadius: 8,
+        marginLeft: 10,
+        borderWidth: 1,
+        borderColor: '#EDF2F7',
     },
     statusOptions: {
         flexDirection: 'row',
         justifyContent: 'space-between',
     },
     statusButton: {
-        flex: 1, // Giúp các nút chia đều không gian
+        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center', // Căn giữa nội dung nút
+        justifyContent: 'center',
         paddingVertical: 8,
         paddingHorizontal: 12,
         borderRadius: 20,
         borderWidth: 1,
         borderColor: '#EDF2F7',
-        marginHorizontal: 4, // Thêm khoảng cách nhỏ giữa các nút
+        marginHorizontal: 4,
     },
     statusText: {
         marginLeft: 6,
@@ -484,7 +692,6 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#CBD5E0',
     },
-    // Trạng thái khi được chọn
     okSelected: {
         backgroundColor: '#E6F7EB',
         borderColor: '#34C759',
@@ -506,7 +713,6 @@ const styles = StyleSheet.create({
     brokenText: {
         color: '#FF3B30',
     },
-    // Footer
     footer: {
         padding: 20,
         backgroundColor: '#FFFFFF',
@@ -514,20 +720,19 @@ const styles = StyleSheet.create({
         borderTopColor: '#EDF2F7',
     },
     mainConfirmButton: {
-        backgroundColor: '#2563EB', // Màu xanh dương
+        backgroundColor: '#2563EB',
         padding: 15,
         borderRadius: 12,
         alignItems: 'center',
     },
     disabledButton: {
-        backgroundColor: '#A0AEC0', // Màu xám khi bị vô hiệu hóa
+        backgroundColor: '#A0AEC0',
     },
     mainConfirmButtonText: {
         color: '#FFFFFF',
         fontSize: 16,
         fontWeight: 'bold',
     },
-    // Modal chung
     modalOverlay: {
         flex: 1,
         justifyContent: 'center',
@@ -563,15 +768,14 @@ const styles = StyleSheet.create({
         marginRight: 10,
     },
     confirmButton: {
-        backgroundColor: '#34C759', // Màu xanh lá
+        backgroundColor: '#34C759',
         marginLeft: 10,
     },
     buttonText: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#1A202C', // Màu chữ cho nút Hủy
+        color: '#1A202C',
     },
-    // Modal "Thiếu"
     itemRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -595,16 +799,15 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginHorizontal: 15,
         color: '#1A202C',
-        minWidth: 30, // Đảm bảo số không bị nhảy layout
+        minWidth: 30,
         textAlign: 'center',
     },
-    // Modal "Xác nhận"
     summaryList: {
         backgroundColor: '#F5F8FA',
         borderRadius: 8,
         padding: 15,
         marginBottom: 15,
-        maxHeight: 200, // Thêm chiều cao tối đa và cho phép cuộn
+        maxHeight: 150, // <-- SỬA ĐỔI: Giảm chiều cao để vừa 2 bảng
     },
     summaryTitle: {
         fontSize: 14,
@@ -615,6 +818,7 @@ const styles = StyleSheet.create({
     summaryItem: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        alignItems: 'center', 
         paddingVertical: 8,
         borderBottomWidth: 1,
         borderBottomColor: '#EDF2F7',
@@ -622,12 +826,12 @@ const styles = StyleSheet.create({
     summaryItemName: {
         fontSize: 16,
         color: '#4A5568',
-        flex: 1, // Cho phép tên xuống dòng
+        flex: 1,
     },
     summaryItemStatus: {
         fontSize: 16,
         fontWeight: 'bold',
-        marginLeft: 10, // Thêm khoảng cách
+        marginLeft: 10,
     },
     statusBroken: {
         color: '#FF3B30',
@@ -651,5 +855,20 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#718096',
         marginLeft: 8,
-    }
+    },
+    // <-- THÊM MỚI: Style cho bộ chọn số lượng minibar -->
+    minibarQuantityWrapper: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: 15,
+        paddingTop: 15,
+        borderTopWidth: 1,
+        borderTopColor: '#EDF2F7',
+    },
+    minibarQuantityLabel: {
+        fontSize: 16,
+        color: '#4A5568',
+        fontWeight: '600',
+    },
 });

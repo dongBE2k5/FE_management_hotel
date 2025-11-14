@@ -1,16 +1,18 @@
+import { urlImage } from "@/constants/BaseURL";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import {
+  Image,
   Modal,
-  ScrollView, // 👈 Thêm ScrollView
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View,
+  View
 } from "react-native";
 
-// 🔹 Hàm helper để format tiền tệ
+// 🔹 Hàm helper (Giữ nguyên)
 const formatCurrency = (value) => {
   if (typeof value !== 'number') {
     return "0 ₫";
@@ -23,25 +25,35 @@ export default function DamageConfirmModal({
   onClose,
   onBackToFeedback,
   onBackToConstdetailmodal,
-  damagedItems = [], // 👈 Nhận prop damagedItems
+  damagedItems = [],
+  usedServices = [], // 👈 SỬA: Nhận mảng, mặc định là []
 }) {
-  
-    console.log('damagedItems in DamageConfirmModal:', damagedItems);
-  // 🔹 Tự động tính toán tổng số lượng và tổng chi phí
-  const { totalQuantity, totalCost } = React.useMemo(() => {
-    return damagedItems.reduce(
-      (acc, item) => {
-        // Đảm bảo quantityAffected và price là số
-        const quantity = Number(item.quantityAffected) || 0;
-        const price = Number(item.price) || 0;
-        
-        acc.totalQuantity += quantity;
-        acc.totalCost += price * quantity;
-        return acc;
-      },
-      { totalQuantity: 0, totalCost: 0 }
-    );
-  }, [damagedItems]);
+  console.log("dịch vụ", damagedItems, usedServices);
+
+  // 👈 SỬA: Tính toán lại, bao gồm cả dịch vụ
+  const { totalDamages, totalServices, servicesList } = React.useMemo(() => {
+    const damages = damagedItems || [];
+    // 👈 SỬA: 'usedServices' giờ là mảng (servicesData)
+    const servicesData = usedServices || [];
+
+    const totalDamages = damages.reduce((acc, item) => {
+      const quantity = Number(item.quantityAffected) || 0;
+      const price = Number(item.price) || 0;
+      return acc + (price * quantity);
+    }, 0);
+
+    const totalServices = servicesData.reduce((acc, item) => {
+      const quantity = Number(item.quantity) || 0;
+      const price = Number(item.price) || 0;
+      return acc + (price * quantity);
+    }, 0);
+
+    return {
+      totalDamages,
+      totalServices,
+      servicesList: servicesData, // Trả về mảng dịch vụ
+    };
+  }, [damagedItems, usedServices]); // 👈 'usedServices' là dependency
 
   return (
     <Modal
@@ -50,65 +62,109 @@ export default function DamageConfirmModal({
       animationType="fade"
       onRequestClose={onClose}
     >
-      {/* Bấm vào vùng overlay sẽ đóng modal */}
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.overlay}>
-          {/* View bên trong không nhận sự kiện chạm overlay */}
           <TouchableWithoutFeedback>
             <View style={styles.modalContainer}>
-              {/* Tiêu đề */}
-              <Text style={styles.title}>Xác nhận chi phí đền bù</Text>
+              <Text style={styles.title}>Xác nhận chi phí phát sinh</Text>
 
-              {/* Thông báo chính - Đã thay bằng dữ liệu động */}
+              {/* 👈 SỬA: Cập nhật hộp cảnh báo */}
               <View style={styles.warningBox}>
-                <Ionicons name="warning-outline" size={22} color="red" />
+                <Ionicons name="warning-outline" size={22} color="#E6A23C" />
                 <Text style={styles.warningText}>
-                  Nhân viên đã báo cáo{" "}
-                  <Text style={styles.bold}>
-                    {totalQuantity} mục hư hỏng/thiếu
-                  </Text>{" "}
-                  với tổng chi phí là{" "}
-                  <Text style={styles.boldRed}>{formatCurrency(totalCost)}</Text>.
+                  Nhân viên đã báo cáo:
+                  {totalDamages > 0 && (
+                    <Text>
+                      {"\n"}• Hư hỏng/Thiếu: <Text style={styles.boldRed}>{formatCurrency(totalDamages)}</Text>
+                    </Text>
+                  )}
+                  {totalServices > 0 && (
+                    <Text>
+                      {"\n"}• Dịch vụ đã dùng: <Text style={styles.boldRed}>{formatCurrency(totalServices)}</Text>
+                    </Text>
+                  )}
+                  {(totalDamages === 0 && totalServices === 0) && " Không có chi phí phát sinh."}
                 </Text>
               </View>
 
-              {/* Danh sách chi tiết - Đã thay bằng .map() */}
               <ScrollView style={styles.listContainer}>
-                {damagedItems.map((item, index) => (
-                  <View key={item.id || index}>
-                    <View style={styles.item}>
-                      <Text style={styles.itemName}>{item.itemName}</Text>
-                      <Text style={styles.itemPrice}>
-                        {formatCurrency(item.price * item.quantityAffected)}
-                      </Text>
-                    </View>
-                    <Text style={styles.subText}>
-                      {`${formatCurrency(item.price)} × ${item.quantityAffected}`}
-                    </Text>
-                    {/* Thêm đường kẻ nếu không phải item cuối */}
-                    {index < damagedItems.length - 1 && (
-                      <View style={styles.divider} />
-                    )}
-                  </View>
-                ))}
+                {/* 👈 SỬA: Danh sách 1 - Vật dụng hỏng */}
+                {damagedItems.length > 0 && (
+                  <>
+                    <Text style={styles.sectionTitle}>Vật dụng đền bù</Text>
+                    {damagedItems.map((item, index) => (
+                      <View key={`damage-${item.id || index}`}>
+                        <View style={styles.item}>
+                          <Text style={styles.itemName}>{item.itemName}</Text>
+                          <Text style={styles.itemPrice}>
+                            {formatCurrency(item.price * item.quantityAffected)}
+                          </Text>
+                        </View>
+                        <Text style={styles.subText}>
+                          {`${formatCurrency(item.price)} × ${item.quantityAffected}`}
+                        </Text>
+                        {/* 👇 Hiển thị ảnh nếu có */}
+                        {item.image && (
+                          <>
+                            {console.log("Ảnh:", item.image)}
+                            <Image
+                              source={{ uri: `${urlImage}${item.image}` }}
+                              style={styles.itemImage}
+                              resizeMode="cover"
+                            />
+                          </>
+                        )}
+                       
+                          
+                        )}
+                        {index < damagedItems.length - 1 && (
+                          <View style={styles.divider} />
+                        )}
+                      </View>
+                    ))}
+                  </>
+                )}
+
+                {/* 👈 THÊM MỚI: Danh sách 2 - Dịch vụ đã dùng */}
+                {servicesList.length > 0 && (
+                  <>
+                    <Text style={styles.sectionTitle}>Dịch vụ đã dùng</Text>
+                    {/* Logic render này đã đúng, không cần sửa */}
+                    {servicesList.map((item, index) => (
+                      <View key={`service-${item.utilityId || index}`}>
+                        <View style={styles.item}>
+                          <Text style={styles.itemName}>{item.utilityName}</Text>
+                          <Text style={styles.itemPrice}>
+                            {formatCurrency(item.price * item.quantity)}
+                          </Text>
+                        </View>
+                        <Text style={styles.subText}>
+                          {`${formatCurrency(item.price)} × ${item.quantity}`}
+                        </Text>
+                        {index < servicesList.length - 1 && (
+                          <View style={styles.divider} />
+                        )}
+                      </View>
+                    ))}
+                  </>
+                )}
               </ScrollView>
 
-              {/* Nút hành động (Giữ nguyên logic) */}
               <View style={styles.btnRow}>
                 <TouchableOpacity
                   style={[styles.btn, { backgroundColor: "#2ecc71" }]}
-                  onPress={onBackToFeedback} 
+                  onPress={onBackToFeedback}
                 >
                   <Text style={styles.btnText}>Yêu cầu kiểm tra lại</Text>
                 </TouchableOpacity>
 
+                {/* Nút xác nhận (Giữ nguyên logic) */}
                 <TouchableOpacity
                   style={[styles.btn, { backgroundColor: "#007BFF" }]}
                   onPress={() => {
-                    onClose?.();
-                    setTimeout(() => {
-                      onBackToConstdetailmodal?.((totalCost));
-                    }, 300);
+                    // Vẫn chỉ truyền damagedItems,
+                    // vì FeedbackModal đã có usedServices trong state của nó
+                    onBackToConstdetailmodal?.(damagedItems);
                   }}
                 >
                   <Text style={styles.btnText}>Xác nhận & Thêm vào hóa đơn</Text>
@@ -122,6 +178,7 @@ export default function DamageConfirmModal({
   );
 }
 
+// (Styles giữ nguyên, thêm sectionTitle)
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
@@ -134,7 +191,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 12,
     padding: 18,
-    maxHeight: "80%", // 👈 Thêm giới hạn chiều cao
+    maxHeight: "80%",
   },
   title: {
     fontWeight: "700",
@@ -145,7 +202,9 @@ const styles = StyleSheet.create({
   warningBox: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff5f5",
+    backgroundColor: "#fdf6ec", // 👈 SỬA: Màu vàng nhạt
+    borderColor: "#E6A23C", // 👈 SỬA: Viền vàng
+    borderWidth: 1,
     borderRadius: 8,
     padding: 10,
     marginBottom: 12,
@@ -162,10 +221,20 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "red",
   },
-  // 👈 Thêm style cho ScrollView
   listContainer: {
-    maxHeight: 200, // Giới hạn chiều cao của list
+    maxHeight: 300, // 👈 Tăng chiều cao 
     marginBottom: 10,
+  },
+  // 👈 THÊM MỚI
+  sectionTitle: {
+    fontWeight: "700",
+    fontSize: 14,
+    color: "#555",
+    marginTop: 8,
+    marginBottom: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    paddingBottom: 4,
   },
   item: {
     flexDirection: "row",
@@ -174,7 +243,7 @@ const styles = StyleSheet.create({
   itemName: {
     fontWeight: "600",
     color: "#333",
-    flexShrink: 1, // 👈 Cho phép tên item xuống dòng
+    flexShrink: 1,
     marginRight: 8,
   },
   itemPrice: {
@@ -207,5 +276,19 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "600",
     fontSize: 13,
+  },
+  itemImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginTop: 6,
+    marginBottom: 8,
+    alignSelf: "flex-start",
+    backgroundColor: "#f5f5f5", // fallback màu nền khi chưa load
+  },
+  itemRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
 });

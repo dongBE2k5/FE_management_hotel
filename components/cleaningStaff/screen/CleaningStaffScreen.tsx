@@ -8,6 +8,7 @@ import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, TouchableOpac
 // Xóa MOCK_TASKS
 import { connectAndSubscribe, disconnect, fetchReceivedRequests, updateStatusRequest } from '@/service/Realtime/WebSocketAPI';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Toast from 'react-native-toast-message';
 import TaskCard from '../modal/TaskCard';
 
 // ==================================================================
@@ -35,7 +36,7 @@ const mapRoomStatusToTaskStatus = (roomStatus) => {
  * @param {Array} receivedRequests - Danh sách request từ fetchReceivedRequests
  * @returns {Array} Danh sách task đã được gộp và xử lý logic
  */
-const transformData = (rooms = [], receivedRequests = []) => {
+const transformData = (rooms = [], receivedRequests = [], hotelId) => {
     // 1. Chỉ định các trạng thái được phép
     const allowedStatuses = ['NEEDCLEANING', 'AVAILABLE', 'REQUEST', 'CLEANING'];
 
@@ -44,9 +45,9 @@ const transformData = (rooms = [], receivedRequests = []) => {
 
     // 3. Chuyển đổi mảng đã lọc
     return filteredRooms.map(room => {
-        
+
         // --- LOGIC MỚI: Tinh chỉnh Status và Actionable ---
-        
+
         // 1. Lấy trạng thái mặc định từ phòng
         let taskStatus = mapRoomStatusToTaskStatus(room.status);
         const taskPriority = (room.status === 'REQUEST') ? 'REQUEST' : 'NORMAL';
@@ -58,6 +59,7 @@ const transformData = (rooms = [], receivedRequests = []) => {
         let assignmentId = null;
         let isAlowwed = false;
         let title = `Phòng ${room.roomNumber}`;
+        let bookingId = null;
 
         // 3. Xử lý logic
         if (room.status === 'REQUEST') {
@@ -67,6 +69,13 @@ const transformData = (rooms = [], receivedRequests = []) => {
             );
 
             if (matchingRequest) {
+
+                console.log("data", matchingRequest.bookingId);
+
+                bookingId = matchingRequest.bookingId ?? null; // ✅ Lấy bookingId đúng chỗ
+                console.log("booking", bookingId);
+
+
                 if (matchingRequest.status === 'PENDING') {
                     // TRƯỜNG HỢP 1: Yêu cầu mới, CHƯA ai nhận
                     taskStatus = 'todo'; // Hiển thị ở cột 'Cần làm'
@@ -76,7 +85,7 @@ const transformData = (rooms = [], receivedRequests = []) => {
                     requestId = matchingRequest.requestId.toString();
                     assignmentId = matchingRequest.id.toString();
                     title = `Phòng ${room.roomNumber} (Yêu cầu khẩn)`;
-                
+
                 } else if (matchingRequest.status === 'IN_PROGRESS') {
                     // TRƯỜNG HỢP 2 (ĐÃ SỬA): Yêu cầu đang IN_PROGRESS
                     taskStatus = 'in-progress'; // Hiển thị ở cột 'Đang làm'
@@ -89,24 +98,24 @@ const transformData = (rooms = [], receivedRequests = []) => {
                 }
             } else {
                 // Phòng là 'REQUEST' nhưng không có request nào (PENDING/IN_PROGRESS)
-                taskStatus = 'todo'; 
+                taskStatus = 'todo';
                 isActionable = false;
                 isAlowwed = false;
                 title = `Phòng ${room.roomNumber} (Đang chờ xử lý...)`;
             }
-        
+
         } else if (room.status === 'NEEDCLEANING') {
             // TRƯỜNG HỢP 3: Dọn dẹp thông thường
             taskStatus = 'todo';
             isActionable = true; // Luôn cho phép
             title = `Phòng ${room.roomNumber}`;
-        
+
         } else if (room.status === 'CLEANING') {
             // TRƯỜNG HỢP 4: Đang dọn
             taskStatus = 'in-progress';
             isActionable = true; // Cho phép nhấn để hoàn thành
             title = `Phòng ${room.roomNumber} (Đang dọn...)`;
-        
+
         } else if (room.status === 'AVAILABLE') {
             // TRƯỜNG HỢP 5: Hoàn thành
             taskStatus = 'done';
@@ -116,19 +125,21 @@ const transformData = (rooms = [], receivedRequests = []) => {
         // --- KẾT THÚC LOGIC MỚI ---
 
         return {
-            id: taskId, 
-            roomId: room.id.toString(), 
+            id: taskId,
+            roomId: room.id.toString(),
             roomNumber: room.roomNumber,
             roomTypeId: room.typeOfRoomId,
             title: title,
             description: room.description,
-            status: taskStatus, 
+            status: taskStatus,
             priority: taskPriority,
             typeRoom: room.typeRoom,
-            actionable: isActionable, 
-            requestId: requestId, 
+            actionable: isActionable,
+            requestId: requestId,
             assignmentId: assignmentId,
-            allowed: isAlowwed, 
+            allowed: isAlowwed,
+            bookingId: bookingId,
+            hotelId: hotelId
         };
     });
 };
@@ -226,7 +237,7 @@ export default function CleaningStaffScreen() {
     // Lấy dữ liệu từ API và kết nối WebSocket
     useFocusEffect(
         useCallback(() => {
-            let isMounted = true; 
+            let isMounted = true;
             let userId = null;
 
             // 1. Định nghĩa hàm setup WebSocket
@@ -238,17 +249,29 @@ export default function CleaningStaffScreen() {
 
                     onMessageReceived: async (newRequest) => {
                         console.log("📩 Nhận request realtime:", newRequest);
+                        if (newRequest) {
+                            Toast.show({
+                                type: 'info',
+                                text1: 'Có yêu cầu mới 🚨',
+                                // text2: `Khách hàng đã hoàn tất thanh toán cho booking${data.bookingId ? ` (ID: ${data.bookingId})` : ''}.`,
+                            });
+                        }
                         try {
                             const currentUserId = userId || Number(await AsyncStorage.getItem("userId"));
                             if (!currentUserId) return;
-
+                            const hotelIdStr = await AsyncStorage.getItem('hotelID');
+                            const hotelId = hotelIdStr ? Number(hotelIdStr) : null;
+                            if (!hotelId) {
+                                console.error("Hotel ID không hợp lệ.");
+                                return;
+                            }
                             const [rooms, receivedRequests] = await Promise.all([
-                                getRoomByHotel(1),
+                                getRoomByHotel(hotelId),
                                 fetchReceivedRequests(currentUserId)
                             ]);
 
                             if (isMounted) {
-                                const transformedTasks = transformData(rooms, receivedRequests);
+                                const transformedTasks = transformData(rooms, receivedRequests, hotelId);
                                 setAllTasks(transformedTasks);
                             }
                         } catch (error) {
@@ -268,16 +291,21 @@ export default function CleaningStaffScreen() {
                         console.warn("⚠️ Không tìm thấy userId trong AsyncStorage");
                         return;
                     }
-                    userId = Number(userIdStr); 
-
+                    userId = Number(userIdStr);
+                    const hotelIdStr = await AsyncStorage.getItem('hotelID');
+                    const hotelId = hotelIdStr ? Number(hotelIdStr) : null;
+                    if (!hotelId) {
+                        console.error("Hotel ID không hợp lệ.");
+                        return;
+                    }
                     const [rooms, receivedRequests] = await Promise.all([
-                        getRoomByHotel(1),
+                        getRoomByHotel(hotelId),
                         fetchReceivedRequests(userId)
                     ]);
 
-                    if (!isMounted) return; 
+                    if (!isMounted) return;
 
-                    const transformedTasks = transformData(rooms, receivedRequests);
+                    const transformedTasks = transformData(rooms, receivedRequests,hotelId);
                     setAllTasks(transformedTasks);
 
                     setupWs(userId);
@@ -309,15 +337,15 @@ export default function CleaningStaffScreen() {
 
         // 1️⃣ Xử lý logic cho YÊU CẦU KHẨN (REQUEST)
         if (priority === "REQUEST") {
-            
+
             if (status === 'todo') {
                 // --- Bắt đầu một task REQUEST ---
-                
+
                 // 1a. Optimistic UI: todo -> in-progress và cho phép tiếp tục
                 setAllTasks(prevTasks =>
                     prevTasks.map(task =>
-                        task.id === taskId 
-                            ? { ...task, status: 'in-progress', actionable: true, title: `Phòng ${item.roomNumber} (Tiếp tục xử lý YC)` } 
+                        task.id === taskId
+                            ? { ...task, status: 'in-progress', actionable: true, title: `Phòng ${item.roomNumber} (Tiếp tục xử lý YC)` }
                             : task
                     )
                 );
@@ -330,6 +358,7 @@ export default function CleaningStaffScreen() {
                     console.error("❌ Lỗi cập nhật trạng thái request:", error);
                     // Cần rollback UI ở đây nếu lỗi
                 }
+                console.log("item", item);
 
                 // 1c. Navigation
                 navigation.navigate("CheckRoomScreen", {
@@ -338,14 +367,16 @@ export default function CleaningStaffScreen() {
                     roomTypeId: item.roomTypeId,
                     requestId: item.requestId,
                     assignmentId: item.assignmentId,
+                    bookingId: item.bookingId,
+                    hotelId: item.hotelId
                 });
 
             } else if (status === 'in-progress') {
                 // --- Tiếp tục một task REQUEST (Yêu cầu mới) ---
-                
+
                 // 1a. KHÔNG cập nhật UI (nó đã ở 'in-progress')
                 // 1b. KHÔNG gọi API (chỉ là vào lại màn hình)
-                
+
                 // 1c. Chỉ Navigation
                 console.log(`Tiếp tục xử lý yêu cầu ${taskId}`);
                 navigation.navigate("CheckRoomScreen", {
@@ -354,12 +385,14 @@ export default function CleaningStaffScreen() {
                     roomTypeId: item.roomTypeId,
                     requestId: item.requestId,
                     assignmentId: item.assignmentId,
+                    bookingId: item.bookingId,
+                    hotelId: item.hotelId
                 });
             }
-            
+
         } else {
             // 2️⃣ Xử lý logic cho DỌN DẸP THƯỜNG (NORMAL)
-            
+
             const nextStatus = nextStatusMap[status];
             if (nextStatus) {
                 // 2a. Optimistic UI
@@ -423,7 +456,7 @@ export default function CleaningStaffScreen() {
                 renderItem={({ item }) => (
                     <TaskCard
                         task={item}
-                        onAction={() => handleTaskAction(item.id, item.status, item.priority ,item)}
+                        onAction={() => handleTaskAction(item.id, item.status, item.priority, item)}
                     />
                 )}
                 ListEmptyComponent={
