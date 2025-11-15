@@ -1,5 +1,6 @@
 import Room from "@/models/Room";
 import { UtilityItem } from "@/models/Utility/Utility";
+import Voucher from "@/models/Voucher";
 
 // src/types/navigation.ts
 export type RootStackParamList = {
@@ -68,6 +69,7 @@ export type RootStackParamList = {
 
 
 export type ProfileStackParamList = {
+  
   Profile: undefined; //
   Account: undefined;
   Login: undefined;
@@ -102,6 +104,8 @@ export type HostStackParamList = {
   RoomDetail:undefined;
 }
 export type HostStack ={
+  VoucherList: undefined;
+  FormVoucher: {isEdit: boolean, voucher: Voucher | null};
   // CCCDScanner: undefined;
   CCCDScannerScreen : undefined;
   CameraCaptureView: { onCapture: (imageUri: string) => void }; 

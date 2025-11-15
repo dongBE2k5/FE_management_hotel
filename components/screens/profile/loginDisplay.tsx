@@ -1,14 +1,45 @@
 import Login from '@/components/userProfile/Login';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { getCurrentUser } from '@/service/UserAPI';
 import type { RootStackParamList } from '@/types/navigation';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import { useFocusEffect } from 'expo-router';
 
 export default function HotelDetail() {
     const [showStickyHeader, setShowStickyHeader] = useState(false);
+    const [loading, setLoading] = useState(true);
 
+    useFocusEffect(
+        useCallback(() => {
+            console.log("🏨 LoginDisplay");
+            const checkLogin = async () => {
+                try {
+                  setLoading(true);
+                  const token = await AsyncStorage.getItem('userToken');
+                  if (token) {
+                    const user = await getCurrentUser(token);
+                    console.log("✅ user.Login:", user);
+        
+                    if (user) {
+                      navigation.replace('LoggedAccount');
+                    } 
+                  }
+                } catch (error) {
+                  console.error("❌ Error in checkLogin:", error);
+                } finally {
+                  setLoading(false);
+                }
+              };
+        
+              checkLogin();
+        }, [])
+    );
+    console.log("🏨 LoginDisplay");
+    
     const handleScroll = (event: { nativeEvent: { contentOffset: { y: any; }; }; }) => {
         const scrollY = event.nativeEvent.contentOffset.y;
         setShowStickyHeader(scrollY > 100); // Thay đổi giá trị nếu cần điều chỉnh

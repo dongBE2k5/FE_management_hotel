@@ -133,6 +133,14 @@ import axios from "axios";
     return response.data;
   }
   
+  async function updateUtilityIsUsed(utilityId: number, isUsed: string) {
+    const response = await axios.put(`${BaseUrl}/utility/${utilityId}/used/${isUsed}`);
+    if (!response.status) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    console.log("response", response);
+    return response.data;
+  }
   
-  export { createUtilityOfHotel, deleteUtilityOfHotel, getAllUtilityByType, getTypeOfRoomUtilityOfHotelByHotelIdAndType, getUtilityByHotel, getUtilityOfHotelByHotelIdAndType, getUtilityOfHotelById, updateUtilityOfHotel, updateUtilityOfHotelById };
+  export { createUtilityOfHotel, deleteUtilityOfHotel, getAllUtilityByType, getTypeOfRoomUtilityOfHotelByHotelIdAndType, getUtilityByHotel, getUtilityOfHotelByHotelIdAndType, getUtilityOfHotelById, updateUtilityIsUsed, updateUtilityOfHotel, updateUtilityOfHotelById };
 

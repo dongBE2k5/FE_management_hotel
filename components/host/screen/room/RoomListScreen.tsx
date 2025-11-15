@@ -126,7 +126,7 @@ export default function RoomListScreen() {
            
             
             fetchRooms(hotelId);
-        }, [])
+        }, [hotelId])
     );
 
     const fetchRooms = async (hotelId: number) => {

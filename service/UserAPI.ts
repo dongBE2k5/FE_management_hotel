@@ -66,6 +66,7 @@ async function logoutFunction(): Promise<LogoutResponse> {
   
     await AsyncStorage.removeItem('userToken');
     await AsyncStorage.removeItem('userId');
+    await AsyncStorage.removeItem('role')
 
     return { success: true, message: "Đăng xuất thành công!" };
   } catch (error: any) {
@@ -274,8 +275,5 @@ async function updateProfile(
 export default updateProfile;
 
 
-export {
-  getUserById, loginFunction, register, logoutFunction, getCurrentUser, sendOtp,
-  resetPassword, changePassword, updateProfile
-};
+export { changePassword, getCurrentUser, getUserById, loginFunction, logoutFunction, register, resetPassword, sendOtp, updateProfile };
 

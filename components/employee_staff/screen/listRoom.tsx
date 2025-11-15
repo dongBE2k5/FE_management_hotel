@@ -1,7 +1,7 @@
+import { useHost } from '@/context/HostContext';
 import { getAllBookingsByHotelId } from '@/service/BookingAPI';
 import { connectAndSubscribeBooking, disconnect } from '@/service/Realtime/BookingWS';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
@@ -59,20 +59,22 @@ export default function ListRoom() {
     });
 
     const [data, setData] = useState([]);
-
+    const { hotelId } = useHost();
+    console.log("HOTEL ID", hotelId);
+    
     useFocusEffect(
         useCallback(() => {
             let isMounted = true;
             const fetchBookings = async () => {
                 try {
-                    const hotelIdStr = await AsyncStorage.getItem('hotelID');
-                    const hotelId = hotelIdStr ? Number(hotelIdStr) : null;
+                    // const hotelIdStr = await AsyncStorage.getItem('hotelID');
+                    // const hotelId = hotelIdStr ? Number(hotelIdStr) : null;
                     if (!hotelId) {
                         console.error("Hotel ID không hợp lệ.");
                         return;
                     }
                     const [bookings] = await Promise.all([
-                        getAllBookingsByHotelId(hotelId),
+                        getAllBookingsByHotelId(Number(hotelId)),
                     ]);
 
                     const sortedData = bookings.sort(
@@ -82,6 +84,8 @@ export default function ListRoom() {
                     const formattedData = sortedData.map(mapBookingData);
 
                     setData(formattedData);
+                    console.log("DATA", formattedData);
+                    
                 } catch (error) {
                     console.log("Lỗi", error);
                 }
