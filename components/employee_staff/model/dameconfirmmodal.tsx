@@ -164,7 +164,7 @@ export default function DamageConfirmModal({
                   onPress={() => {
                     // Vẫn chỉ truyền damagedItems,
                     // vì FeedbackModal đã có usedServices trong state của nó
-                    onBackToConstdetailmodal?.(damagedItems);
+                    onBackToConstdetailmodal?.(damagedItems,true);
                   }}
                 >
                   <Text style={styles.btnText}>Xác nhận & Thêm vào hóa đơn</Text>

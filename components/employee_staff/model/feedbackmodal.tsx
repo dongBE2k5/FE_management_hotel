@@ -21,7 +21,8 @@ export default function FeedbackModal({
     roomNumber = "P.???", 
     activeRequest,
     onReportReceived, 
-    bookingId, // 👈 Nhận bookingId
+    bookingId,
+    isPaid // 👈 Nhận bookingId
 }) {
     const [isLoadingItems, setIsLoadingItems] = useState(false); 
     const [damagedItems, setDamagedItems] = useState([]); 
@@ -256,9 +257,10 @@ export default function FeedbackModal({
                 }}
 
                 // 👈 SỬA: onBackToConstdetailmodal
-                onBackToConstdetailmodal={(itemsFromDamageModal) => {
+                onBackToConstdetailmodal={(itemsFromDamageModal,isPaid) => {
                     // 'usedServices' (từ state) giờ là mảng
                     onReportReceived(itemsFromDamageModal, usedServices); 
+                    isPaid
                     setShowDamageModal(false);
                     onClose(); 
                     onCloseAll?.(); 
