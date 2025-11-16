@@ -43,6 +43,37 @@ async function createPayment(
     }
   }
 }
+async function createPaymentMumanual (
+  orderTotal: number,
+  method: string,
+  bookingId: number,
+
+): Promise<PaymentResponse | undefined> {
+  try {
+ 
+    const params = new URLSearchParams();
+    params.append('amount', orderTotal.toString());
+    params.append('orderInfo', bookingId.toString());
+    params.append('method', method);
+  
+
+
+    const response = await axios.post(`${BaseUrl}/pay/createpaymanual`, params);
+
+    console.log('✅ Đã thanh toán thành công ');
+    // console.log(response.data);
+
+    return response.data;
+  } catch (error) {
+    console.log('❌ Link thanh toán bị lỗi:');
+    if (axios.isAxiosError(error)) {
+      console.log('Message:', error.message);
+      console.log('Response:', error.response?.data);
+    } else {
+      console.log(error);
+    }
+  }
+}
 
 
 /**
@@ -84,6 +115,7 @@ async function getAllPayments(): Promise<Payment[] | null> {
 }
 export default {
   createPayment,
+  createPaymentMumanual,
   getAllPayments,
   getPaymentById,
 };

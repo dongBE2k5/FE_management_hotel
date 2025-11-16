@@ -103,10 +103,10 @@ export default function HotelList() {
 
     return (
         <View style={styles.container}>
-            <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("CreateHotel")}>
+            {/* <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("CreateHotel")}>
                 <Ionicons name="add-circle-outline" size={28} color="#fff" />
                 <Text style={styles.addText}>Thêm khách sạn</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             <FlatList
                 data={hotels}

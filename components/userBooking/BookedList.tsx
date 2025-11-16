@@ -20,11 +20,14 @@ export default function BookedList() {
   const [countdown, setCountdown] = useState(60);
   const [loading, setLoading] = useState(false);
   const [filterStatus, setFilterStatus] = useState("CHUA_THANH_TOAN");
-  const filteredBookings = filterStatus
-    ? bookings.filter((b) => b.status === filterStatus)
-    : bookings;
+  const filteredBookings = []
+  // filterStatus
+  //   ? bookings.filter((b) => b.status === filterStatus)
+  //   : bookings;
   const navigation = useNavigation();
   const fetchBookings = async () => {
+    console.log(bookings);
+    
     try {
       setLoading(true);
       const userId = await AsyncStorage.getItem("userId");

@@ -1,5 +1,6 @@
 import BaseUrl from "@/constants/BaseURL";
 import Room from "@/models/Room";
+import RoomRequest from "@/models/Room/RoomRequest";
 import axios from "axios";
 
 async function getRoomByHotel(id: number): Promise<Room[]> {
@@ -61,5 +62,14 @@ async function getRoomById(id: number): Promise<Room> {
   return data;
 }
 
-export { addRoom, getRoomAvailableByHotel, getRoomByHotel, getRoomById };
+async function updateRoom(id: number, room: RoomRequest): Promise<Room> {
+  const res = await axios.put(`${BaseUrl}/rooms/${id}`, room);
+  if (res?.status !== 200) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+  console.log("res Room", res?.data);
+  return res?.data;
+}
+
+export { addRoom, getRoomAvailableByHotel, getRoomByHotel, getRoomById, updateRoom };
 

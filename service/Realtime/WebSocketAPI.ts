@@ -138,11 +138,12 @@ export const fetchInitialRequests = async (
  */
 export const sendRequest = async (
   payload: RequestPayload,
-  roomId?: number
+  roomId?: number,
+  bookingId?: number
 
 ) => {
   try {
-    const response = await axios.post<Request>(BASE_URL, payload, roomId ? { params: { roomId } } : undefined);
+    const response = await axios.post<Request>(BASE_URL, payload, roomId && bookingId ? { params: { roomId ,bookingId}, } : undefined);
     console.log("📤 Gửi yêu cầu thành công:", response.data);
     return response.data; // Trả về response.data
   } catch (error) {

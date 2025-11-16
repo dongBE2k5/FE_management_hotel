@@ -52,10 +52,10 @@ export default function Login() {
     
         await AsyncStorage.multiRemove(['userId', 'role', 'userToken']);
 
-        Alert.alert('Thành công', 'Đăng nhập thành công!', [
-          {
-            text: 'OK',
-            onPress: async () => {
+        // Alert.alert('Thành công', 'Đăng nhập thành công!', [
+        //   {
+        //     text: 'OK',
+        //     onPress: async () => {
               // 3. Lưu thông tin vào bộ nhớ
               await AsyncStorage.multiSet([
                 ['userId', res.id.toString()],
@@ -67,11 +67,10 @@ export default function Login() {
               setUser(res);
 
               // 5. XÓA điều hướng tại đây. UserContext sẽ xử lý.
-              navigation.replace('LoggedAccount');
-              // DevSettings.reload();
-            },
-          },
-        ]);
+              router.replace('/');
+        //     },
+        //   },
+        // ]);
       } else {
         Alert.alert(
           'Lỗi đăng nhập',

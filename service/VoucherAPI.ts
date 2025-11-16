@@ -1,3 +1,5 @@
+import VoucherRequest from '@/models/Voucher/VoucherRequest';
+import axios from 'axios';
 import BaseUrl from '../constants/BaseURL';
 import Voucher from '../models/Voucher';
 
@@ -63,3 +65,32 @@ export async function useVoucher(voucherId: number, originalPrice: number) {
     return text;
   }
 }
+
+const getVouchersByHotelId = async (hotelId: number): Promise<Voucher[]> => {
+  const res = await axios.get(`${BaseUrl}/vouchers/hotel/${hotelId}`);
+  if (res.status !== 200) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+  console.log("🏨 Voucher theo hotelId:", res.data);
+  return res.data;
+}
+
+const addVoucherOfHotel = async (voucher: VoucherRequest): Promise<Voucher | null> => {
+  const res = await axios.post(`${BaseUrl}/vouchers`, voucher);
+  if (res.status !== 200) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+  console.log("🏨 Voucher thêm thành công:", res.data);
+  return res.data;
+}
+
+const updateVoucherOfHotel = async (id: number, voucher: VoucherRequest): Promise<Voucher | null> => {
+  const res = await axios.put(`${BaseUrl}/vouchers/${id}`, voucher);
+  if (res.status !== 200) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+  console.log("🏨 Voucher cập nhật thành công:", res.data);
+  return res.data;
+}
+export { addVoucherOfHotel, getVouchersByHotelId, updateVoucherOfHotel };
+

@@ -63,9 +63,10 @@ async function logoutFunction(): Promise<LogoutResponse> {
       throw new Error(errorBody);
     }
 
-  
+
     await AsyncStorage.removeItem('userToken');
     await AsyncStorage.removeItem('userId');
+    await AsyncStorage.removeItem('role')
 
     return { success: true, message: "Đăng xuất thành công!" };
   } catch (error: any) {
@@ -211,17 +212,17 @@ async function changePassword(
       let errorMessage = "Đổi mật khẩu thất bại."; // Giá trị mặc định
 
       try {
-     
+
         const errorObject = JSON.parse(errText);
         if (errorObject.message) {
           errorMessage = errorObject.message;
         } else {
           errorMessage = errText; // Trường hợp không có trường message
         }
-      } catch (e) { 
+      } catch (e) {
         errorMessage = errText;
       }
-      
+
 
       return { success: false, message: errorMessage };
     }
@@ -311,9 +312,8 @@ async function verifyRegisterOtp(email: string, otp: string): Promise<{ success:
 
 export default updateProfile;
 
-
 export {
   getUserById, loginFunction, register, logoutFunction, getCurrentUser, sendOtp,
-  resetPassword, changePassword, updateProfile,sendRegisterOtp, verifyRegisterOtp
+  resetPassword, changePassword, updateProfile, sendRegisterOtp, verifyRegisterOtp
 };
 

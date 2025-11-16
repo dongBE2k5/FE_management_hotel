@@ -121,9 +121,12 @@ export default function RoomListScreen() {
 
     useFocusEffect(
         useCallback(() => {
+             console.log("hotelId",hotelId);
             if (!hotelId) return;
+           
+            
             fetchRooms(hotelId);
-        }, [])
+        }, [hotelId])
     );
 
     const fetchRooms = async (hotelId: number) => {

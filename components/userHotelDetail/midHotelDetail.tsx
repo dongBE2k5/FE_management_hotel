@@ -16,7 +16,7 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, Image, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import RoomCard from "./roomCard";
 import RoomZone from './roomZone';
 
@@ -66,15 +66,15 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
     const phongGiaDinh = rooms.filter(room => room.typeRoom == "GIA_DINH");
 
     const utilityOfTypeRoom1 = utility!.filter((utility: TypeOfRoomUtility) => utility.typeOfRoomId
-    == 1);
+        == 1);
     const utilityOfTypeRoom2 = utility!.filter((utility: TypeOfRoomUtility) => utility.typeOfRoomId
-    == 2);
+        == 2);
     const utilityOfTypeRoom3 = utility!.filter((utility: TypeOfRoomUtility) => utility.typeOfRoomId
-    == 3);
+        == 3);
 
     console.log("utilityOfTypeRoom1", utilityOfTypeRoom1);
 
-    
+
     // useEffect(() => {
     //     if (checkIn) {
     //       const nextDay = new Date(checkIn);
@@ -98,19 +98,19 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
 
         const fetchUtilityOfHotel = async (id: number) => {
             console.log("fetchUtilityOfHotel");
-            
+
             try {
                 const data = await getTypeOfRoomUtilityOfHotelByHotelIdAndType(id, "INROOM");
-                    console.log("data", data.data.utilities);
-                setUtility(data.data.utilities as TypeOfRoomUtility[]); 
+                console.log("data", data.data.utilities);
+                setUtility(data.data.utilities as TypeOfRoomUtility[]);
                 console.log("utility 1: ", utility!.filter((utility: TypeOfRoomUtility) => utility.typeOfRoomId
-                == 1));
-                
+                    == 1));
+
 
             } catch (err) {
                 console.error(err);
             }
-        }; 
+        };
         fetchUtilityOfHotel(hotelId);
         fetchRoomAvailableByHotel(hotelId, checkIn, checkOut!);
     }, [isSearch]);
@@ -417,8 +417,8 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
             {phongDon.length > 0 && (
                 <>
                     <RoomZone
-                     utilityOfTypeRoom={utilityOfTypeRoom1} 
-                    roomTypeImage={roomTypeImage.filter(image => image.roomTypeId == 1)} />
+                        utilityOfTypeRoom={utilityOfTypeRoom1}
+                        roomTypeImage={roomTypeImage.filter(image => image.roomTypeId == 1)} />
 
                     <RoomCard checkInDate={checkIn} checkOutDate={checkOut} rooms={rooms.filter(room => room.typeRoom == "DON")} />
                 </>
@@ -441,83 +441,176 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
             )}
 
 
-
+            <ModalChooseDate checkIn={checkIn} checkOut={checkOut || new Date()} nights={nights} formatVN={formatVN} setShowIn={setShowIn} setShowOut={setShowOut} showIn={showIn} showOut={showOut} setCheckIn={setCheckIn} setCheckOut={setCheckOut} tempCheckIn={tempCheckIn} tempCheckOut={tempCheckOut || new Date()} setTempCheckIn={setTempCheckIn} setTempCheckOut={setTempCheckOut} isSearch={isSearch} setIsSearch={setIsSearch} />
         </View>
     );
 }
 
 //hiển thị voucher ks
 function HotelVoucherSection({ hotelId }: Props) {
-  const [hotelVouchers, setHotelVouchers] = useState<Voucher[]>([]);
-  const [savedVouchers, setSavedVouchers] = useState<Voucher[]>([]);
-  const [userId, setUserId] = useState<number | null>(null);
+    const [hotelVouchers, setHotelVouchers] = useState<Voucher[]>([]);
+    const [savedVouchers, setSavedVouchers] = useState<Voucher[]>([]);
+    const [userId, setUserId] = useState<number | null>(null);
 
-  // ✅ Lấy userId trước
-  useEffect(() => {
-    const fetchUserAndVouchers = async () => {
-      try {
-        const idStr = await AsyncStorage.getItem("userId");
-        if (!idStr) return;
+    // ✅ Lấy userId trước
+    useEffect(() => {
+        const fetchUserAndVouchers = async () => {
+            try {
+                const idStr = await AsyncStorage.getItem("userId");
+                if (!idStr) return;
 
-        const id = Number(idStr);
-        setUserId(id);
+                const id = Number(idStr);
+                setUserId(id);
 
-        // 🔹 Load voucher khách sạn hiện tại
-        const allVouchers = await getAllVouchers();
-        const hotelVs = allVouchers.filter(v => v.hotelId === hotelId);
-        setHotelVouchers(hotelVs);
+                // 🔹 Load voucher khách sạn hiện tại
+                const allVouchers = await getAllVouchers();
+                const hotelVs = allVouchers.filter(v => v.hotelId === hotelId);
+                setHotelVouchers(hotelVs);
 
-        // 🔹 Load voucher đã lưu của user
-        const saved = await getUserVouchers(id);
-        setSavedVouchers(saved);
-      } catch (error) {
-        console.error("❌ Lỗi khi tải dữ liệu voucher:", error);
-      }
+                // 🔹 Load voucher đã lưu của user
+                const saved = await getUserVouchers(id);
+                setSavedVouchers(saved);
+            } catch (error) {
+                console.error("❌ Lỗi khi tải dữ liệu voucher:", error);
+            }
+        };
+
+        fetchUserAndVouchers();
+    }, [hotelId]); // reload khi đổi khách sạn
+
+    const handleSaveVoucher = async (voucher: Voucher) => {
+        if (!userId) return;
+
+        const res = await saveUserVoucher(userId, voucher.id!);
+        if (res) {
+            Alert.alert("✅ Thành công", "Voucher đã được lưu!");
+            setSavedVouchers((prev) => [...prev, voucher]);
+        } else {
+            Alert.alert("❌ Lỗi", "Voucher này đã được lưu trước đó!");
+        }
     };
 
-    fetchUserAndVouchers();
-  }, [hotelId]); // reload khi đổi khách sạn
+    const isVoucherSaved = (voucherId: number) =>
+        savedVouchers.some((v) => v.id === voucherId);
 
-  const handleSaveVoucher = async (voucher: Voucher) => {
-    if (!userId) return;
+    if (hotelVouchers.length === 0) return null;
 
-    const res = await saveUserVoucher(userId, voucher.id!);
-    if (res) {
-      Alert.alert("✅ Thành công", "Voucher đã được lưu!");
-      setSavedVouchers((prev) => [...prev, voucher]);
-    } else {
-      Alert.alert("❌ Lỗi", "Voucher này đã được lưu trước đó!");
-    }
-  };
+    return (
+        <View style={styles.section}>
+            <Text style={styles.title}>🎟 Ưu đãi của khách sạn</Text>
 
-  const isVoucherSaved = (voucherId: number) =>
-    savedVouchers.some((v) => v.id === voucherId);
-
-  if (hotelVouchers.length === 0) return null;
-
-  return (
-    <View style={styles.section}>
-      <Text style={styles.title}>🎟 Ưu đãi của khách sạn</Text>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={{ marginTop: 10 }}
-      >
-        {hotelVouchers.map((v) => (
-          <View key={v.id} style={{ marginRight: 10,marginBottom:5 }}>
-            <VoucherCard
-              voucher={v}
-              onSave={() => handleSaveVoucher(v)}
-              isSaved={isVoucherSaved(v.id!)} // ✅ Giờ sẽ nhận đúng trạng thái
-            />
-          </View>
-        ))}
-      </ScrollView>
-    </View>
-  );
+            <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ marginTop: 10 }}
+            >
+                {hotelVouchers.map((v) => (
+                    <View key={v.id} style={{ marginRight: 10, marginBottom: 5 }}>
+                        <VoucherCard
+                            voucher={v}
+                            onSave={() => handleSaveVoucher(v)}
+                            isSaved={isVoucherSaved(v.id!)} // ✅ Giờ sẽ nhận đúng trạng thái
+                        />
+                    </View>
+                ))}
+            </ScrollView>
+        </View>
+    );
 }
 
+function ModalChooseDate({ checkIn, checkOut, nights, formatVN, setShowIn, setShowOut, showIn, showOut, setCheckIn, setCheckOut, tempCheckIn, tempCheckOut, setTempCheckIn, setTempCheckOut, setIsSearch }: { checkIn: Date, checkOut: Date, nights: number, formatVN: (date: Date) => string, setShowIn: (show: boolean) => void, setShowOut: (show: boolean) => void, showIn: boolean, showOut: boolean, setCheckIn: (date: Date) => void, setCheckOut: (date: Date) => void, tempCheckIn: Date, tempCheckOut: Date, setTempCheckIn: (date: Date) => void, setTempCheckOut: (date: Date) => void, isSearch: boolean, setIsSearch: (search: boolean) => void }) {
+    return (
+        <SafeAreaView style={styles.wrapper}>
+            <View style={styles.container}>
+                <Text style={styles.hotelTitle}>Chọn ngày nhận phòng và trả phòng</Text>
+
+                {/* Ngày nhận phòng + số đêm */}
+                <View style={styles.row}>
+                    <TouchableOpacity style={styles.leftBox} onPress={() => setShowIn(true)}>
+                        <Text style={styles.label}>Ngày nhận phòng</Text>
+                        <Text style={styles.value}>{formatVN(checkIn)}</Text>
+                    </TouchableOpacity>
+
+                    <View style={styles.rightBox}>
+                        <Text style={styles.label}>Số đêm nghỉ</Text>
+                        <Text style={[styles.value, styles.bold]}>
+                            {checkOut ? `${nights} đêm` : '--'}
+                        </Text>
+                    </View>
+                </View>
+
+                {/* Trả phòng */}
+                <TouchableOpacity style={styles.bottomBox} onPress={() => setShowOut(true)}>
+                    <Text style={styles.label}>Trả phòng</Text>
+                    <Text style={styles.value}>{checkOut ? formatVN(checkOut) : 'Chưa chọn'}</Text>
+                </TouchableOpacity>
+
+                {/* MODAL NHẬN PHÒNG */}
+                <Modal transparent animationType="slide" visible={showIn} onRequestClose={() => setShowIn(false)}>
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContainer}>
+                            <View style={styles.modalHeader}>
+                                <TouchableOpacity onPress={() => setShowIn(false)}>
+                                    <Text style={styles.modalBtn}>Hủy</Text>
+                                </TouchableOpacity>
+                                <Text style={styles.modalTitle}>Nhận phòng</Text>
+                                <TouchableOpacity onPress={() => {
+                                    setCheckIn(tempCheckIn);
+                                    if (checkOut && tempCheckIn >= checkOut) setCheckOut(null);
+                                    setShowIn(false);
+                                }}>
+                                    <Text style={styles.modalBtn}>OK</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            <DateTimePicker
+                                value={tempCheckIn}
+                                minimumDate={new Date()}
+                                mode="date"
+                                display="spinner"
+                                style={{ flex: 1 }}
+                                onChange={(_, date) => date && setTempCheckIn(date)}
+                            />
+                        </View>
+                    </View>
+                </Modal>
+
+                {/* MODAL TRẢ PHÒNG */}
+                <Modal transparent animationType="slide" visible={showOut} onRequestClose={() => setShowOut(false)}>
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContainer}>
+                            <View style={styles.modalHeader}>
+                                <TouchableOpacity onPress={() => setShowOut(false)}>
+                                    <Text style={styles.modalBtn}>Hủy</Text>
+                                </TouchableOpacity>
+                                <Text style={styles.modalTitle}>Trả phòng</Text>
+                                <TouchableOpacity onPress={() => {
+                                    if (tempCheckOut) setCheckOut(tempCheckOut);
+                                    setShowOut(false);
+                                }}>
+                                    <Text style={styles.modalBtn}>OK</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            <DateTimePicker
+                                value={tempCheckOut || new Date(checkIn.getTime() + 86400000)}
+                                minimumDate={new Date(checkIn.getTime() + 86400000)}
+                                mode="date"
+                                display="spinner"
+                                style={{ flex: 1 }}
+                                onChange={(_, date) => date && setTempCheckOut(date)}
+                            />
+                        </View>
+                    </View>
+                </Modal>
+
+                <View style={{ marginTop: 12 }}>
+                    <Button title="Tìm kiếm" onPress={() => setIsSearch(true)} />
+                </View>
+            </View>
+        </SafeAreaView>
+    )
+}
 const styles = StyleSheet.create({
     container: {
         borderRadius: 10,
@@ -556,7 +649,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#000',
     },
-    section: { margin: 15 ,},
+    section: { margin: 15, },
     row: { flexDirection: 'row', alignItems: 'center' },
     title: { color: 'black', fontWeight: 'bold', fontSize: 15 },
     subTitle: { color: '#999494', fontWeight: 'bold', fontSize: 12, marginLeft: 5, marginTop: 5 },
@@ -599,4 +692,42 @@ const styles = StyleSheet.create({
         // Elevation Android
         elevation: 2,
     },
+    /* MODAL STYLES */
+    modalOverlay: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        backgroundColor: 'rgba(0,0,0,0.4)'
+    },
+    modalContainer: {
+        backgroundColor: '#fff',
+        height: 300,
+        borderTopLeftRadius: 14,
+        borderTopRightRadius: 14
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderColor: '#eee'
+    },
+    modalTitle: {
+        fontSize: 16,
+        fontWeight: 'bold'
+    },
+    modalBtn: {
+        color: '#009EDE',
+        fontWeight: 'bold',
+        fontSize: 15
+    },
+    wrapper: {
+        flex: 1,
+        backgroundColor: '#fff'
+      },
+      hotelTitle: {
+        fontWeight: 'bold',
+        marginBottom: 6,
+        fontSize: 16
+      },
 });

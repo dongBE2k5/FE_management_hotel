@@ -20,7 +20,7 @@ import { useFocusEffect } from "expo-router";
 const Stack = createStackNavigator<HostStack>();
 
 export default function HomeLayout() {
-  const [isHost, setIsHost] = useState<boolean | null>(true); // null: chưa xác định
+  const [isHost, setIsHost] = useState<boolean | null>(false); // null: chưa xác định
   const [loading, setLoading] = useState(false);
 // app/(host)/index.tsx
 useFocusEffect(
@@ -50,7 +50,7 @@ useFocusEffect(
       }
     };
 
-    // fetchHostStatus();
+    fetchHostStatus();
   }, [])
 );
 
@@ -88,8 +88,7 @@ useFocusEffect(
         ) : (
           // 🧾 Nếu chưa là host => hiển thị quy trình KYC
           <>
-            <Stack.Screen name="CCCDScannerScreen" component={CCCDScannerScreen} />
-            <Stack.Screen name="CameraCaptureView" component={CameraCaptureScreen} />
+  
             <Stack.Screen name="KycFormScreen" component={KycFormScreen} />
           </>
         )} */}

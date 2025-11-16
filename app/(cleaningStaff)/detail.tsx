@@ -1,152 +1,111 @@
-import React, { useState } from "react";
-import { Alert, Button, Image, ScrollView, Text, TextInput, View, StyleSheet } from "react-native";
-import * as ImagePicker from "expo-image-picker";
+import React, { useEffect, useState } from 'react';
+import { FlatList, NativeEventEmitter, NativeModules, StyleSheet, Text, View } from 'react-native';
 
-// Sửa lỗi import: bỏ khoảng trắng thừa
-import { createHost, HostFiles } from "@/service/HostAPI";
-import { Asset } from "expo-image-picker"; // Import Asset
+const { SettingsModule, NotificationModule, LoggerModule, AppInfoModule } = NativeModules;
 
-// Định nghĩa lại HostFiles để rõ ràng
-interface HostFiles {
-  cccdMatTruoc?: Asset;
-  cccdMatSau?: Asset;
-  giayPhepKinhDoanh?: Asset;
-}
+export default function NotificationScreen() {
+  const [notifications, setNotifications] = useState([]);
 
-export default function UploadHostHotelForm() {
-  // ✅ Dọn dẹp state: Loại bỏ các trường không cần thiết
-  const [form, setForm] = useState({
-    userId: 3, // Đây là ví dụ, bạn nên lấy từ state/context của user
-    stk: "",
-    nganHang: "",
-    chiNhanh: "",
-    cccd: "",
-    // Đã loại bỏ: cccdMatTruoc, cccdMatSau, giayPhepKinhDoanh, status
-  });
-
-  // Khởi tạo state cho file rõ ràng hơn
-  const [files, setFiles] = useState<HostFiles>({});
-
-  const pickImage = async (key: keyof HostFiles) => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
-    });
-
-    if (!result.canceled && result.assets) { // Kiểm tra result.assets
-      setFiles((prev) => ({
-        ...prev,
-        [key]: result.assets[0],
-      }));
+  useEffect(() => {
+    async function logStart() {
+      const packageName = await AppInfoModule.getPackageName();
+      LoggerModule.logDebug(packageName, '🚀 App đã khởi động!');
     }
-  };
-
-  const handleSubmit = async () => {
-    if (!form.stk || !form.nganHang || !form.cccd) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập đầy đủ STK, Ngân hàng và CCCD.");
-      return;
-    }
-    
-    // Bạn có thể thêm kiểm tra bắt buộc upload file tại đây
-    if (!files.cccdMatTruoc || !files.cccdMatSau) {
-       Alert.alert("Thiếu ảnh", "Vui lòng cung cấp ảnh CCCD mặt trước và mặt sau.");
-       return;
-    }
-
+    // ✅ Log chỉ khi app khởi động
     try {
-      const response = await createHost(form, files);
-      Alert.alert("Thành công", response.message || "Gửi thành công!");
-    } catch (error: any) {
-      console.error("❌ Gửi thất bại:", JSON.stringify(error));
-      Alert.alert("Lỗi", error.response?.data?.message || "Không thể gửi dữ liệu");
+      LoggerModule.logDebug('MyApp', '🚀 App đã khởi động!');
+      LoggerModule.logInfo('MyApp', '🟢 Đang chạy bình thường');
+    } catch (e) {
+      console.warn('LoggerModule chưa sẵn sàng', e);
     }
-  };
+
+    const timer = setTimeout(() => {
+      NotificationModule.getActiveNotifications()
+        .then((data) => {
+          if (Array.isArray(data)) {
+            const vcbNotification = data.filter(
+              (n) => n.package === 'com.VCB' || n.package === 'com.vnpay.bidv'
+            );
+            console.log('🏦 VCB Notifications:', vcbNotification);
+            setNotifications(vcbNotification);
+          } else {
+            console.warn('⚠️ Không phải mảng:', data);
+          }
+        })
+        .catch((err) => console.error('❌ Error:', err));
+
+      try {
+        const eventEmitter = new NativeEventEmitter(NotificationModule);
+        const sub = eventEmitter.addListener('notificationReceived', (data) => {
+          setNotifications((prev) => [data, ...prev]);
+        });
+        return () => sub.remove();
+      } catch (e) {
+        console.error('🚨 NativeEventEmitter lỗi:', e);
+      }
+    }, 1500);
+    logStart()
+    return () => clearTimeout(timer);
+  }, []);
+
+  const renderItem = ({ item }) => (
+    <View style={styles.item}>
+      <Text style={styles.package}>{item.package}</Text>
+      <Text style={styles.title}>{item.title || '(Không có tiêu đề)'}</Text>
+      <Text style={styles.text}>{item.text || '(Không có nội dung)'}</Text>
+    </View>
+  );
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Đăng ký chủ khách sạn</Text>
-
-      <TextInput
-        placeholder="Số tài khoản"
-        value={form.stk}
-        onChangeText={(text) => setForm({ ...form, stk: text })}
-        style={styles.input}
-      />
-
-      <TextInput
-        placeholder="Ngân hàng"
-        value={form.nganHang}
-        onChangeText={(text) => setForm({ ...form, nganHang: text })}
-        style={styles.input}
-      />
-
-      <TextInput
-        placeholder="Chi nhánh"
-        value={form.chiNhanh}
-        onChangeText={(text) => setForm({ ...form, chiNhanh: text })}
-        style={styles.input}
-      />
-
-      <TextInput
-        placeholder="CCCD"
-        value={form.cccd}
-        onChangeText={(text) => setForm({ ...form, cccd: text })}
-        keyboardType="numeric"
-        style={styles.input}
-      />
-
-      <View style={styles.imagePickerContainer}>
-        <Button title="Chọn CCCD mặt trước" onPress={() => pickImage("cccdMatTruoc")} />
-        {files.cccdMatTruoc && (
-          <Image source={{ uri: files.cccdMatTruoc.uri }} style={styles.image} />
-        )}
-      </View>
-
-      <View style={styles.imagePickerContainer}>
-        <Button title="Chọn CCCD mặt sau" onPress={() => pickImage("cccdMatSau")} />
-        {files.cccdMatSau && (
-          <Image source={{ uri: files.cccdMatSau.uri }} style={styles.image} />
-        )}
-      </View>
-      
-      <View style={styles.imagePickerContainer}>
-        <Button title="Chọn Giấy phép kinh doanh (nếu có)" onPress={() => pickImage("giayPhepKinhDoanh")} />
-        {files.giayPhepKinhDoanh && (
-          <Image source={{ uri: files.giayPhepKinhDoanh.uri }} style={styles.image} />
-        )}
-      </View>
-
-      <Button title="Gửi xác nhận" onPress={handleSubmit} color="#2E86DE" />
-    </ScrollView>
+    <View style={styles.container}>
+      <Text style={styles.header}>📲 Danh sách thông báo VCB & BIDV</Text>
+      {notifications.length > 0 ? (
+        <FlatList
+          data={notifications}
+          keyExtractor={(_, i) => i.toString()}
+          renderItem={renderItem}
+        />
+      ) : (
+        <Text style={styles.empty}>Không có thông báo nào hiển thị.</Text>
+      )}
+    </View>
   );
 }
 
-// Thêm một số style cơ bản
 const styles = StyleSheet.create({
-    container: {
-        padding: 20
-    },
-    title: {
-        fontSize: 20,
-        fontWeight: "bold",
-        marginBottom: 10
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: '#ccc',
-        marginBottom: 12,
-        padding: 10,
-        borderRadius: 5
-    },
-    imagePickerContainer: {
-        marginBottom: 15
-    },
-    image: {
-        width: "100%",
-        height: 150,
-        marginVertical: 10,
-        resizeMode: 'contain',
-        borderWidth: 1,
-        borderColor: '#eee'
-    }
+  container: {
+    flex: 1,
+    backgroundColor: '#101010',
+    paddingHorizontal: 16,
+    paddingTop: 40,
+  },
+  header: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  item: {
+    backgroundColor: '#1e1e1e',
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  package: {
+    color: '#5aa9e6',
+    fontWeight: 'bold',
+  },
+  title: {
+    color: '#fff',
+    marginTop: 4,
+  },
+  text: {
+    color: '#ccc',
+    marginTop: 2,
+  },
+  empty: {
+    color: '#888',
+    textAlign: 'center',
+    marginTop: 20,
+  },
 });
