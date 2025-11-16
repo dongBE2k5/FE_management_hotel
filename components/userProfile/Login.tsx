@@ -10,6 +10,7 @@ import { useNavigation, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Alert,
+  DevSettings,
   StyleSheet,
   Text,
   TextInput,
@@ -66,7 +67,8 @@ export default function Login() {
               setUser(res);
 
               // 5. XÓA điều hướng tại đây. UserContext sẽ xử lý.
-              router.replace('/');
+              navigation.replace('LoggedAccount');
+              // DevSettings.reload();
             },
           },
         ]);
