@@ -141,7 +141,13 @@ export default function ZoneHotel() {
                 style={styles.background}
                 resizeMode="cover"
             >
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <LocationSelector
+                        locations={[{ id: 0, name: "Tất cả" }, ...locations]}
+                        changeLocation={changeLocation}
+                    />
 
+                </ScrollView>
                 {/* === ĐÃ XEM GẦN ĐÂY === */}
                 {recentHotels.length > 0 && (
                     <View style={{ marginBottom: 15 }}>
@@ -191,13 +197,7 @@ export default function ZoneHotel() {
                     <Text style={styles.text}>Khách sạn nội địa</Text>
                 </View>
 
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <LocationSelector
-                        locations={[{ id: 0, name: "Tất cả" }, ...locations]}
-                        changeLocation={changeLocation}
-                    />
 
-                </ScrollView>
 
                 <ScrollView
                     horizontal
