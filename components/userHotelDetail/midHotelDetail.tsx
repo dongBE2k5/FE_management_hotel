@@ -16,7 +16,7 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, Image, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RoomCard from "./roomCard";
 import RoomZone from './roomZone';
 
@@ -54,7 +54,7 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
 
     const [checkOut, setCheckOut] = useState<Date | null>(tomorrow);
     const [tempCheckOut, setTempCheckOut] = useState<Date | null>(checkOut);
-
+    const [showModalChooseDate, setShowModalChooseDate] = useState(false);
     const [showIn, setShowIn] = useState(false);
     const [showOut, setShowOut] = useState(false);
     const [rooms, setRooms] = useState<Room[]>([]);
@@ -75,13 +75,6 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
     console.log("utilityOfTypeRoom1", utilityOfTypeRoom1);
 
 
-    // useEffect(() => {
-    //     if (checkIn) {
-    //       const nextDay = new Date(checkIn);
-    //       nextDay.setDate(nextDay.getDate() + 1); // +1 ngày
-    //       setCheckOut(nextDay);
-    //     }
-    //   }, [checkIn]);
     useEffect(() => {
         const fetchRoomAvailableByHotel = async (id: number, checkIn: Date, checkOut: Date) => {
             console.log("fetchRoomAvailableByHotel");
@@ -89,12 +82,16 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
 
             try {
                 const data = await getRoomAvailableByHotel(id, checkIn, checkOut);
+                console.log("data", data);
                 setRooms(data);
-                setIsSearch(false);
             } catch (err) {
                 console.error(err);
             }
         };
+        fetchRoomAvailableByHotel(hotelId, checkIn, checkOut!);
+    }, [showModalChooseDate]);
+    useEffect(() => {
+
 
         const fetchUtilityOfHotel = async (id: number) => {
             console.log("fetchUtilityOfHotel");
@@ -112,7 +109,6 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
             }
         };
         fetchUtilityOfHotel(hotelId);
-        fetchRoomAvailableByHotel(hotelId, checkIn, checkOut!);
     }, [isSearch]);
     useEffect(() => {
         const fetchRates = async () => {
@@ -153,9 +149,38 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
     const insets = useSafeAreaInsets();
 
     return (
-        <View
-        >
+        <View>
+            <Button title='Open Modal' onPress={() => {
+                console.log("Open Modal");
+                setShowModalChooseDate(true);
+            }} />
             <View style={styles.container}>
+                {/* Hàng trên: Nhận phòng + Trả phòng */}
+                <TouchableOpacity onPress={() => setShowModalChooseDate(true)}>
+                    <View style={[styles.row, { marginBottom: 0 }]}>
+                        {/* Nhận phòng */}
+                        <View style={styles.box}>
+                            <Text style={styles.label}>Nhận phòng</Text>
+                            <Text style={styles.date}>{formatVN(checkIn)}</Text>
+                        </View>
+
+                        {/* Trả phòng */}
+                        <View style={styles.box}>
+                            <Text style={styles.label}>Trả phòng</Text>
+                            <Text style={styles.date}>
+                                {checkOut ? formatVN(checkOut) : "Chưa chọn"}
+                            </Text>
+                        </View>
+                    </View>
+                </TouchableOpacity>
+
+                {/* Số đêm */}
+                <View style={styles.nightBox}>
+                    <Text style={styles.nightText}>Số đêm: </Text>
+                    <Text style={styles.nightValue}>{nights} đêm</Text>
+                </View>
+            </View>
+            /* <View style={[styles.container, { display: 'none' }]}>
                 <Text style={{ fontWeight: 'bold', marginBottom: 5 }}>Khách sạn Mường Thanh Grand Đà Nẵng</Text>
                 {/* Ngày nhận phòng + số đêm */}
                 <View style={styles.row}>
@@ -341,7 +366,7 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                 </View>
 
 
-            </View>
+            </View>   */
             <HotelVoucherSection hotelId={hotelId} />
             {/* Tiện ích */}
             <View style={styles.section}>
@@ -441,7 +466,8 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
             )}
 
 
-            <ModalChooseDate checkIn={checkIn} checkOut={checkOut || new Date()} nights={nights} formatVN={formatVN} setShowIn={setShowIn} setShowOut={setShowOut} showIn={showIn} showOut={showOut} setCheckIn={setCheckIn} setCheckOut={setCheckOut} tempCheckIn={tempCheckIn} tempCheckOut={tempCheckOut || new Date()} setTempCheckIn={setTempCheckIn} setTempCheckOut={setTempCheckOut} isSearch={isSearch} setIsSearch={setIsSearch} />
+            {showModalChooseDate && <ModalChooseDate showModalChooseDate={showModalChooseDate} setShowModalChooseDate={setShowModalChooseDate} checkIn={checkIn} setCheckIn={setCheckIn} checkOut={checkOut} setCheckOut={setCheckOut} />}
+
         </View>
     );
 }
@@ -518,99 +544,249 @@ function HotelVoucherSection({ hotelId }: Props) {
     );
 }
 
-function ModalChooseDate({ checkIn, checkOut, nights, formatVN, setShowIn, setShowOut, showIn, showOut, setCheckIn, setCheckOut, tempCheckIn, tempCheckOut, setTempCheckIn, setTempCheckOut, setIsSearch }: { checkIn: Date, checkOut: Date, nights: number, formatVN: (date: Date) => string, setShowIn: (show: boolean) => void, setShowOut: (show: boolean) => void, showIn: boolean, showOut: boolean, setCheckIn: (date: Date) => void, setCheckOut: (date: Date) => void, tempCheckIn: Date, tempCheckOut: Date, setTempCheckIn: (date: Date) => void, setTempCheckOut: (date: Date) => void, isSearch: boolean, setIsSearch: (search: boolean) => void }) {
+type ModalChooseDateProps = {
+    showModalChooseDate: boolean;
+    setShowModalChooseDate: (show: boolean) => void;
+    type: "checkIn" | "checkOut";
+    checkIn: Date;
+    setCheckIn: (date: Date) => void;
+    checkOut: Date | null;
+    setCheckOut: (date: Date | null) => void;
+};
+
+const ModalChooseDate = ({
+    showModalChooseDate,
+    setShowModalChooseDate,
+    type,
+    checkIn,
+    setCheckIn,
+    checkOut,
+    setCheckOut,
+}: ModalChooseDateProps) => {
+    const [modalChooseDateType, setModalChooseDateType] = useState<"checkIn" | "checkOut" | undefined>(undefined);
+    console.log("modalChooseDateType", modalChooseDateType);
+
+    console.log("checkIn", checkIn);
+    console.log("checkOut", checkOut);
+
+
+    const formatVN = (date: Date) =>
+        format(date, "EEE, d 'thg' M yyyy", { locale: vi });
+
     return (
-        <SafeAreaView style={styles.wrapper}>
-            <View style={styles.container}>
-                <Text style={styles.hotelTitle}>Chọn ngày nhận phòng và trả phòng</Text>
+        <Modal
+            transparent
+            animationType="slide"
+            visible={showModalChooseDate}
+            onRequestClose={() => setShowModalChooseDate(false)}
+        >
+            <View style={styles.overlay}>
+                <View style={styles.sheet}>
+                    {/* Drag handle */}
+                    <View style={styles.handle} />
 
-                {/* Ngày nhận phòng + số đêm */}
-                <View style={styles.row}>
-                    <TouchableOpacity style={styles.leftBox} onPress={() => setShowIn(true)}>
-                        <Text style={styles.label}>Ngày nhận phòng</Text>
-                        <Text style={styles.value}>{formatVN(checkIn)}</Text>
-                    </TouchableOpacity>
+                    {/* Header */}
+                    <View style={styles.header}>
+                        <TouchableOpacity onPress={() => setShowModalChooseDate(false)}>
+                            <Text style={styles.cancel}>Hủy</Text>
+                        </TouchableOpacity>
 
-                    <View style={styles.rightBox}>
-                        <Text style={styles.label}>Số đêm nghỉ</Text>
-                        <Text style={[styles.value, styles.bold]}>
-                            {checkOut ? `${nights} đêm` : '--'}
+                        <Text style={styles.title}>
+                            {type === "checkIn" ? "Chọn ngày nhận phòng" : "Chọn ngày trả phòng"}
                         </Text>
+
+                        <TouchableOpacity
+                            onPress={() => {
+                                setShowModalChooseDate(false);
+                            }}
+                        >
+                            <Text style={[styles.actionText, { color: '#007AFF' }]}>OK</Text>
+                        </TouchableOpacity>
                     </View>
-                </View>
 
-                {/* Trả phòng */}
-                <TouchableOpacity style={styles.bottomBox} onPress={() => setShowOut(true)}>
-                    <Text style={styles.label}>Trả phòng</Text>
-                    <Text style={styles.value}>{checkOut ? formatVN(checkOut) : 'Chưa chọn'}</Text>
-                </TouchableOpacity>
+                    {/* Divider */}
+                    <View style={styles.divider} />
 
-                {/* MODAL NHẬN PHÒNG */}
-                <Modal transparent animationType="slide" visible={showIn} onRequestClose={() => setShowIn(false)}>
-                    <View style={styles.modalOverlay}>
-                        <View style={styles.modalContainer}>
-                            <View style={styles.modalHeader}>
-                                <TouchableOpacity onPress={() => setShowIn(false)}>
-                                    <Text style={styles.modalBtn}>Hủy</Text>
-                                </TouchableOpacity>
-                                <Text style={styles.modalTitle}>Nhận phòng</Text>
-                                <TouchableOpacity onPress={() => {
-                                    setCheckIn(tempCheckIn);
-                                    if (checkOut && tempCheckIn >= checkOut) setCheckOut(null);
-                                    setShowIn(false);
-                                }}>
-                                    <Text style={styles.modalBtn}>OK</Text>
-                                </TouchableOpacity>
-                            </View>
+                    {/* Picker */}
+                    <View style={[styles.content, { padding: 10 }]}>
+                        <TouchableOpacity
+                            style={styles.dateBox}
+                            onPress={() => {
+                                setModalChooseDateType("checkIn");
+                                setShowModalChooseDate(true);
+                            }}
+                        >
+                            <Text style={styles.label}>Ngày nhận phòng</Text>
+                            <Text style={styles.value}>{formatVN(checkIn)}</Text>
+                        </TouchableOpacity>
 
-                            <DateTimePicker
-                                value={tempCheckIn}
-                                minimumDate={new Date()}
-                                mode="date"
-                                display="spinner"
-                                style={{ flex: 1 }}
-                                onChange={(_, date) => date && setTempCheckIn(date)}
-                            />
-                        </View>
+                        <TouchableOpacity
+                            style={styles.dateBox}
+                            onPress={() => {
+                                setModalChooseDateType("checkOut");
+                                setShowModalChooseDate(true);
+                            }}
+                        >
+                            <Text style={styles.label}>Ngày trả phòng</Text>
+                            <Text style={styles.value}>{checkOut ? formatVN(checkOut) : "Chưa chọn"}</Text>
+                        </TouchableOpacity>
+                        {modalChooseDateType == "checkIn" && (
+                            <>
+                                <Modal
+                                    transparent
+                                    animationType="slide"
+                                    visible={modalChooseDateType == "checkIn" && Platform.OS === 'ios'}
+                                    onRequestClose={() => setModalChooseDateType(undefined)}
+                                >
+                                    <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000066' }}>
+                                        <View
+                                            style={{
+                                                backgroundColor: '#fff',
+                                                height: 300,
+                                                borderTopLeftRadius: 12,
+                                                borderTopRightRadius: 12,
+                                                justifyContent: 'center',
+                                            }}
+                                        >
+                                            {/* Header */}
+                                            <View
+                                                style={{
+                                                    flexDirection: 'row',
+                                                    justifyContent: 'space-between',
+                                                    paddingHorizontal: 16,
+                                                    paddingVertical: 10,
+                                                    borderBottomWidth: 1,
+                                                    borderColor: '#ddd',
+                                                }}
+                                            >
+                                                <TouchableOpacity onPress={() => setModalChooseDateType(undefined)}>
+                                                    <Text style={{ color: '#009EDE', fontWeight: 'bold' }}>Hủy</Text>
+                                                </TouchableOpacity>
+                                                <Text style={{ fontWeight: 'bold', fontSize: 16 }}>Nhận phòng</Text>
+                                                <TouchableOpacity
+                                                    onPress={() => {
+                                                        // nếu ngày nhận >= ngày trả thì reset ngày trả
+                                                        if (checkOut && checkIn >= checkOut) setCheckOut(null);
+                                                        setModalChooseDateType(undefined);
+                                                    }}
+                                                >
+                                                    <Text style={{ color: '#009EDE', fontWeight: 'bold' }}>OK</Text>
+                                                </TouchableOpacity>
+                                            </View>
+
+                                            <DateTimePicker
+                                                value={checkIn}
+                                                minimumDate={new Date()}
+                                                mode="date"
+                                                display="spinner"
+                                                themeVariant="light"
+                                                textColor="black"
+                                                style={{ flex: 1 }}
+                                                onChange={(_, date) => date && setCheckIn(date)}
+                                            />
+                                        </View>
+                                    </View>
+                                </Modal>
+                            // {/* Android giữ nguyên */}
+                                {Platform.OS === 'android' && modalChooseDateType && (
+                                    <DateTimePicker
+                                        value={checkIn}
+                                        mode="date"
+                                        display="default"
+                                        minimumDate={new Date()} // 👈 Chặn ngày quá khứ
+                                        onChange={(_, date) => {
+                                            setModalChooseDateType(undefined);
+                                            if (date) {
+                                                setCheckIn(date);
+                                                if (checkOut && date >= checkOut) setCheckOut(null);
+                                            }
+                                        }}
+                                    />
+                                )}
+                            </>
+                        )}
+                        {modalChooseDateType == "checkOut" && (
+                            <>
+                                <Modal
+                                    transparent
+                                    animationType="slide"
+                                    visible={modalChooseDateType == "checkOut" && Platform.OS === 'ios'}
+                                    onRequestClose={() => setModalChooseDateType(undefined)}
+                                >
+                                    <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000066' }}>
+                                        <View
+                                            style={{
+                                                backgroundColor: '#fff',
+                                                height: 300,
+                                                borderTopLeftRadius: 12,
+                                                borderTopRightRadius: 12,
+                                                justifyContent: 'center',
+                                            }}
+                                        >
+                                            {/* Header */}
+                                            <View
+                                                style={{
+                                                    flexDirection: 'row',
+                                                    justifyContent: 'space-between',
+                                                    paddingHorizontal: 16,
+                                                    paddingVertical: 10,
+                                                    borderBottomWidth: 1,
+                                                    borderColor: '#ddd',
+                                                }}
+                                            >
+                                                <TouchableOpacity onPress={() => setModalChooseDateType(undefined)}>
+                                                    <Text style={{ color: '#009EDE', fontWeight: 'bold' }}>Hủy</Text>
+                                                </TouchableOpacity>
+                                                <Text style={{ fontWeight: 'bold', fontSize: 16 }}>Trả phòng</Text>
+                                                <TouchableOpacity
+                                                    onPress={() => {
+                                                        if (checkOut) setCheckOut(checkOut);
+                                                        setModalChooseDateType(undefined);
+                                                    }}
+                                                >
+                                                    <Text style={{ color: '#009EDE', fontWeight: 'bold' }}>OK</Text>
+                                                </TouchableOpacity>
+                                            </View>
+
+                                            <DateTimePicker
+                                                value={checkOut || new Date(checkIn.getTime() + 86400000)}
+                                                minimumDate={new Date(checkIn.getTime() + 86400000)}
+                                                mode="date"
+                                                display="spinner"
+                                                themeVariant="light"
+                                                textColor="black"
+                                                style={{ flex: 1 }}
+                                                onChange={(_, date) => date && setCheckOut(date)}
+                                            />
+                                        </View>
+                                    </View>
+                                </Modal>
+
+
+                                {Platform.OS === 'android' && modalChooseDateType == "checkOut" && (
+                                    <DateTimePicker
+                                        value={checkOut || new Date(checkIn.getTime() + 86400000)}
+                                        minimumDate={new Date(checkIn.getTime() + 86400000)}
+                                        mode="date"
+                                        display="default"
+                                        onChange={(_, date) => {
+                                            setModalChooseDateType(undefined);
+                                            if (date) setCheckOut(date);
+                                        }}
+                                    />
+                                )}
+                            </>
+                        )}
+
                     </View>
-                </Modal>
 
-                {/* MODAL TRẢ PHÒNG */}
-                <Modal transparent animationType="slide" visible={showOut} onRequestClose={() => setShowOut(false)}>
-                    <View style={styles.modalOverlay}>
-                        <View style={styles.modalContainer}>
-                            <View style={styles.modalHeader}>
-                                <TouchableOpacity onPress={() => setShowOut(false)}>
-                                    <Text style={styles.modalBtn}>Hủy</Text>
-                                </TouchableOpacity>
-                                <Text style={styles.modalTitle}>Trả phòng</Text>
-                                <TouchableOpacity onPress={() => {
-                                    if (tempCheckOut) setCheckOut(tempCheckOut);
-                                    setShowOut(false);
-                                }}>
-                                    <Text style={styles.modalBtn}>OK</Text>
-                                </TouchableOpacity>
-                            </View>
-
-                            <DateTimePicker
-                                value={tempCheckOut || new Date(checkIn.getTime() + 86400000)}
-                                minimumDate={new Date(checkIn.getTime() + 86400000)}
-                                mode="date"
-                                display="spinner"
-                                style={{ flex: 1 }}
-                                onChange={(_, date) => date && setTempCheckOut(date)}
-                            />
-                        </View>
-                    </View>
-                </Modal>
-
-                <View style={{ marginTop: 12 }}>
-                    <Button title="Tìm kiếm" onPress={() => setIsSearch(true)} />
                 </View>
             </View>
-        </SafeAreaView>
-    )
-}
+        </Modal>
+    );
+};
+
+
 const styles = StyleSheet.create({
     container: {
         borderRadius: 10,
@@ -650,7 +826,7 @@ const styles = StyleSheet.create({
         color: '#000',
     },
     section: { margin: 15, },
-    row: { flexDirection: 'row', alignItems: 'center' },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
     title: { color: 'black', fontWeight: 'bold', fontSize: 15 },
     subTitle: { color: '#999494', fontWeight: 'bold', fontSize: 12, marginLeft: 5, marginTop: 5 },
     hotelTag: {
@@ -692,42 +868,89 @@ const styles = StyleSheet.create({
         // Elevation Android
         elevation: 2,
     },
-    /* MODAL STYLES */
-    modalOverlay: {
+    overlay: {
         flex: 1,
-        justifyContent: 'flex-end',
-        backgroundColor: 'rgba(0,0,0,0.4)'
+        justifyContent: "flex-end",
+        backgroundColor: "rgba(0,0,0,0.3)",
     },
-    modalContainer: {
-        backgroundColor: '#fff',
-        height: 300,
-        borderTopLeftRadius: 14,
-        borderTopRightRadius: 14
+    sheet: {
+        height: 250,
+        backgroundColor: "#fff",
+        borderTopLeftRadius: 16,
+        borderTopRightRadius: 16,
+        paddingBottom: 20,
     },
-    modalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderColor: '#eee'
+    handle: {
+        width: 50,
+        height: 5,
+        backgroundColor: "#ccc",
+        borderRadius: 3,
+        alignSelf: "center",
+        marginVertical: 10,
     },
-    modalTitle: {
+    header: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        paddingHorizontal: 20,
+        paddingBottom: 10,
+        alignItems: "center",
+    },
+    cancel: {
         fontSize: 16,
-        fontWeight: 'bold'
+        color: "red",
     },
-    modalBtn: {
-        color: '#009EDE',
-        fontWeight: 'bold',
-        fontSize: 15
+
+    actionText: {
+        fontSize: 16,
     },
-    wrapper: {
+    divider: {
+        height: 1,
+        backgroundColor: "#eee",
+        marginBottom: 10,
+    },
+    content: {
         flex: 1,
-        backgroundColor: '#fff'
-      },
-      hotelTitle: {
-        fontWeight: 'bold',
-        marginBottom: 6,
-        fontSize: 16
-      },
+    },
+    dateBox: {
+        padding: 14,
+        borderWidth: 1,
+        borderColor: "#ddd",
+        borderRadius: 12,
+        marginBottom: 12,
+        backgroundColor: "#fff",
+    },
+    nightBox: {
+        flexDirection: "row",
+        paddingVertical: 10,
+        paddingHorizontal: 12,
+        backgroundColor: "#F0F7FF",
+        borderRadius: 10,
+        marginTop: 5,
+    },
+
+    nightText: {
+        fontSize: 14,
+        color: "#555",
+    },
+
+    nightValue: {
+        fontSize: 14,
+        fontWeight: "700",
+        color: "#007AFF",
+    },
+    box: {
+        width: "48%",
+        padding: 12,
+        backgroundColor: "#F8F9FA",
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: "#E5E5E5",
+    },
+
+    date: {
+        marginTop: 4,
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#333",
+    },
 });
