@@ -34,7 +34,9 @@ export default function BookedList() {
       if (!userId) return;
       const res = await getBookingsByUserId(Number(userId));
 
-      // 🔍 Kiểm tra: có booking nào CHUA_THANH_TOAN bị đổi sang DA_HUY không
+      // Sắp xếp giảm dần theo id (booking mới nhất trước)
+      res.sort((a, b) => b.id - a.id);
+
       setBookings((prev) => {
         if (prev.length > 0) {
           const canceledAuto = res.filter((newB) => {
@@ -43,14 +45,12 @@ export default function BookedList() {
           });
 
           if (canceledAuto.length > 0) {
-            // Alert.alert(
-            //   "⚠️ Đặt phòng bị hủy",
-            //   "Một số đơn chưa thanh toán đã bị hủy do quá thời gian thanh toán."
-            // );
+            // Alert.alert("⚠️ Đặt phòng bị hủy", "Một số đơn chưa thanh toán đã bị hủy do quá thời gian thanh toán.");
           }
         }
         return res;
       });
+
     } catch (error) {
       console.error("❌ Lỗi khi lấy danh sách booking:", error);
     } finally {

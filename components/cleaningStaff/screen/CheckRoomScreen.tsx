@@ -84,7 +84,7 @@ const MissingItemModal = ({ visible, onClose, onConfirm, item }) => {
     );
 };
 
-// --- COMPONENT: ConfirmCheckModal (Sửa đổi để thêm Minibar) ---
+// --- COMPONENT: ConfirmCheckModal (Không thay đổi) ---
 const ConfirmCheckModal = ({ visible, onClose, onConfirm, checklist, minibarItems, time }) => {
 
     const itemsWithIssues = useMemo(
@@ -92,7 +92,6 @@ const ConfirmCheckModal = ({ visible, onClose, onConfirm, checklist, minibarItem
         [checklist]
     );
 
-    // <-- THÊM MỚI: Lọc minibar đã sử dụng -->
     const usedMinibarItems = useMemo(
         () => minibarItems.filter(item => item.quantity > 0),
         [minibarItems]
@@ -138,7 +137,7 @@ const ConfirmCheckModal = ({ visible, onClose, onConfirm, checklist, minibarItem
                         )}
                     </View>
 
-                    {/* <-- THÊM MỚI: Tóm tắt Minibar --> */}
+                    {/* Tóm tắt Minibar */}
                     <View style={styles.summaryList}>
                         <Text style={styles.summaryTitle}>Minibar đã sử dụng</Text>
                         {usedMinibarItems.map(item => (
@@ -174,12 +173,10 @@ const ConfirmCheckModal = ({ visible, onClose, onConfirm, checklist, minibarItem
 export default function CheckRoomScreen() {
     const navigation = useNavigation();
     const route = useRoute();
-    // <-- SỬA ĐỔI: Lấy hotelId từ params
     const { id, roomNumber, roomTypeId, requestId, assignmentId, bookingId, hotelId } = route.params;
-    console.log("hotelid",hotelId);
     
     const [checklist, setChecklist] = useState([]);
-    const [minibarItems, setMinibarItems] = useState([]); // <-- THÊM MỚI: State cho Minibar
+    const [minibarItems, setMinibarItems] = useState([]); 
     const [isMissingModalVisible, setMissingModalVisible] = useState(false);
     const [isConfirmModalVisible, setConfirmModalVisible] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
@@ -190,7 +187,6 @@ export default function CheckRoomScreen() {
             try {
                 setIsLoading(true);
                 
-                // <-- SỬA ĐỔI: Gọi song song cả 2 API -->
                 const [damageData, minibarData] = await Promise.all([
                     getRoomItemsByTypeRoomId(roomTypeId),
                     getUtilityOfHotelByHotelIdAndType(hotelId, 'MINIBAR')
@@ -206,7 +202,8 @@ export default function CheckRoomScreen() {
                 }));
                 setChecklist(formattedDamageData);
                 
-                // <-- THÊM MỚI: Xử lý data minibar -->
+                // Xử lý data minibar
+                // 🔔 Sửa lỗi: API của bạn trả về { data: [...] }
                 const formattedMinibarData = minibarData.data.map(item => ({
                     id: item.id, // Đây là utilityId
                     name: item.name,
@@ -225,7 +222,6 @@ export default function CheckRoomScreen() {
             }
         };
 
-        // <-- SỬA ĐỔI: Thêm hotelId vào dependency
         loadItemData();
     }, [roomTypeId, navigation, hotelId]);
 
@@ -320,7 +316,7 @@ export default function CheckRoomScreen() {
         }
     };
 
-    // <-- THÊM MỚI: Hàm xử lý số lượng Minibar -->
+    // <-- Hàm xử lý số lượng Minibar (Không thay đổi) -->
     const handleMinibarQuantityChange = (itemId, newQuantity) => {
         // Đảm bảo số lượng không âm
         const clampedQuantity = Math.max(0, newQuantity); 
@@ -332,7 +328,7 @@ export default function CheckRoomScreen() {
     };
 
 
-    // <-- SỬA ĐỔI: Xử lý khi nhấn nút xác nhận cuối cùng (Logic tổng) -->
+    // <-- Xử lý khi nhấn nút xác nhận cuối cùng (Không thay đổi) -->
     const handleFinalConfirm = async () => {
         const userIdStr = await AsyncStorage.getItem("userId");
         const userId = userIdStr ? Number(userIdStr) : null;
@@ -401,7 +397,6 @@ export default function CheckRoomScreen() {
             }
 
             // 5. Cập nhật trạng thái cuối cùng của Request (chỉ_dựa_trên_đồ_hỏng)
-            // Đây là 4 trường hợp bạn đã mô tả
             if (itemsWithIssues.length > 0) {
                 await updateStatusRequest(requestId, "HAS_ISSUE", id, assignmentId);
                 Alert.alert("Thành công", "Đã ghi nhận tình trạng phòng (Có vấn đề).");
@@ -424,6 +419,7 @@ export default function CheckRoomScreen() {
         }
     };
 
+    // (currentTime không đổi)
     const currentTime = new Date().toLocaleTimeString('vi-VN', {
         hour: '2-digit',
         minute: '2-digit',
@@ -434,7 +430,7 @@ export default function CheckRoomScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
-            {/* Header */}
+            {/* Header (Không đổi) */}
             <View style={styles.header}>
                 <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
                     <Ionicons name="arrow-back" size={24} color="#1A202C" />
@@ -443,7 +439,7 @@ export default function CheckRoomScreen() {
                 <View style={{ width: 24 }} />
             </View>
 
-            {/* Thông tin phòng */}
+            {/* Thông tin phòng (Không đổi) */}
             <View style={styles.roomInfo}>
                 <Ionicons name="keypad-outline" size={20} color="#0062E0" />
                 <Text style={styles.roomNumber}>Phòng {roomNumber}</Text>
@@ -456,7 +452,7 @@ export default function CheckRoomScreen() {
                 </View>
             ) : (
                 <ScrollView style={styles.scrollView}>
-                    {/* DANH SÁCH VẬT DỤNG */}
+                    {/* DANH SÁCH VẬT DỤNG (Không đổi) */}
                     <Text style={styles.listTitle}>Danh sách kiểm tra</Text>
                     {checklist.map(item => (
                         <View key={item.id} style={styles.checkItemCard}>
@@ -502,58 +498,42 @@ export default function CheckRoomScreen() {
                         </View>
                     ))}
 
-                    {/* <-- THÊM MỚI: DANH SÁCH MINIBAR --> */}
+                    {/* // ===========================================
+                    // == SỬA ĐỔI PHẦN MINIBAR TẠI ĐÂY ==
+                    // ===========================================
+                    */}
                     <Text style={styles.listTitle}>Minibar</Text>
                     {minibarItems.map(item => (
                         <View key={item.id} style={styles.checkItemCard}>
-                            <Text style={styles.checkItemName}>{item.name}</Text>
-                            
-                            {/* Toggle Buttons */}
-                            <View style={styles.statusOptions}>
-                                <TouchableOpacity
-                                    style={[styles.statusButton, item.quantity === 0 && styles.okSelected]} // Style "OK"
-                                    onPress={() => handleMinibarQuantityChange(item.id, 0)}
-                                >
-                                    <Ionicons name="checkmark-circle" size={20} color={item.quantity === 0 ? '#34C759' : '#CBD5E0'} />
-                                    <Text style={[styles.statusText, item.quantity === 0 && styles.okText]}>Không sử dụng</Text>
-                                </TouchableOpacity>
-                                
-                                <TouchableOpacity
-                                    style={[styles.statusButton, item.quantity > 0 && styles.brokenSelected]} // Style "Hư"
-                                    onPress={() => handleMinibarQuantityChange(item.id, item.quantity > 0 ? 0 : 1)} // Toggle
-                                >
-                                    <Ionicons name="card" size={20} color={item.quantity > 0 ? '#FF3B30' : '#CBD5E0'} />
-                                    <Text style={[styles.statusText, item.quantity > 0 && styles.brokenText]}>Đã sử dụng</Text>
-                                </TouchableOpacity>
-                            </View>
-
-                            {/* Bộ chọn số lượng (chỉ hiện khi đã sử dụng) */}
-                            {item.quantity > 0 && (
-                                <View style={styles.minibarQuantityWrapper}>
-                                    <Text style={styles.minibarQuantityLabel}>Số lượng:</Text>
-                                    <View style={styles.quantityControl}>
-                                        <TouchableOpacity
-                                            style={styles.quantityButton}
-                                            onPress={() => handleMinibarQuantityChange(item.id, item.quantity - 1)}
-                                        >
-                                            <Ionicons name="remove" size={24} color="#FF3B30" />
-                                        </TouchableOpacity>
-                                        <Text style={styles.quantityText}>{item.quantity}</Text>
-                                        <TouchableOpacity
-                                            style={styles.quantityButton}
-                                            onPress={() => handleMinibarQuantityChange(item.id, item.quantity + 1)}
-                                        >
-                                            <Ionicons name="add" size={24} color="#34C759" />
-                                        </TouchableOpacity>
-                                    </View>
+                            {/* Tái sử dụng style của Modal Báo Thiếu */}
+                            <View style={styles.itemRow}>
+                                <Text style={styles.itemNameText}>{item.name}</Text>
+                                <View style={styles.quantityControl}>
+                                    <TouchableOpacity
+                                        style={styles.quantityButton}
+                                        onPress={() => handleMinibarQuantityChange(item.id, item.quantity - 1)}
+                                    >
+                                        <Ionicons name="remove" size={24} color="#FF3B30" />
+                                    </TouchableOpacity>
+                                    <Text style={styles.quantityText}>{item.quantity}</Text>
+                                    <TouchableOpacity
+                                        style={styles.quantityButton}
+                                        onPress={() => handleMinibarQuantityChange(item.id, item.quantity + 1)}
+                                    >
+                                        <Ionicons name="add" size={24} color="#34C759" />
+                                    </TouchableOpacity>
                                 </View>
-                            )}
+                            </View>
                         </View>
                     ))}
+                    {/* // ===========================================
+                    // == KẾT THÚC SỬA ĐỔI ==
+                    // ===========================================
+                    */}
                 </ScrollView>
             )}
 
-            {/* Nút xác nhận */}
+            {/* Nút xác nhận (Không đổi) */}
             <View style={styles.footer}>
                 <TouchableOpacity
                     style={[styles.mainConfirmButton, isLoading && styles.disabledButton]}
@@ -564,7 +544,7 @@ export default function CheckRoomScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* Modals */}
+            {/* Modals (Không đổi) */}
             {selectedItem && (
                 <MissingItemModal
                     visible={isMissingModalVisible}
@@ -578,14 +558,14 @@ export default function CheckRoomScreen() {
                 onClose={() => setConfirmModalVisible(false)}
                 onConfirm={handleFinalConfirm}
                 checklist={checklist}
-                minibarItems={minibarItems} // <-- THÊM MỚI: Truyền state minibar
+                minibarItems={minibarItems} 
                 time={currentTime.replace(', ', ' ')}
             />
         </SafeAreaView>
     );
 }
 
-// --- STYLESHEET (Thêm style cho Minibar) ---
+// --- STYLESHEET (Xóa style không cần thiết) ---
 const styles = StyleSheet.create({
     // ... (Toàn bộ style cũ của bạn giữ nguyên) ...
     container: {
@@ -776,11 +756,13 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#1A202C',
     },
+    // Styles này được tái sử dụng cho Minibar
     itemRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 10,
+        // Sửa lại padding một chút để vừa vặn trong card
+        // paddingVertical: 10, 
     },
     itemNameText: {
         fontSize: 16,
@@ -807,7 +789,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         padding: 15,
         marginBottom: 15,
-        maxHeight: 150, // <-- SỬA ĐỔI: Giảm chiều cao để vừa 2 bảng
+        maxHeight: 150, 
     },
     summaryTitle: {
         fontSize: 14,
@@ -856,19 +838,8 @@ const styles = StyleSheet.create({
         color: '#718096',
         marginLeft: 8,
     },
-    // <-- THÊM MỚI: Style cho bộ chọn số lượng minibar -->
-    minibarQuantityWrapper: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: 15,
-        paddingTop: 15,
-        borderTopWidth: 1,
-        borderTopColor: '#EDF2F7',
-    },
-    minibarQuantityLabel: {
-        fontSize: 16,
-        color: '#4A5568',
-        fontWeight: '600',
-    },
+    
+    // Style minibar cũ không còn cần thiết nữa
+    // minibarQuantityWrapper: { ... },
+    // minibarQuantityLabel: { ... },
 });

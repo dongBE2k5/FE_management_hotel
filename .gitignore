@@ -3,6 +3,7 @@
 # dependencies
 node_modules/
 .history
+local.properties
 # Expo
 .expo/
 dist/

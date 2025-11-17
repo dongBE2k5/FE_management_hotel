@@ -57,8 +57,9 @@ export default function CostDetailModal({ visible, onClose, costData, onManualPa
   const isPaid = costData?.isPaid ?? false;
   const hasDamages = damagedItemsTotal > 0;
   const amountToPay = !isPaid ? totalAmount : (hasDamages ? damagedItemsTotal : 0);
-  const showPaymentButtons = !isPaid;
-
+  const showPaymentButtons = !isPaid ;
+  console.log(showPaymentButtons);
+  
 
   // (Hàm handlePayment (Online))
   const handlePayment = async () => {

@@ -63,7 +63,7 @@ async function logoutFunction(): Promise<LogoutResponse> {
       throw new Error(errorBody);
     }
 
-  
+
     await AsyncStorage.removeItem('userToken');
     await AsyncStorage.removeItem('userId');
     await AsyncStorage.removeItem('role')
@@ -212,17 +212,17 @@ async function changePassword(
       let errorMessage = "Đổi mật khẩu thất bại."; // Giá trị mặc định
 
       try {
-     
+
         const errorObject = JSON.parse(errText);
         if (errorObject.message) {
           errorMessage = errorObject.message;
         } else {
           errorMessage = errText; // Trường hợp không có trường message
         }
-      } catch (e) { 
+      } catch (e) {
         errorMessage = errText;
       }
-      
+
 
       return { success: false, message: errorMessage };
     }
@@ -272,8 +272,48 @@ async function updateProfile(
   }
 }
 
+async function sendRegisterOtp(email: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const res = await fetch(`${BaseUrl}/auth/send-otp-register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, type: "register" }), // thêm type để backend biết là đăng ký
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      return { success: false, message: err };
+    }
+
+    return { success: true, message: "OTP đã được gửi tới email của bạn!" };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
+
+async function verifyRegisterOtp(email: string, otp: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const res = await fetch(`${BaseUrl}/auth/verify-otp-register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, otp, type: "register" }),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      return { success: false, message: err };
+    }
+
+    return { success: true, message: "OTP hợp lệ, bạn có thể tiếp tục đăng ký!" };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
+
 export default updateProfile;
 
-
-export { changePassword, getCurrentUser, getUserById, loginFunction, logoutFunction, register, resetPassword, sendOtp, updateProfile };
+export {
+  getUserById, loginFunction, register, logoutFunction, getCurrentUser, sendOtp,
+  resetPassword, changePassword, updateProfile, sendRegisterOtp, verifyRegisterOtp
+};
 
