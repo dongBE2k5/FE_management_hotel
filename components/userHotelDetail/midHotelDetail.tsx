@@ -15,7 +15,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, Image, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RoomCard from "./roomCard";
 import RoomZone from './roomZone';
@@ -122,6 +122,7 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
             }
         };
         fetchRates();
+        setShowModalChooseDate(true);
     }, [hotelId]);
 
     // console.log(rooms);
@@ -150,10 +151,6 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
 
     return (
         <View>
-            <Button title='Open Modal' onPress={() => {
-                console.log("Open Modal");
-                setShowModalChooseDate(true);
-            }} />
             <View style={styles.container}>
                 {/* Hàng trên: Nhận phòng + Trả phòng */}
                 <TouchableOpacity onPress={() => setShowModalChooseDate(true)}>
@@ -180,193 +177,6 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
                     <Text style={styles.nightValue}>{nights} đêm</Text>
                 </View>
             </View>
-            /* <View style={[styles.container, { display: 'none' }]}>
-                <Text style={{ fontWeight: 'bold', marginBottom: 5 }}>Khách sạn Mường Thanh Grand Đà Nẵng</Text>
-                {/* Ngày nhận phòng + số đêm */}
-                <View style={styles.row}>
-                    <TouchableOpacity style={styles.leftBox} onPress={() => setShowIn(true)}>
-                        <Text style={styles.label}>Ngày nhận phòng</Text>
-                        <Text style={styles.value}>{formatVN(checkIn)}</Text>
-                    </TouchableOpacity>
-
-                    <View style={styles.rightBox}>
-                        <Text style={styles.label}>Số đêm nghỉ</Text>
-                        <Text style={[styles.value, { fontWeight: 'bold' }]}>
-                            {checkOut ? `${nights} đêm` : '--'}
-                        </Text>
-                    </View>
-                </View>
-
-                {/* Ngày trả phòng */}
-                <TouchableOpacity
-                    style={styles.bottomBox}
-                    onPress={() => setShowOut(true)}
-                >
-                    <Text style={styles.label}>Trả phòng</Text>
-                    <Text style={styles.value}>
-                        {checkOut ? formatVN(checkOut) : 'Chưa chọn'}
-                    </Text>
-                </TouchableOpacity>
-
-                {/* Date Pickers */}
-                {/* ----- Date Pickers ----- */}
-                {/* Nhận phòng */}
-
-                <Modal
-                    transparent
-                    animationType="slide"
-                    visible={showIn && Platform.OS === 'ios'}
-                    onRequestClose={() => setShowIn(false)}
-                >
-                    <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000066' }}>
-                        <View
-                            style={{
-                                backgroundColor: '#fff',
-                                height: 300,
-                                borderTopLeftRadius: 12,
-                                borderTopRightRadius: 12,
-                                justifyContent: 'center',
-                            }}
-                        >
-                            {/* Header */}
-                            <View
-                                style={{
-                                    flexDirection: 'row',
-                                    justifyContent: 'space-between',
-                                    paddingHorizontal: 16,
-                                    paddingVertical: 10,
-                                    borderBottomWidth: 1,
-                                    borderColor: '#ddd',
-                                }}
-                            >
-                                <TouchableOpacity onPress={() => setShowIn(false)}>
-                                    <Text style={{ color: '#009EDE', fontWeight: 'bold' }}>Hủy</Text>
-                                </TouchableOpacity>
-                                <Text style={{ fontWeight: 'bold', fontSize: 16 }}>Nhận phòng</Text>
-                                <TouchableOpacity
-                                    onPress={() => {
-                                        setCheckIn(tempCheckIn);
-                                        // nếu ngày nhận >= ngày trả thì reset ngày trả
-                                        if (checkOut && tempCheckIn >= checkOut) setCheckOut(null);
-                                        setShowIn(false);
-                                    }}
-                                >
-                                    <Text style={{ color: '#009EDE', fontWeight: 'bold' }}>OK</Text>
-                                </TouchableOpacity>
-                            </View>
-
-                            <DateTimePicker
-                                value={tempCheckIn}
-                                minimumDate={new Date()}
-                                mode="date"
-                                display="spinner"
-                                themeVariant="light"
-                                textColor="black"
-                                style={{ flex: 1 }}
-                                onChange={(_, date) => date && setTempCheckIn(date)}
-                            />
-                        </View>
-                    </View>
-                </Modal>
-
-
-
-                {/* Android giữ nguyên */}
-                {Platform.OS === 'android' && showIn && (
-                    <DateTimePicker
-                        value={checkIn}
-                        mode="date"
-                        display="default"
-                        minimumDate={new Date()} // 👈 Chặn ngày quá khứ
-                        onChange={(_, date) => {
-                            setShowIn(false);
-                            if (date) {
-                                setCheckIn(date);
-                                if (checkOut && date >= checkOut) setCheckOut(null);
-                            }
-                        }}
-                    />
-                )}
-
-
-                {/* ----- Trả phòng ----- */}
-                <Modal
-                    transparent
-                    animationType="slide"
-                    visible={showOut && Platform.OS === 'ios'}
-                    onRequestClose={() => setShowOut(false)}
-                >
-                    <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000066' }}>
-                        <View
-                            style={{
-                                backgroundColor: '#fff',
-                                height: 300,
-                                borderTopLeftRadius: 12,
-                                borderTopRightRadius: 12,
-                                justifyContent: 'center',
-                            }}
-                        >
-                            {/* Header */}
-                            <View
-                                style={{
-                                    flexDirection: 'row',
-                                    justifyContent: 'space-between',
-                                    paddingHorizontal: 16,
-                                    paddingVertical: 10,
-                                    borderBottomWidth: 1,
-                                    borderColor: '#ddd',
-                                }}
-                            >
-                                <TouchableOpacity onPress={() => setShowOut(false)}>
-                                    <Text style={{ color: '#009EDE', fontWeight: 'bold' }}>Hủy</Text>
-                                </TouchableOpacity>
-                                <Text style={{ fontWeight: 'bold', fontSize: 16 }}>Trả phòng</Text>
-                                <TouchableOpacity
-                                    onPress={() => {
-                                        if (tempCheckOut) setCheckOut(tempCheckOut);
-                                        setShowOut(false);
-                                    }}
-                                >
-                                    <Text style={{ color: '#009EDE', fontWeight: 'bold' }}>OK</Text>
-                                </TouchableOpacity>
-                            </View>
-
-                            <DateTimePicker
-                                value={tempCheckOut || new Date(checkIn.getTime() + 86400000)}
-                                minimumDate={new Date(checkIn.getTime() + 86400000)}
-                                mode="date"
-                                display="spinner"
-                                themeVariant="light"
-                                textColor="black"
-                                style={{ flex: 1 }}
-                                onChange={(_, date) => date && setTempCheckOut(date)}
-                            />
-                        </View>
-                    </View>
-                </Modal>
-
-
-                {Platform.OS === 'android' && showOut && (
-                    <DateTimePicker
-                        value={checkOut || new Date(checkIn.getTime() + 86400000)}
-                        minimumDate={new Date(checkIn.getTime() + 86400000)}
-                        mode="date"
-                        display="default"
-                        onChange={(_, date) => {
-                            setShowOut(false);
-                            if (date) setCheckOut(date);
-                        }}
-                    />
-                )}
-                <View style={{ marginTop: 10 }}>
-                    <Button title='Tìm kiếm' onPress={() => {
-                        // fetchRoomAvailableByHotel(hotelId, checkIn, checkOut);
-                        setIsSearch(true);
-                    }} />
-                </View>
-
-
-            </View>   */
             <HotelVoucherSection hotelId={hotelId} />
             {/* Tiện ích */}
             <View style={styles.section}>
@@ -467,7 +277,6 @@ export default function MidHotelDetail({ roomTypeImage, hotelId }: RoomProps) {
 
 
             {showModalChooseDate && <ModalChooseDate showModalChooseDate={showModalChooseDate} setShowModalChooseDate={setShowModalChooseDate} checkIn={checkIn} setCheckIn={setCheckIn} checkOut={checkOut} setCheckOut={setCheckOut} />}
-
         </View>
     );
 }
