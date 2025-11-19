@@ -30,7 +30,7 @@ export interface HostFiles {
 /**
  * ✅ Tạo mới Host (có thể kèm upload file)
  */
-export async function createHost(form: Partial<Host>, files: HostFiles) {
+export async function createHost(form: Partial<Host>, files: HostFiles): Promise<ApiResponse<Host>> {
     const formData = new FormData();
 
     // ⛔️ KHÔNG DÙNG CÁCH NÀY

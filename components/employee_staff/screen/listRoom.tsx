@@ -56,6 +56,7 @@ export default function ListRoom() {
         amountPaid: booking.amountPaid || 0,
         status: booking.status || 'CHUA_THANH_TOAN',
         createdAt: booking.createdAt || null,
+        createdAt: booking.createdAt || null,
     });
 
     const [data, setData] = useState([]);
@@ -88,7 +89,9 @@ export default function ListRoom() {
                         (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
                     );
 
+
                     const formattedData = sortedData.map(mapBookingData);
+
 
                     setData(formattedData);
                     console.log("DATA", formattedData);
@@ -98,11 +101,14 @@ export default function ListRoom() {
                 }
             };
 
+
             const setupWs = async () => {
                 connectAndSubscribeBooking({
                     onConnected: () => console.log('✅ WebSocket connected from ListRoom'),
                     onDisconnected: () => console.log('❌ WebSocket disconnected from ListRoom'),
                     onError: (error) => console.error('⚠️ WebSocket error:', error),
+
+                    // 2. Sửa onMessageReceived để gọi Toast
 
                     // 2. Sửa onMessageReceived để gọi Toast
                     onMessageReceived: (newRequest) => {
@@ -151,6 +157,7 @@ export default function ListRoom() {
             };
         }, [])
 
+
     );
 
     const navigation = useNavigation();
@@ -194,6 +201,9 @@ export default function ListRoom() {
             default:
                 list = data;
                 break;
+            default:
+                list = data;
+                break;
         }
 
         // Lọc tiếp theo từ khóa tìm kiếm
@@ -225,6 +235,7 @@ export default function ListRoom() {
 
     const PaymentProgress = ({ item }) => {
         const { amountPaid, price, status } = item;
+
 
         const percentage = useMemo(() => {
             if (status === 'DA_THANH_TOAN' || status === 'CHECK_IN' || status === 'CHECK_OUT') {
@@ -271,6 +282,7 @@ export default function ListRoom() {
                         </View>
                     </View>
                     <View style={styles.infoRow}><Ionicons name="calendar-outline" size={20} color="#666" style={styles.infoIcon} /><Text style={styles.dateInfo}>{item.dateInfo}</Text></View>
+
 
                     <View style={styles.infoRow}>
                         <Ionicons name="create-outline" size={20} color="#666" style={styles.infoIcon} />
@@ -343,6 +355,21 @@ export default function ListRoom() {
                 contentContainerStyle={{ paddingHorizontal: 15, paddingTop: 10 }}
                 ListEmptyComponent={<View style={styles.emptyContainer}><Text style={styles.emptyText}>Không có booking nào.</Text></View>}
             />
+             <TouchableOpacity 
+                style={styles.bottomActionButton} 
+                onPress={() => {
+                    // Route này không có trong EmployeeStackParamList, cần thêm vào hoặc dùng route khác
+                    console.log('Navigate to ListStaffHotel');
+                    navigation.navigate("ListStaffHotel");
+                }}
+                activeOpacity={0.8}
+            >
+                <View style={styles.bottomButtonContent}>
+                    <Ionicons name="people-outline" size={24} color="#fff" />
+                    <Text style={styles.bottomButtonContent}>Danh Sách Nhân Viên</Text>
+                </View>
+            </TouchableOpacity>
+
         </SafeAreaView>
     );
 }
@@ -407,6 +434,35 @@ const styles = StyleSheet.create({
     filterContainer: {
         paddingVertical: 10,
         paddingHorizontal: 15,
+    },
+    
+ bottomActionButton: {
+        position: 'absolute',
+        bottom: 20,
+        left: 20,
+        right: 20,
+        backgroundColor: '#007bff',
+        borderRadius: 16,
+        paddingVertical: 16,
+        paddingHorizontal: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+        elevation: 8,
+        borderWidth: 1,
+        borderColor: '#0056b3',
+    },
+
+
+  bottomButtonContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 10,
+        color: '#fff',
+        fontWeight: 'bold',
+        fontSize: 16,
     },
     filterButton: {
         backgroundColor: '#f0f2f5',

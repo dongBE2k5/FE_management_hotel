@@ -19,7 +19,7 @@ import { useFocusEffect } from "expo-router";
 import CCCDScannerScreen from '@/components/host/screen/CCCDScannerScreen';
 import CameraCaptureScreen from '@/components/host/screen/CameraCaptureView';
 import KycFormScreen from "@/components/host/screen/CCCDScannerScreen";
-// import StaffListHotel from "@/components/host/screen/employee/ListStaffHotel";
+import StaffListHotel from "@/components/host/screen/employee/ListStaffHotel";
 
 const Stack = createStackNavigator<HostStack>();
 
@@ -80,7 +80,7 @@ useFocusEffect(
             <Stack.Screen name="checkout" component={Checkout} />
           </> */}
         {isHost ? (
-// 🏨 Nếu là host => hiển thị các màn hình quản lý khách sạn
+          // 🏨 Nếu là host => hiển thị các màn hình quản lý khách sạn
           <>
             <Stack.Screen name="HotelList" component={HotelList} />
             <Stack.Screen name="hostBookings" component={HostBookings} />
@@ -88,7 +88,7 @@ useFocusEffect(
             <Stack.Screen name="CreateHotel" component={CreateHotel} />
             <Stack.Screen name="bookingDetail" component={BookingDetail} />
             <Stack.Screen name="checkout" component={Checkout} />
-            {/* <Stack.Screen name="ListStaffHotel" component={StaffListHotel} /> */}
+            <Stack.Screen name="ListStaffHotel" component={StaffListHotel} />
             
           </>
         ) : (
