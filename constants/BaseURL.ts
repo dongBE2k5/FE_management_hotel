@@ -4,7 +4,7 @@ import * as Linking from "expo-linking";
 const linkingUrl = Linking.createURL("/");
 
 
-let ip = "192.168.68.105"; // fallback mặc định
+let ip = "192.168.1.6"; // fallback mặc định
 
 try {
     const parsed = new URL(linkingUrl);
@@ -16,19 +16,19 @@ try {
 
     } else {
         // ⚙️ fallback IP LAN của bạn (hoặc để localhost)
-        ip = "192.168.68.105";
+        ip = "192.168.1.6";
     }
 } catch (error) {
     console.warn("Invalid Linking URL, fallback to IP LAN:", error);
-    ip = "192.168.68.105";
+    ip = "192.168.1.6";
 }
 
 const BaseUrl = `http://${ip}:8080/api`;
-//export const BaseUrl2 = `http://${ip}:8080/api`;
-//export const BaseUrl = `https://prudish-leonie-noncapriciously.ngrok-free.dev/api`;
+export const BaseUrl2 = `http://${ip}:8080/api`;
+// export const BaseUrl = `https://prudish-leonie-noncapriciously.ngrok-free.dev/api`;
 
 const urlIP = `http://${ip}:8080`;
- //const urlIP = `https://prudish-leonie-noncapriciously.ngrok-free.dev`;
+//  const urlIP = `https://prudish-leonie-noncapriciously.ngrok-free.dev`;
 // const getBaseUrl = ip;
 export default  BaseUrl ;
 export const urlImage = `${urlIP}/uploads/`;
