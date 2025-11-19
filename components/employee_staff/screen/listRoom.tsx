@@ -1,4 +1,3 @@
-import { useHost } from '@/context/HostContext';
 import { getAllBookingsByHotelId } from '@/service/BookingAPI';
 import { connectAndSubscribeBooking, disconnect } from '@/service/Realtime/BookingWS';
 import { Ionicons } from '@expo/vector-icons';
@@ -82,9 +81,8 @@ export default function ListRoom() {
                         console.error("Hotel ID không hợp lệ.");
                         return;
                     }
-                    const [bookings] = await Promise.all([
-                        getAllBookingsByHotelId(Number(hotelId)),
-                    ]);
+                    const bookings = await getAllBookingsByHotelId(Number(1));
+                    console.log("BOOKINGS", bookings);
 
                     const sortedData = bookings.sort(
                         (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)

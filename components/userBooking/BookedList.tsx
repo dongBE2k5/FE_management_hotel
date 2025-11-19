@@ -8,6 +8,7 @@ import {
   Alert,
   FlatList,
   Image,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -20,10 +21,9 @@ export default function BookedList() {
   const [countdown, setCountdown] = useState(60);
   const [loading, setLoading] = useState(false);
   const [filterStatus, setFilterStatus] = useState("CHUA_THANH_TOAN");
-  const filteredBookings = []
-  // filterStatus
-  //   ? bookings.filter((b) => b.status === filterStatus)
-  //   : bookings;
+  const filteredBookings = filterStatus
+    ? bookings.filter((b) => b.status === filterStatus)
+    : bookings;
   const navigation = useNavigation();
   const fetchBookings = async () => {
     console.log("ds booking",bookings);
@@ -200,37 +200,47 @@ export default function BookedList() {
   return (
     <>
       <Header />
+      
       <View style={styles.container}>
         <Text style={styles.title}>🧾 Lịch sử đặt phòng</Text>
-
+        
         {/* 🔽 Thanh lọc trạng thái */}
-        <View style={styles.filterRow}>
-          {[
-            { label: "Chưa thanh toán", value: "CHUA_THANH_TOAN" },
-            { label: "Đã thanh toán", value: "DA_THANH_TOAN" },
-            { label: "Đã hủy", value: "DA_HUY" },
-          ].map((opt) => (
-            <TouchableOpacity
-              key={opt.value}
-              style={[
-                styles.filterButton,
-                filterStatus === opt.value && styles.filterButtonActive,
-              ]}
-              onPress={() =>
-                setFilterStatus((prev) => (prev === opt.value ? "" : opt.value))
-              }
-            >
-              <Text
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingRight: 10 }}
+          style={{ marginBottom: 10, height: 50, flexShrink: 0, flexGrow: 0 }}
+        >
+          <View style={styles.filterRow}>
+            {[
+              { label: "Chưa thanh toán", value: "CHUA_THANH_TOAN" },
+              { label: "Đã cọc", value: "DA_COC" },
+              { label: "Đã thanh toán", value: "DA_THANH_TOAN" },
+              { label: "Đã hủy", value: "DA_HUY" },
+            ].map((opt) => (
+              <TouchableOpacity
+                key={opt.value}
                 style={[
-                  styles.filterText,
-                  filterStatus === opt.value && styles.filterTextActive,
+                  styles.filterButton,
+                  filterStatus === opt.value && styles.filterButtonActive,
                 ]}
+                onPress={() =>
+                  setFilterStatus((prev) => (prev === opt.value ? "" : opt.value))
+                }
               >
-                {opt.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+                <Text
+                  style={[
+                    styles.filterText,
+                    filterStatus === opt.value && styles.filterTextActive,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
 
         {/* 🔽 Danh sách booking */}
         {filteredBookings.length === 0 ? (
@@ -254,7 +264,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   title: {
     fontSize: 22,
@@ -379,11 +390,11 @@ const styles = StyleSheet.create({
   },
   filterRow: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    marginBottom: 16,
+    alignItems: "center",
+    gap: 15,
     backgroundColor: "#F1F5F9",
-    paddingVertical: 8,
     borderRadius: 10,
+
   },
   filterButton: {
     paddingVertical: 8,

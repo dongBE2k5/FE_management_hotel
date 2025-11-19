@@ -1,10 +1,8 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import BookingStatus from '@/enums/BookingStatus';
 import BookingResponse from '@/models/Booking/BookingResponse';
 import History from '@/models/Booking/History';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import BaseUrl from '../constants/BaseURL';
 import Booking from '../models/Booking/Booking';
-import { Hotel } from '@/models/Hotel';
 
 interface HistoryStatus {
     bookingId: number;
@@ -80,6 +78,16 @@ const getAllBookingsByHotelId = async (hotelId: number): Promise<BookingResponse
     }
 };
 
+const getAllBookingsByRoomId = async (roomId: number) => {
+    try {
+        const response = await fetch(`${BaseUrl}/bookings/room/${roomId}`);
+        return response.json();
+    } catch (error) {
+        console.error(" Lỗi khi lấy danh sách đặt phòng theo roomId:", error);
+        return null;
+    }
+};
+
 
 
 //  Update booking status (API mới, có token)
@@ -130,10 +138,8 @@ const getHistoryBookingsByBookingId = async (bookingId: number): Promise<History
 
 export {
     createBooking,
-    getAllBookingsByHotelId,
-    getBookingById,
+    getAllBookingsByHotelId, getAllBookingsByRoomId, getBookingById,
     getBookings,
-    getBookingsByUserId,
-    updateBookingStatus,       
-    getHistoryBookingsByBookingId
+    getBookingsByUserId, getHistoryBookingsByBookingId, updateBookingStatus
 };
+

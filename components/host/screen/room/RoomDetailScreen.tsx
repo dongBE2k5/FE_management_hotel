@@ -9,6 +9,7 @@ import { urlImage } from '@/constants/BaseURL';
 import { useHost } from '@/context/HostContext';
 import RoomRequest from '@/models/Room/RoomRequest';
 import { TypeOfRoomUtility } from '@/models/TypeOfRoomUtility/TypeOfRoomUtilityResponse';
+import { getAllBookingsByRoomId } from '@/service/BookingAPI';
 import {
     Alert,
     FlatList,
@@ -243,24 +244,33 @@ const HistoryModal = ({ visible, onClose, pastBookings }) => {
 
     const guestsWithBookings = useMemo(() => {
         if (!pastBookings) return [];
+
         const guestMap = new Map();
+
         pastBookings.forEach(booking => {
-            if (!guestMap.has(booking.guestName)) {
-                guestMap.set(booking.guestName, []);
+            const guestName = booking?.user?.fullName || "Khách không tên";
+
+            if (!guestMap.has(guestName)) {
+                guestMap.set(guestName, []);
             }
-            guestMap.get(booking.guestName).push(booking);
+
+            guestMap.get(guestName).push(booking);
         });
+
         return Array.from(guestMap.entries()).map(([guestName, bookings]) => ({
             guestName,
             bookings,
-            lastStay: bookings.sort((a, b) => {
-                // A simple way to compare dates in "HH:mm DD/MM/YYYY" format
-                const dateA = new Date(a.checkIn.split(' ')[1].split('/').reverse().join('-'));
-                const dateB = new Date(b.checkIn.split(' ')[1].split('/').reverse().join('-'));
-                return dateB - dateA;
-            })[0].checkOut,
+            lastStay: bookings.sort((a, b) =>
+                new Date(b.checkOutDate) - new Date(a.checkOutDate)
+            )[0].checkOutDate,
         }));
     }, [pastBookings]);
+
+    const formatDate = (dateString) => {
+        if (!dateString) return "";
+        const date = new Date(dateString);
+        return date.toLocaleDateString("vi-VN");
+    };
 
     useEffect(() => {
         if (!visible) {
@@ -300,13 +310,13 @@ const HistoryModal = ({ visible, onClose, pastBookings }) => {
             <Text style={styles.modalTitle}>Khách hàng đã ở</Text>
             <FlatList
                 data={guestsWithBookings}
-                keyExtractor={item => item.guestName}
+                keyExtractor={(item, index) => index.toString()}
                 ListEmptyComponent={<Text style={styles.emptyText}>Chưa có lịch sử khách ở.</Text>}
                 renderItem={({ item }) => (
                     <TouchableOpacity style={styles.listItem} onPress={() => handleSelectGuest(item)}>
                         <View>
                             <Text style={styles.listItemTitle}>{item.guestName}</Text>
-                            <Text style={styles.listItemSubtitle}>Lần ở gần nhất: {item.lastStay}</Text>
+                            <Text style={styles.listItemSubtitle}>Lần ở gần nhất: {formatDate(item.lastStay)}</Text>
                         </View>
                         <Ionicons name="chevron-forward" size={22} color="#ccc" />
                     </TouchableOpacity>
@@ -329,10 +339,10 @@ const HistoryModal = ({ visible, onClose, pastBookings }) => {
                 data={selectedGuest?.bookings}
                 keyExtractor={item => item.bookingId}
                 renderItem={({ item }) => (
-                    <TouchableOpacity style={styles.listItem} onPress={() => { setSelectedBooking(item); setView('timeline'); }}>
+                    <TouchableOpacity style={styles.listItem}>
                         <View>
-                            <Text style={styles.listItemTitle}>Từ: {item.checkIn}</Text>
-                            <Text style={styles.listItemSubtitle}>Đến: {item.checkOut}</Text>
+                            <Text style={styles.listItemTitle}>Từ: {formatDate(item.checkInDate)}</Text>
+                            <Text style={styles.listItemSubtitle}>Đến: {formatDate(item.checkOutDate)}</Text>
                         </View>
                         <Ionicons name="chevron-forward" size={22} color="#ccc" />
                     </TouchableOpacity>
@@ -350,7 +360,7 @@ const HistoryModal = ({ visible, onClose, pastBookings }) => {
                 </TouchableOpacity>
             </View>
             <Text style={styles.modalTitle}>Chi tiết lần ở</Text>
-            <Text style={styles.modalSubtitle}>{selectedBooking?.checkIn} - {selectedBooking?.checkOut}</Text>
+            <Text style={styles.modalSubtitle}>{formatDate(selectedBooking?.checkInDate)} - {formatDate(selectedBooking?.checkOutDate)}</Text>
             <FlatList
                 data={selectedBooking?.timeline}
                 keyExtractor={item => item.id}
@@ -359,7 +369,7 @@ const HistoryModal = ({ visible, onClose, pastBookings }) => {
                         <Ionicons name="time-outline" size={20} color="#888" />
                         <View style={styles.timelineContent}>
                             <Text style={styles.timelineEvent}>{item.event}</Text>
-                            <Text style={styles.timelineTime}>{item.time}</Text>
+                            <Text style={styles.timelineTime}>{formatDate(item.time)}</Text>
                         </View>
                     </View>
                 )}
@@ -376,9 +386,9 @@ const HistoryModal = ({ visible, onClose, pastBookings }) => {
     return (
         <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
             <View style={styles.modalOverlay}>
-                <View style={[styles.modalContent, { height: '85%' }]}>
+                <View style={[styles.modalContent, { height: '50%' }]}>
                     {renderContent()}
-                    <TouchableOpacity style={[styles.editActionButton, styles.cancelButton, { marginTop: 15 }]} onPress={onClose}>
+                    <TouchableOpacity style={[styles.editActionButton, styles.cancelButton, { marginTop: 15, display: 'flex', justifyContent: 'center', alignItems: 'center' }]} onPress={onClose}>
                         <Text style={styles.editActionButtonText}>Đóng</Text>
                     </TouchableOpacity>
                 </View>
@@ -461,6 +471,7 @@ export default function RoomDetailScreen({ route, navigation = mockNavigation })
     const [isServiceModalVisible, setServiceModalVisible] = useState(false);
     const {hotelId} = useHost()
     const [isFresh, setIsFresh] = useState(false);
+    const [bookings, setBookings] = useState<any[]>([]);
 
     useFocusEffect(
         useCallback(() => {
@@ -474,14 +485,18 @@ export default function RoomDetailScreen({ route, navigation = mockNavigation })
         if (!response) {
             return;
         }
+
         setHotelUtility(response.data.utilities.filter((utility: TypeOfRoomUtility) => utility.typeOfRoomId
-        == typeOfRoomId));
-        console.log("roomData?.typeOfRoomId", typeOfRoomId);
-        console.log("response.data.utilities", JSON.stringify(response.data.utilities));
-        console.log(urlImage + response.data.utilities[0].imageUrl);
-        
-        console.log("response", response.data.utilities.filter((utility: TypeOfRoomUtility) => utility.typeOfRoomId
-        == typeOfRoomId));
+        == typeOfRoomId));        
+      
+    }
+    const fetchBookingsByRoomId = async (roomId: number) => {
+        const response = await getAllBookingsByRoomId(roomId);
+        if (!response) {
+            return;
+        }
+        console.log("BOOKINGS", response.data);
+        setBookings(response.data);
     }
 
     const fetchRoomByIdAndHotelUtility = async (roomId: number) => {
@@ -498,6 +513,7 @@ export default function RoomDetailScreen({ route, navigation = mockNavigation })
         };
         setRoomData(response);
         fetchHotelUtility(response.typeOfRoomId, "INROOM");
+        fetchBookingsByRoomId(Number(roomId));
     }
     
     const handleAction = (action) => {
@@ -579,7 +595,7 @@ export default function RoomDetailScreen({ route, navigation = mockNavigation })
                         ))}
                     </View>
 
-                    <ActionPanel status={roomStatus} onPress={handleAction} />
+                    {/* <ActionPanel status={roomStatus} onPress={handleAction} /> */}
 
                     <TouchableOpacity onPress={() => setHistoryModalVisible(true)}>
                         <View style={styles.panel}>
@@ -593,7 +609,7 @@ export default function RoomDetailScreen({ route, navigation = mockNavigation })
                 </View>
             </ScrollView>
 
-            {/* <HistoryModal visible={isHistoryModalVisible} onClose={() => setHistoryModalVisible(false)} pastBookings={roomData.pastBookings || []} /> */}
+            <HistoryModal visible={isHistoryModalVisible} onClose={() => setHistoryModalVisible(false)} pastBookings={bookings || []} />
             <EditInfoModal visible={isEditModalVisible} onClose={() => setEditModalVisible(false)} onSave={handleSaveInfo} currentData={roomData} />
             {/* <ServiceManagementModal visible={isServiceModalVisible} onClose={() => setServiceModalVisible(false)} onSave={handleSaveServices} roomNumber={roomData.id} initialServices={roomData.usedServices || {}} applicableServices={currentRoomType?.id || null} allServices={allServices || []} /> */}
         </SafeAreaView>

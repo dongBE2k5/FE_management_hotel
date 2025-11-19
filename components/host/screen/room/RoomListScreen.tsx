@@ -2,20 +2,20 @@ import { useHost } from '@/context/HostContext';
 import Room from '@/models/Room';
 import { getRoomByHotel } from '@/service/RoomAPI';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useNavigation } from 'expo-router';
+import { router, useFocusEffect, useNavigation } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
-import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-const sampleRooms = [
-    { id: '101', type: 'Phòng Standard', status: 'occupied', bookingInfo: { guestName: 'Nguyễn Văn A' }, price: 1200000 },
-    { id: '102', type: 'Phòng Superior', status: 'available', price: 1500000 },
-    { id: '201', type: 'Phòng Deluxe', status: 'maintenance', guest: null },
-];
 
 const statusConfig = {
     AVAILABLE: { text: 'Trống', color: '#28a745' },
     USED: { text: 'Có khách', color: '#dc3545' },
     MAINTENANCE: { text: 'Bảo trì', color: '#6c757d' },
+};
+const typeRoomConfig = {
+    DON: { text: 'Phòng Đơn', color: '#28a745' },
+    DOI: { text: 'Phòng Đôi', color: '#dc3545' },
+    GIA_DINH: { text: 'Phòng Gia Đình', color: '#6c757d' },
 };
 
 const RoomCard = ({ room, onPress }) => {
@@ -27,8 +27,8 @@ const RoomCard = ({ room, onPress }) => {
             <View style={styles.cardContent}>
                 <View style={[styles.statusColorBar, { backgroundColor: statusInfo.color }]} />
                 <View style={styles.cardInfo}>
-                    <Text style={styles.roomNumber}>Phòng {room.roomNumber}</Text>
-                    <Text style={styles.roomType}>{room.type}</Text>
+                    <Text style={styles.roomNumber}>Phòng: {room.roomNumber}</Text>
+                    <Text style={styles.roomType}>Loại phòng: {typeRoomConfig[room.typeRoom as keyof typeof typeRoomConfig].text}</Text>
                     {room.status === 'USED' && room.bookingInfo ? (
                         <Text style={styles.guestName}>{room.bookingInfo.guestName}</Text>
                     ) : (
@@ -112,20 +112,20 @@ export default function RoomListScreen() {
     const { hotelId } = useHost();
     const navigation = useNavigation();
     // const allRooms = route.params?.rooms || sampleRooms;
-    const allRooms = initialRooms || sampleRooms;
+    let allRooms =  []
     const [rooms, setRooms] = useState<Room[]>([]);
-    const [activeFilter, setActiveFilter] = useState('all');
+    const [activeFilter, setActiveFilter] = useState('ALL');
     const [searchQuery, setSearchQuery] = useState('');
 
    
 
     useFocusEffect(
         useCallback(() => {
-             console.log("hotelId",hotelId);
-            if (!hotelId) return;
-           
-            
-            fetchRooms(hotelId);
+            if (!hotelId) {
+                Alert.alert("⚠ Lỗi", "Vui lòng chọn khách sạn");
+                return router.push("/(host)");
+            }
+            fetchRooms(hotelId!);
         }, [hotelId])
     );
 
@@ -133,35 +133,56 @@ export default function RoomListScreen() {
 
         const response = await getRoomByHotel(hotelId);
         console.log("response", response);
+        allRooms = response;
         setRooms(response);
     };
 
-    // const filteredRooms = useMemo(() => {
-    //     let roomsToFilter = allRooms;
-    //     switch (activeFilter) {
-    //         case 'maintenance': roomsToFilter = allRooms.filter(r => r.status === 'maintenance'); break;
-    //         case 'available': roomsToFilter = allRooms.filter(r => r.status === 'available'); break;
-    //         case 'occupied': roomsToFilter = allRooms.filter(r => r.status === 'occupied'); break;
-    //     }
-    //     if (searchQuery.trim()) {
-    //         const lowercasedQuery = searchQuery.toLowerCase();
-    //         return roomsToFilter.filter(room => {
-    //             const guestName = room.bookingInfo ? room.bookingInfo.guestName.toLowerCase() : '';
-    //             const roomId = room.id.toLowerCase();
-    //             return roomId.includes(lowercasedQuery) || guestName.includes(lowercasedQuery);
-    //         });
-    //     }
-    //     return roomsToFilter;
-    // }, [activeFilter, allRooms, searchQuery]);
+    const filteredRooms = useMemo(() => {
+        let roomsToFilter = rooms;
+    
+        // 1️⃣ Lọc theo trạng thái
+        switch (activeFilter) {
+            case "ALL":
+                roomsToFilter = rooms;
+                break;
+            case "MAINTENANCE":
+                roomsToFilter = rooms.filter(r => r.status === "MAINTENANCE");
+                break;
+            case "AVAILABLE":
+                roomsToFilter = rooms.filter(r => r.status === "AVAILABLE");
+                break;
+            case "USED":
+                roomsToFilter = rooms.filter(r => r.status === "USED");
+                break;
+        }
+    
+        // 2️⃣ Lọc theo search
+        if (searchQuery.trim()) {
+            const query = searchQuery.trim().toLowerCase();
+    
+            return roomsToFilter.filter(room => {
+                const roomNumber = room.roomNumber?.toLowerCase() || "";
+                const idString = String(room.id); // ép về string để .includes()
+    
+                return (
+                    roomNumber.includes(query) ||
+                    idString.includes(query)
+                );
+            });
+        }
+    
+        return roomsToFilter;
+    
+    }, [activeFilter, rooms, searchQuery]);
 
     const counts = useMemo(() => ({
-        all: allRooms.length,
-        maintenance: allRooms.filter(r => r.status === 'maintenance').length,
-        available: allRooms.filter(r => r.status === 'available').length,
-        occupied: allRooms.filter(r => r.status === 'occupied').length,
-    }), [allRooms]);
+        all: rooms.length,
+        maintenance: rooms.filter(r => r.status === 'MAINTENANCE').length,
+        available: rooms.filter(r => r.status === 'AVAILABLE').length,
+        used: rooms.filter(r => r.status === 'USED').length,
+    }), [rooms]);
 
-    const percentage = counts.all > 0 ? Math.round((counts.occupied / counts.all) * 100) : 0;
+    const percentage = counts.all > 0 ? Math.round((counts.used / counts.all) * 100) : 0;
 
     const FilterButton = ({ name, filterKey }) => (
         <TouchableOpacity
@@ -176,7 +197,7 @@ export default function RoomListScreen() {
         <View style={styles.safeArea}>
             <View style={styles.header}>
                 <View>
-                    <Text style={styles.headerTitle}>Trạng thái phòng</Text>
+                    <Text style={styles.headerTitle}>Danh sách phòng</Text>
                     <Text style={styles.headerDate}>{new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}</Text>
                 </View>
                 <View style={styles.headerActions}>
@@ -193,7 +214,7 @@ export default function RoomListScreen() {
                 <View style={styles.occupancyContainer}>
                     <View style={styles.occupancyHeader}>
                         <Text style={styles.occupancyTitle}>Công suất phòng</Text>
-                        <Text style={styles.occupancyText}>{counts.occupied} / {counts.all} ({percentage}%)</Text>
+                        <Text style={styles.occupancyText}>{counts.used} / {counts.all} ({percentage}%)</Text>
                     </View>
                     <View style={styles.progressBarBackground}>
                         <View style={[styles.progressBarFill, { width: `${percentage}%` }]} />
@@ -206,14 +227,14 @@ export default function RoomListScreen() {
             </View>
 
             <FlatList
-                data={rooms}
+                data={filteredRooms}
                 keyExtractor={item => item.id.toString()}
                 ListHeaderComponent={
                     <View style={styles.filterBar}>
-                        <FilterButton name={`Tất cả (${counts.all})`} filterKey="all" />
-                        <FilterButton name={`Có khách (${counts.occupied})`} filterKey="occupied" />
-                        <FilterButton name={`Trống (${counts.available})`} filterKey="available" />
-                        <FilterButton name={`Bảo trì (${counts.maintenance})`} filterKey="maintenance" />
+                        <FilterButton name={`Tất cả (${counts.all})`} filterKey="ALL" />
+                        <FilterButton name={`Có khách (${counts.used})`} filterKey="USED" />
+                        <FilterButton name={`Trống (${counts.available})`} filterKey="AVAILABLE" />
+                        <FilterButton name={`Bảo trì (${counts.maintenance})`} filterKey="MAINTENANCE" />
                     </View>
                 }
                 renderItem={({ item }) => (

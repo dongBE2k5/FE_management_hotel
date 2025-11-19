@@ -5,7 +5,7 @@ import { Utility, UtilityItem } from '@/models/Utility/Utility';
 import { createUtilityOfHotel, deleteUtilityOfHotel, getUtilityByHotel, getUtilityOfHotelById, updateUtilityIsUsed, updateUtilityOfHotel, updateUtilityOfHotelById } from '@/service/HotelUtilityAPI';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from "expo-image-picker";
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Image, Modal, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -64,43 +64,13 @@ export default function Service() {
 
     useFocusEffect(
         useCallback(() => {
-            if (!hotelId) return;
+            if (!hotelId) {
+                Alert.alert("⚠ Lỗi", "Vui lòng chọn khách sạn");
+                return router.push("/(host)");
+            }
             fetchData();
         }, [isFresh, hotelId])
 );
-
-// useFocusEffect(
-//     useCallback(() => {
-//         const fetchData = async () => {
-//             try {
-//                 // 🔹 Lấy tất cả tiện ích
-//                 const utilitiesRes = await getAllUtilityByType("OUTROOM");
-//                 setUtilities(utilitiesRes);
-
-//                 // 🔹 Lấy danh sách tiện ích đã được gán cho khách sạn
-//                 const hotelUtilitiesRes = await getUtilityOfHotel(hotelId);
-//                 console.log("Dịch vụ cũ của khách sạn:", hotelUtilitiesRes.data);
-
-//                 const existing = hotelUtilitiesRes?.data || [];
-//                 console.log("Existing:", existing);
-//                 // 🔹 Bật sẵn toggle và gán giá
-//                 const selectedIds = existing.utilities.map((item: any) => item.id);
-//                 console.log("Selected IDs:", selectedIds);
-//                 const prices: { [key: number]: string } = {};
-//                 existing.utilities.forEach((item: any) => {
-//                     prices[item.id] = item.price.toString();
-//                 });
-
-//                 setSelectedServices(selectedIds);
-//                 setServicePrices(prices);
-//             } catch (err) {
-//                 console.error("Lỗi khi tải dữ liệu:", err);
-//             }
-//         };
-
-//         fetchData(); 
-//     }, [])
-//   );
 
 const handleReload = () => {
     setIsFresh(prev => !prev);
@@ -202,7 +172,7 @@ return (
                     onPress={() => setActiveTab(tab as 'INROOM' | 'MINIBAR' | 'OUTROOM')}
                 >
                     <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-                        {tab === 'INROOM' ? 'Trong phòng' : tab === 'MINIBAR' ? 'Mini Bar' : 'Ngoài phòng'}
+                        {tab === 'INROOM' ? 'Tiện ích có sẵn' : tab === 'MINIBAR' ? 'Mini Bar' : 'Tiện ích thêm'}
                     </Text>
                 </TouchableOpacity>
             ))}
@@ -348,7 +318,7 @@ const ServiceEditorModal = ({ visible, onClose, onSave, service, onAdd }) => {
         console.log("typeOfRoom123", typeOfRoomData);
 
 
-        if (!name.trim() || !price.trim() || !category) {
+        if (!name.trim() || (!price.trim() && category != "INROOM") || !category) {
             Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin Tên, Giá và Phân loại.");
             return;
         }
@@ -453,13 +423,13 @@ const ServiceEditorModal = ({ visible, onClose, onSave, service, onAdd }) => {
                             onChangeText={setName}
                         />
 
-                        <TextInput
+                        {category != "INROOM" && <TextInput
                             style={styles.textInput}
                             placeholder="Giá tiền"
                             value={price}
                             onChangeText={setPrice}
                             keyboardType="numeric"
-                        />
+                        />}
 
                         <Text style={styles.inputLabel}>Ảnh dịch vụ</Text>
                         {image ? (
