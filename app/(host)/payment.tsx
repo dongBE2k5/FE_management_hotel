@@ -7,7 +7,8 @@ import {
     updateHotelPaymentType
 } from "@/service/Payment/HotelPaymentTypeAPI";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
     Alert,
     FlatList,
@@ -49,18 +50,20 @@ export default function HotelPaymentTypeScreen() {
     const [editingId, setEditingId] = useState<boolean>(false);
 
     const { hotelId } = useHost();
-    console.log(paymentTypes);
-    console.log("EDITING", editingId);
     
-    useEffect(() => {
-        console.log("Selected Payment", selectedPayment);
-        resetForm();
-        loadData();
-    }, [hotelId]);
+    useFocusEffect(
+        useCallback(() => {
+            if (!hotelId) {
+                Alert.alert("⚠ Lỗi", "Vui lòng chọn khách sạn");
+                return router.push("/(host)");}
+            resetForm();
+            loadData();
+        }, [hotelId])
+    );
 
     const loadData = async () => {
-        if (!hotelId) return;
-        const res = await getHotelPaymentTypesByHotelId(hotelId);
+        
+        const res = await getHotelPaymentTypesByHotelId(hotelId!);
         console.log("DATA", res.data);
 
         setHotelPaymentTypes(res.data);

@@ -330,10 +330,6 @@ export default function ManageRoomTypesScreen({ route, navigation = mockNavigati
                 <Text style={styles.screenHeaderTitle}>Quản lý Loại phòng</Text>
                 <View style={{ width: 28 }} />
             </View>
-            <TouchableOpacity style={styles.manageServiceButton} onPress={() => navigation.navigate('ManageServices', { services, setServices, roomTypes })}>
-                <Ionicons name="list-circle-outline" size={24} color="#007bff" />
-                <Text style={styles.manageServiceButtonText}>Quản lý Dịch vụ</Text>
-            </TouchableOpacity>
             <FlatList
                 data={roomTypes.sort((a, b) => a.id - b.id)}
                 keyExtractor={item => item.id}

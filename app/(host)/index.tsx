@@ -68,7 +68,7 @@ useFocusEffect(
     <View style={styles.container}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
       <>
-            <Stack.Screen name="HotelList" component={HotelList} />
+            <Stack.Screen name="HotelList" component={HotelList} options={{ headerShown: true, title: 'Danh sách khách sạn' }}  />
             <Stack.Screen name="hostBookings" component={HostBookings} />
             <Stack.Screen name="hotelEdit" component={EditHotel} />
             <Stack.Screen name="CreateHotel" component={CreateHotel} />

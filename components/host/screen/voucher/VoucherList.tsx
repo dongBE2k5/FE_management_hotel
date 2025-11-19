@@ -4,7 +4,7 @@ import { getVouchersByHotelId } from '@/service/VoucherAPI';
 import { HostStack } from '@/types/navigation';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useFocusEffect, useNavigation } from 'expo-router';
+import { router, useFocusEffect, useNavigation } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
     ActivityIndicator,
@@ -40,8 +40,11 @@ export default function VoucherList() {
 
             setLoading(true);
             const fetchVouchers = async () => {
-                if (!hotelId) return;
-                const vouchers = await getVouchersByHotelId(Number(hotelId));
+                if (!hotelId) {
+                    Alert.alert("⚠ Lỗi", "Vui lòng chọn khách sạn");
+                    return router.push("/(host)");
+                }              
+                  const vouchers = await getVouchersByHotelId(Number(hotelId));
                 setVouchers(vouchers);
                 setLoading(false);
             };
