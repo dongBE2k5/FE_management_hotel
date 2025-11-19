@@ -76,6 +76,38 @@ async function createPaymentMumanual (
 }
 
 
+async function createPaymentBank (
+  orderTotal: number,
+  method: string,
+  bookingId: number,
+  hotelId:number,
+): Promise<PaymentResponse | undefined> {
+  try {
+ 
+    const params = new URLSearchParams();
+    params.append('amount', orderTotal.toString());
+    params.append('orderInfo', bookingId.toString());
+    params.append('method', method);
+    params.append("hotelId",hotelId)
+
+
+    const response = await axios.post(`${BaseUrl}/pay/createpayqr`, params);
+
+    console.log('✅ Đã thanh toán thành công ');
+    // console.log(response.data);
+
+    return response.data;
+  } catch (error) {
+    console.log('❌ Link thanh toán bị lỗi:');
+    if (axios.isAxiosError(error)) {
+      console.log('Message:', error.message);
+      console.log('Response:', error.response?.data);
+    } else {
+      console.log(error);
+    }
+  }
+}
+
 /**
  * Lấy payment theo ID
  */
@@ -113,9 +145,35 @@ async function getAllPayments(): Promise<Payment[] | null> {
     return null;
   }
 }
+async function getAllPayByHotel(hotelId:number): Promise<Payment[] | null> {
+  try {
+    const response = await axios.get(`${BaseUrl}/pay/${hotelId}/hotel`);
+    console.log('📦 Tất cả payment theo hotel:'+hotelId, response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Lỗi khi lấy danh sách payment:', error);
+    return null;
+  }
+}
+
+async function updateStatusPayById(id:number,status:string):Promise<Payment|null> {
+    try {
+      const response= await axios.put(`${BaseUrl}/pay/${id}/status`,status)
+      return response.data
+    } catch (error) {
+       console.error('❌ Lỗi khi cập nhật payment:', error);
+    return null;
+    }  
+}
+
+
+
+
 export default {
   createPayment,
+  createPaymentBank,
   createPaymentMumanual,
   getAllPayments,
-  getPaymentById,
+  getAllPayByHotel,
+  getPaymentById,updateStatusPayById,
 };

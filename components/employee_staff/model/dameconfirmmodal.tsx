@@ -114,9 +114,9 @@ export default function DamageConfirmModal({
                             />
                           </>
                         )}
-                       
+      
                           
-                        )}
+                  
                         {index < damagedItems.length - 1 && (
                           <View style={styles.divider} />
                         )}

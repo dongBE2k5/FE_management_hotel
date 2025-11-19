@@ -9,13 +9,13 @@ import ZoneHotel from '@/components/userHome/zoneHotel';
 import ConfirmBooking from '@/components/userHotelDetail/ConfirmBooking';
 import Login from '@/components/userProfile/Login';
 
-import { useNavigation, useFocusEffect } from '@react-navigation/native'; // <-- Thêm useNavigation và useFocusEffect
+import { useFocusEffect, useNavigation } from '@react-navigation/native'; // <-- Thêm useNavigation và useFocusEffect
 
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { StackActions, CommonActions } from '@react-navigation/native';
+import PaymentWebViewScreen from '@/components/payment/PaymentWebViewScreen';
+import { CommonActions } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import React, { useState, useCallback } from 'react'; // <-- Thêm useCallback
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import React, { useCallback, useState } from 'react'; // <-- Thêm useCallback
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 const Stack = createStackNavigator();
 
@@ -95,6 +95,7 @@ export default function App() {
       <Stack.Screen name="FormBooking" component={FormBooking} />
       <Stack.Screen name="ConfirmBooking" component={ConfirmBooking} />
       <Stack.Screen name="ReviewBooking" component={ReviewBooking} />
+      <Stack.Screen name="PaymentWebView" component={PaymentWebViewScreen} />
       <Stack.Screen name="Login" component={Login} />
 
     </Stack.Navigator>

@@ -25,6 +25,8 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { initiatePayment } from '../payment/PaymentButton';
+import PaymentBankScreen from '../payment/PaymentBankScreen';
 type ConfirmBookingProps = {
   room: Room,
   checkInDate: Date,
@@ -74,6 +76,8 @@ export default function ConfirmBooking() {
   // const [paymentAmount, setPaymentAmount] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
 
+  const [showModalBank, setShowModalBank] = useState(false);
+  const[urlPay,setUrlpay]=useState();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -147,7 +151,7 @@ export default function ConfirmBooking() {
       paymentMethod: paymentMethod,
 
     };
-
+    let url
     try {
       console.log(selectedPayment);
 
@@ -164,9 +168,31 @@ export default function ConfirmBooking() {
           }
         })
       }
-      const createdBookingUtility = await createBookingUtility(bookingUtilityRequest);
-      // initiatePayment(finalPrice, 'vnpay', data.id);
-      console.log("Đã tạo booking utility thành công:", createdBookingUtility);
+      console.log("idhotel" + selectedPayment?.hotelId);
+      if (!bookingUtilityRequest.utilityItemBooking) {
+        const createdBookingUtility = await createBookingUtility(bookingUtilityRequest);
+        console.log("Đã tạo booking utility thành công:", createdBookingUtility);
+      }
+      
+      url = await initiatePayment(pricePaid, paymentMethod, data.id, selectedPayment?.hotelId);
+      setUrlpay(url)
+      console.log("link thanh toán", url);
+      if (paymentMethod === "VNPAY") {
+
+
+        if (url) {
+          navigation.navigate("PaymentWebView", { url });
+        }
+
+      }
+      else if (paymentMethod === "BANK") {
+       
+        if (url) {
+         
+         setShowModalBank(true)
+        }
+      }
+
       // router.replace("/(tabs)/booking");
     } catch (err) {
       console.error(err);
@@ -310,7 +336,7 @@ export default function ConfirmBooking() {
           Phương thức thanh toán
         </Text>
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={[
             styles.paymentOption,
             paymentMethod === "CASH" && styles.selectedOption
@@ -318,7 +344,7 @@ export default function ConfirmBooking() {
           onPress={() => setPaymentMethod("CASH")}
         >
           <Text>💵 Tiền mặt</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity
           style={[
@@ -529,6 +555,13 @@ export default function ConfirmBooking() {
           </View>
         </View>
       </Modal>
+
+        <PaymentBankScreen
+          visible={showModalBank}
+          route={urlPay}
+          onClose={() => setShowModalBank(false)}
+        />
+
     </ScrollView>
   );
 }

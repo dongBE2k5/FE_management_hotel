@@ -9,6 +9,7 @@ interface BookingResponse {
   checkOutDate: Date;
   status: string;
   totalPrice: number;
+  paidPrice:number
   createdAt: Date;
   updatedAt: Date;
   voucherIds?: number[];

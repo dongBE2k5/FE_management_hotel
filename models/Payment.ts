@@ -5,6 +5,7 @@ interface Payment {
     status: string;
     bookingId: number;
     transactionStatus: string;
+    createdAt?: string;
 }
 export default Payment;
 

@@ -50,6 +50,7 @@ export default function HotelList() {
             style={styles.card}
             onPress={() => {
                 setHotelId(item.id);
+              
                 navigation.navigate('hostBookings');
             }}
             activeOpacity={0.8}

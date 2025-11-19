@@ -26,7 +26,7 @@ export default function BookedList() {
   //   : bookings;
   const navigation = useNavigation();
   const fetchBookings = async () => {
-    console.log(bookings);
+    console.log("ds booking",bookings);
     
     try {
       setLoading(true);

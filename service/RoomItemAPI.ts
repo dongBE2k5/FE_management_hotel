@@ -5,9 +5,9 @@ import { RoomItem } from "@/models/RoomItem";
 import axios from "axios";
 import { ApiResponse } from "./HostAPI";
 
-export async function getRoomItemsByTypeRoomId(typeOfRoomId: number): Promise<ApiResponse<RoomItem[]> | null> {
+export async function getRoomItemsByTypeRoomId(typeOfRoomId: number,hotelId:number): Promise<ApiResponse<RoomItem[]> | null> {
     try {
-        const { data } = await axios.get(`${BaseUrl}/type-of-room-items/type/${typeOfRoomId}`);
+        const { data } = await axios.get(`${BaseUrl}/type-of-room-items/type/${typeOfRoomId}/${hotelId}`);
         console.log(`Lấy danh sách item thành công theo loại phòng id :${typeOfRoomId} `);
 
         return data.data;

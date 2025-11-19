@@ -1,14 +1,26 @@
 import ListRoom from "@/components/employee_staff/screen/listRoom";
 import { useHost } from "@/context/HostContext";
 import { HostStackParamList } from "@/types/navigation";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { RouteProp, useRoute } from "@react-navigation/native";
 import { StyleSheet, View } from "react-native";
 import DashboardScreen from "./DashboardScreen";
+import { useEffect } from "react";
 
 export default function HostBookings() {
     const { hotelId, setHotelId } = useHost();
     const route = useRoute<RouteProp<HostStackParamList, 'hostBookings'>>();
     // const id = route.params?.id;
+    useEffect(() => {
+        const saveHotelId = async () => {
+            if (hotelId) {
+                await AsyncStorage.setItem("hotelID", hotelId.toString());
+                console.log("Saved hotelID:", hotelId);
+            }
+        };
+
+        saveHotelId();
+    }, [hotelId]);
     console.log("hotelId", hotelId);
     // useEffect(() => {
     //     const getBookings = async () => {

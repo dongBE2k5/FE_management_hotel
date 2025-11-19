@@ -1,6 +1,7 @@
+import { initiatePayment } from "@/components/payment/PaymentButton";
 import { urlImage } from "@/constants/BaseURL";
-import { openURL } from "expo-linking";
-import React from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useState } from "react";
 import {
   Alert,
   Image,
@@ -12,6 +13,11 @@ import {
   View,
 } from "react-native";
 import PaymentAPI from "../../../service/Payment/PaymentAPI";
+import PaymentBankScreen from "@/components/payment/PaymentBankScreen";
+import { EmployeeStackParamList } from "@/types/navigation";
+import { useNavigation } from "@react-navigation/native";
+import { ro } from "date-fns/locale";
+
 
 const formatCurrency = (value) => {
   if (typeof value !== "number") return "—";
@@ -21,19 +27,36 @@ const formatCurrency = (value) => {
   }).format(value);
 };
 
-// Nhận thêm prop 'onManualPayment'
-export default function CostDetailModal({ visible, onClose, costData, onManualPayment }) {
+// ✨ 1. ĐỊNH NGHĨA CÁC PHƯƠNG THỨC THANH TOÁN
+const PaymentMethods = {
+  VNPAY: "VNPAY",
+  BANK: "BANK",
+  CASH: "CASH", // Đổi từ MANUAL thành CASH
+};
+
+export default function CostDetailModal({
+  visible,
+  onClose,
+  costData,
+  onManualPayment, // onManualPayment được giữ lại để dùng cho CASH
+}) {
   console.log("tiền", costData);
 
   if (!costData || Object.keys(costData).length === 0) {
     // (Modal "Không có thông tin" giữ nguyên)
     return (
-      <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Modal
+        visible={visible}
+        transparent
+        animationType="fade"
+        onRequestClose={onClose}
+      >
         <View style={styles.overlay}>
           <View style={styles.modalContainer}>
             <Text style={styles.title}>Không có thông tin</Text>
             <Text style={{ textAlign: "center", marginVertical: 10 }}>
-              Không thể tính toán chi phí. Vui lòng kiểm tra lại thông tin đặt phòng hoặc yêu cầu check-in.
+              Không thể tính toán chi phí. Vui lòng kiểm tra lại thông tin đặt
+              phòng hoặc yêu cầu check-in.
             </Text>
             <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
               <Text style={styles.closeText}>Đóng</Text>
@@ -47,78 +70,117 @@ export default function CostDetailModal({ visible, onClose, costData, onManualPa
   // (Phần tính toán giữ nguyên)
   const roomPrice = costData?.roomDetails?.price ?? 0;
   const servicesTotal =
-    costData?.services?.reduce((sum, s) => sum + ((s.price ?? 0) * (s.quantity ?? 1)), 0) ?? 0;
+    costData?.services?.reduce(
+      (sum, s) => sum + (s.price ?? 0) * (s.quantity ?? 1),
+      0
+    ) ?? 0;
   const damagedItemsTotal =
-    costData?.damagedItems?.reduce((sum, item) => sum + ((item.price ?? 0) * (item.quantity ?? 1)), 0) ?? 0;
+    costData?.damagedItems?.reduce(
+      (sum, item) => sum + (item.price ?? 0) * (item.quantity ?? 1),
+      0
+    ) ?? 0;
 
   const totalAmount = roomPrice + servicesTotal + damagedItemsTotal;
 
   // (Logic xác định số tiền thanh toán giữ nguyên)
   const isPaid = costData?.isPaid ?? false;
   const hasDamages = damagedItemsTotal > 0;
-  const amountToPay = !isPaid ? totalAmount : (hasDamages ? damagedItemsTotal : 0);
-  const showPaymentButtons = !isPaid ;
+  const amountToPay = !isPaid ? totalAmount : hasDamages ? damagedItemsTotal : 0;
+  // const amountToPay = 100000;
+  const showPaymentButtons = !isPaid;
   console.log(showPaymentButtons);
-  
-
-  // (Hàm handlePayment (Online))
-  const handlePayment = async () => {
+  const [showModalBank, setShowModalBank] = useState(false);
+  const [urlPay, setUrlpay] = useState();
+ 
+    const navigation = useNavigation<EmployeeStackParamList>();
+  // ✨ 2. HÀM THANH TOÁN TỔNG HỢP (Thay thế 2 hàm cũ)
+  const handlePayment = async (paymentMethod) => {
     try {
-      if (!costData?.bookingId || amountToPay <= 0) {
-        Alert.alert("Lỗi", "Không đủ thông tin hoặc tổng tiền không hợp lệ.");
-        return;
-      }
-      const paymentUrl = await PaymentAPI.createPayment(
-        amountToPay,
-        "vnpay",
-        costData.bookingId
-      );
-      if (paymentUrl) {
-        await openURL(paymentUrl.toString());
-        onClose(); // <-- SỬA ĐỔI: Đóng modal sau khi mở link
-      } else {
-        Alert.alert("Lỗi", "Không thể tạo liên kết thanh toán.");
-      }
-    } catch (error) {
-      console.error("Lỗi khi thanh toán:", error);
-      Alert.alert("Lỗi", "Đã xảy ra sự cố khi thanh toán.");
-    }
-  };
+      const hotelIdStr = await AsyncStorage.getItem('hotelID');
+      const hotelId = hotelIdStr ? Number(hotelIdStr) : null;
 
-  // ✨ HÀM MỚI: Xử lý thanh toán thủ công
-  const handleManualPayment = async () => {
-    try {
+      // 1. Validation chung
       if (!costData?.bookingId || amountToPay <= 0) {
         Alert.alert("Lỗi", "Không đủ thông tin hoặc tổng tiền không hợp lệ.");
         return;
       }
 
-      // 1. Gọi API thanh toán thủ công
-      const manualPaymentResult = await PaymentAPI.createPaymentMumanual(
-        amountToPay,
-        "MANUAL", // Hoặc "CASH" - Tùy thuộc vào API của bạn
-        costData.bookingId
-      );
+      let url;
+ 
+      // 2. Chia logic theo paymentMethod
+      switch (paymentMethod) {
+        // --- Case Online (VNPAY, BANK) ---
+        case PaymentMethods.VNPAY:
+        case PaymentMethods.BANK:
+          url = await  initiatePayment(
+            amountToPay,
+            paymentMethod, // Gửi "VNPAY" hoặc "BANK"
+            costData.bookingId,
+            hotelId
+          );
+          setUrlpay(url)
+          if (paymentMethod === "VNPAY") {
 
-      if (manualPaymentResult) {
-        // 2. Nếu API thành công, GỌI HÀM XÁC NHẬN CHECKOUT (từ prop)
-        if (onManualPayment) {
-          onManualPayment();
-        } else {
-          Alert.alert("Thành công", "Đã ghi nhận thanh toán thủ công.");
-        }
-        onClose(); // <-- SỬA ĐỔI: Đóng modal sau khi thanh toán thành công
-      } else {
-        Alert.alert("Lỗi", "Không thể tạo thanh toán thủ công.");
+
+            if (url) {
+              navigation.navigate("PaymentWebView", { url });
+            }
+
+          }
+          else if (paymentMethod === "BANK") {
+
+            if (url) {
+
+              setShowModalBank(true)
+            }
+          }
+
+          break;
+
+        // --- Case Manual (CASH) ---
+        case PaymentMethods.CASH:
+          // Sử dụng hàm createPaymentMumanual như code cũ
+          url = await PaymentAPI.createPaymentMumanual(
+            amountToPay,
+            PaymentMethods.CASH, // Gửi "CASH" (thay vì "MANUAL")
+            costData.bookingId
+          );
+
+          if (url) {
+            if (onManualPayment) {
+              // onManualPayment(); // Gọi hàm xác nhận checkout (nếu có)
+            } else {
+              Alert.alert("Thành công", "Đã ghi nhận thanh toán tiền mặt.");
+            }
+            onClose(); // Đóng modal
+          } else {
+            Alert.alert("Lỗi", "Không thể tạo thanh toán tiền mặt.");
+          }
+          break;
+
+        // --- Case mặc định ---
+        default:
+          Alert.alert("Lỗi", "Phương thức thanh toán không hợp lệ.");
       }
     } catch (error) {
-      console.error("Lỗi khi thanh toán thủ công:", error);
-      Alert.alert("Lỗi", "Đã xảy ra sự cố khi thanh toán thủ công.");
+      console.error(`Lỗi khi thanh toán [${paymentMethod}]:`, error);
+      Alert.alert("Lỗi", `Đã xảy ra sự cố khi thanh toán [${paymentMethod}].`);
     }
   };
+
+  /*
+  // (Hai hàm cũ đã bị xoá và gộp thành handlePayment ở trên)
+  // const handlePayment = async () => { ... };
+  // const handleManualPayment = async () => { ... };
+  */
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
           <Text style={styles.title}>Chi tiết dịch vụ & chi phí</Text>
@@ -133,7 +195,9 @@ export default function CostDetailModal({ visible, onClose, costData, onManualPa
                   <View style={styles.itemDetails}>
                     <Text style={styles.bold}>{costData.roomDetails.name}</Text>
                     {costData.roomDetails.description ? (
-                      <Text style={styles.subText}>{costData.roomDetails.description}</Text>
+                      <Text style={styles.subText}>
+                        {costData.roomDetails.description}
+                      </Text>
                     ) : null}
                   </View>
                   <Text style={styles.price}>{formatCurrency(roomPrice)}</Text>
@@ -142,63 +206,81 @@ export default function CostDetailModal({ visible, onClose, costData, onManualPa
             )}
 
             {/* Dịch vụ */}
-            {Array.isArray(costData.services) && costData.services.length > 0 && (
-              <>
-                <Text style={styles.sectionTitle}>Dịch vụ đã dùng</Text>
-                {costData.services.map((service, i) => (
-                  <View style={styles.rowBetween} key={`service-${i}`}>
-                    <View style={styles.itemDetails}>
-                      <View style={styles.itemNameRow}>
-                        <Text style={styles.bold}>{service.name}</Text>
-                        {(service.quantity ?? 0) > 0 && (
-                          <Text style={styles.quantityText}> (x{service.quantity})</Text>
-                        )}
+            {Array.isArray(costData.services) &&
+              costData.services.length > 0 && (
+                <>
+                  <Text style={styles.sectionTitle}>Dịch vụ đã dùng</Text>
+                  {costData.services.map((service, i) => (
+                    <View style={styles.rowBetween} key={`service-${i}`}>
+                      <View style={styles.itemDetails}>
+                        <View style={styles.itemNameRow}>
+                          <Text style={styles.bold}>{service.name}</Text>
+                          {(service.quantity ?? 0) > 0 && (
+                            <Text style={styles.quantityText}>
+                              {" "}
+                              (x{service.quantity})
+                            </Text>
+                          )}
+                        </View>
+                        {service.description ? (
+                          <Text style={styles.subText}>
+                            {service.description}
+                          </Text>
+                        ) : null}
                       </View>
-                      {service.description ? (
-                        <Text style={styles.subText}>{service.description}</Text>
-                      ) : null}
+                      <Text style={styles.price}>
+                        {formatCurrency(
+                          (service.price ?? 0) * (service.quantity ?? 1)
+                        )}
+                      </Text>
                     </View>
-                    <Text style={styles.price}>{formatCurrency((service.price ?? 0) * (service.quantity ?? 1))}</Text>
-                  </View>
-                ))}
-              </>
-            )}
+                  ))}
+                </>
+              )}
 
             {/* Vật dụng đền bù */}
-            {Array.isArray(costData.damagedItems) && costData.damagedItems.length > 0 && (
-              <>
-                <Text style={styles.sectionTitle}>Vật dụng đền bù</Text>
-                {costData.damagedItems.map((item, i) => (
-                  <View style={styles.rowBetween} key={`damage-${i}`}>
-                    <View style={styles.itemDetails}>
-                      <View style={styles.itemNameRow}>
-                        <Text style={styles.bold}>{item.name}</Text>
-                        {(item.quantity ?? 0) > 0 && (
-                          <Text style={styles.quantityText}> (x{item.quantity})</Text>
+            {Array.isArray(costData.damagedItems) &&
+              costData.damagedItems.length > 0 && (
+                <>
+                  <Text style={styles.sectionTitle}>Vật dụng đền bù</Text>
+                  {costData.damagedItems.map((item, i) => (
+                    <View style={styles.rowBetween} key={`damage-${i}`}>
+                      <View style={styles.itemDetails}>
+                        <View style={styles.itemNameRow}>
+                          <Text style={styles.bold}>{item.name}</Text>
+                          {(item.quantity ?? 0) > 0 && (
+                            <Text style={styles.quantityText}>
+                              {" "}
+                              (x{item.quantity})
+                            </Text>
+                          )}
+                        </View>
+                        {item.description ? (
+                          <Text style={styles.subText}>
+                            {item.description}
+                          </Text>
+                        ) : null}
+                        {/* Hiển thị ảnh nếu có */}
+                        {item.image && (
+                          <>
+                            {console.log("Ảnh:", `${urlImage}${item.image}`)}
+                            <Image
+                              source={{ uri: `${urlImage}${item.image}` }}
+                              style={styles.itemImage}
+                              resizeMode="cover"
+                            />
+                          </>
                         )}
                       </View>
-                      {item.description ? (
-                        <Text style={styles.subText}>{item.description}</Text>
-                      ) : null}
-                      {/* 👇 Hiển thị ảnh nếu có */}
-                      {item.image && (
-                        <>
-                          {console.log("Ảnh:",  `${urlImage}${item.image}`)}
-                          <Image
-                            source={{ uri: `${urlImage}${item.image}` }}
-                            style={styles.itemImage}
-                            resizeMode="cover"
-                          />
-                        </>
-                      )}
+                      <Text style={[styles.price, { color: "red" }]}>
+                        {formatCurrency(
+                          (item.price ?? 0) * (item.quantity ?? 1)
+                        )}
+                      </Text>
                     </View>
-                    <Text style={[styles.price, { color: "red" }]}>
-                      {formatCurrency((item.price ?? 0) * (item.quantity ?? 1))}
-                    </Text>
-                  </View>
-                ))}
-              </>
-            )}
+                  ))}
+                </>
+              )}
           </ScrollView>
 
           <View style={styles.divider} />
@@ -214,32 +296,47 @@ export default function CostDetailModal({ visible, onClose, costData, onManualPa
             <Text style={styles.closeText}>Đóng</Text>
           </TouchableOpacity>
 
-          {/* Khối thanh toán */}
+          {/* ✨ 3. CẬP NHẬT KHỐI THANH TOÁN */}
           {showPaymentButtons && (
             <>
-              {/* Nút 1: Thanh toán Online */}
+              {/* Nút 1: Thanh toán VNPAY */}
               <TouchableOpacity
                 style={[styles.paymentBtn, { backgroundColor: "#28a745" }]}
-                onPress={handlePayment}
+                onPress={() => handlePayment(PaymentMethods.VNPAY)} // 👈 SỬA
               >
                 <Text style={styles.closeText}>
-                  Thanh toán Online {formatCurrency(amountToPay)}
+                  Thanh toán VNPAY {formatCurrency(amountToPay)}
                 </Text>
               </TouchableOpacity>
 
-              {/* ✨ SỬA: Nút 2: Thanh toán Thủ công */}
+              {/* Nút 2: Thanh toán BANK (Nút mới) */}
+              <TouchableOpacity
+                style={[styles.paymentBtn, { backgroundColor: "#17a2b8" }]} // Màu khác
+                onPress={() => handlePayment(PaymentMethods.BANK)} // 👈 SỬA
+              >
+                <Text style={styles.closeText}>
+                  Thanh toán BANK {formatCurrency(amountToPay)}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Nút 3: Thanh toán Tiền mặt (CASH) */}
               <TouchableOpacity
                 style={[styles.paymentBtn, { backgroundColor: "#007BFF" }]}
-                onPress={handleManualPayment} // 👈 SỬA: Gọi hàm handler mới
+                onPress={() => handlePayment(PaymentMethods.CASH)} // 👈 SỬA
               >
-                <Text style={styles.closeText}>Xác nhận (Thanh toán thủ công)</Text>
+                <Text style={styles.closeText}>Xác nhận (Thanh toán tiền mặt)</Text>
               </TouchableOpacity>
             </>
           )}
-
         </View>
       </View>
+      <PaymentBankScreen
+                visible={showModalBank}
+                route={urlPay}
+                onClose={() => setShowModalBank(false)}
+              />
     </Modal>
+    
   );
 }
 

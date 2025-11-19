@@ -33,7 +33,11 @@ useFocusEffect(
           setLoading(false);
           return;
         }
-
+          // const role = await AsyncStorage.getItem('role');
+        // if(role!=="ROLE_HOST"){
+        //   return
+        // }
+        
         const response = await getHostByUser(Number(userId));
         console.log("📡 getHostByUser response:", response.data);
 

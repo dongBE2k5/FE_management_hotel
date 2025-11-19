@@ -9,7 +9,7 @@ export default function NotificationScreen() {
   useEffect(() => {
     async function logStart() {
       const packageName = await AppInfoModule.getPackageName();
-      LoggerModule.logDebug(packageName, '🚀 App đã khởi động!');
+     console.log(LoggerModule.logDebug(packageName, '🚀 App đã khởi động!'));
     }
     // ✅ Log chỉ khi app khởi động
     try {

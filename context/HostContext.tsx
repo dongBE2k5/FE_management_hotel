@@ -51,6 +51,7 @@ export const HostProvider = ({ children }: { children: React.ReactNode }) => {
   fetchRole();
 }, []);
 
+
 return (
   <HostContext.Provider value={{ hotelId, setHotelId }}>
     {children}

@@ -11,7 +11,7 @@ import {
 } from "react-native";
 
 import { getBookingById, getHistoryBookingsByBookingId, updateBookingStatus } from "@/service/BookingAPI";
-import { getBookingUtilityByBookingId } from "@/service/BookingUtilityAPI"; 
+import { getBookingUtilityByBookingId } from "@/service/BookingUtilityAPI";
 import { getEmployeeByHotel } from '@/service/EmpoyeeAPI';
 import { getPaymentsByBookingId } from "@/service/Payment/PaymentAPI";
 import { getRoomItemsByBooking } from "@/service/RoomItemAPI"; // 👈 Đã dùng API mới
@@ -140,53 +140,54 @@ export default function Checkout() {
                     ?.filter(emp => emp?.position === "CLEANING")
                     .map(staffData));
 
-                
-                // 👈 SỬA ĐỔI: Tính 'isPaid' Ở ĐÂY, ngay sau khi có 'payments'
-                const isPaid = payments.some(payment => payment.status === 'success');
-                
 
+                // 👈 SỬA ĐỔI: Tính 'isPaid' Ở ĐÂY, ngay sau khi có 'payments'
+                // const isPaid = payments.some(payment => payment.status === 'success');
+
+
+                const bookingStatus = bookingDetails.status;
+                let isPaid = bookingStatus === 'CHECK_OUT' ? true : false;
                 // 1. Xử lý dữ liệu cho màn hình checkout chính (Giờ 'isPaid' đã tồn tại)
                 const formattedScreenData = transformDataForScreen(bookingDetails, historyDetails, isPaid);
                 setBookingData(formattedScreenData);
 
                 // 👈 Cập nhật trạng thái check-out
-                const bookingStatus = bookingDetails.status;
-                setIsAlreadyCheckedOut(bookingStatus === 'CHECK_OUT');
-                
+
+                setIsAlreadyCheckedOut(bookingStatus=== 'CHECK_OUT');
+ 
                 // 👈 SỬA ĐỔI: Xóa dòng logic sai này
-                // let isPaid = bookingStatus === 'CHECK_OUT'? true : false; 
+
 
                 // --- LOGIC TẢI DỮ LIỆU NẾU ĐÃ CHECK-OUT ---
                 let fetchedDamages = [];
                 let fetchedServices = [];
 
-                if (bookingStatus === 'CHECK_OUT') {
-                    console.log("Booking đã CHECK_OUT, đang tải chi tiết hỏng hóc và dịch vụ...");
-                    try {
-                        const [damageData, utilityData] = await Promise.all([
-                            getRoomItemsByBooking(bookingId), // 👈 Sử dụng API mới
-                            getBookingUtilityByBookingId(bookingId)
-                        ]);
-                          console.log("báo hư",damageData);
-                          
-                        // Format và set state
-                        fetchedDamages = (damageData || []).map(item => ({
-                            name: item.itemName,
-                            quantity: item.quantityAffected, // 🔔 Lưu ý: Đảm bảo API trả về 'quantityAffected'
-                            price: item.price,
-                            description: item.status === 'MISSING' ? 'Báo thiếu' : 'Báo hỏng',
-                            image:item.image
-                        }));
+                console.log("Booking đã CHECK_OUT, đang tải chi tiết hỏng hóc và dịch vụ...");
+                try {
+                    const [damageData, utilityData] = await Promise.all([
+                        getRoomItemsByBooking(bookingId), // 👈 Sử dụng API mới
+                        getBookingUtilityByBookingId(bookingId)
+                    ]);
+                    console.log("báo hư", damageData);
 
-                        fetchedServices = formService(utilityData?.utilityItemBookingResponse || []);
+                    // Format và set state
+                    fetchedDamages = (damageData || []).map(item => ({
+                        name: item.itemName,
+                        quantity: item.quantityAffected, // 🔔 Lưu ý: Đảm bảo API trả về 'quantityAffected'
+                        price: item.price,
+                        description: item.status === 'MISSING' ? 'Báo thiếu' : 'Báo hỏng',
+                        image: item.image
+                    }));
 
-                        setDamagedItems(fetchedDamages);
-                        setUsedServices(fetchedServices);
+                    fetchedServices = formService(utilityData?.utilityItemBookingResponse || []);
 
-                    } catch (err) {
-                        console.warn("Lỗi khi tải dữ liệu check-out (hư hỏng/dịch vụ):", err);
-                    }
+                    setDamagedItems(fetchedDamages);
+                    setUsedServices(fetchedServices);
+
+                } catch (err) {
+                    console.warn("Lỗi khi tải dữ liệu check-out (hư hỏng/dịch vụ):", err);
                 }
+
                 // --- KẾT THÚC LOGIC MỚI ---
 
                 // 2. Chuẩn bị dữ liệu riêng cho CostDetailModal
@@ -203,16 +204,19 @@ export default function Checkout() {
 
                     const diffTime = Math.max(0, checkOutDate - checkInDate);
                     const numberOfDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    const roomTotal = numberOfDays * bookingDetails.room.price;
 
+                    // const roomTotal = numberOfDays * bookingDetails.room.price;
+                    const roomTotal =bookingDetails.totalPrice - bookingDetails.paidPrice;
+                        
                     const modalData = {
                         roomDetails: {
                             name: bookingDetails.room.type,
-                            description: `${numberOfDays} đêm × ${bookingDetails.room.price.toLocaleString('vi-VN')} ₫`,
+                            // descriptiotn: `${numberOfDays} đêm × ${bookingDetails.room.price.toLocaleString('vi-VN')} ₫`,
+                            description: `tổng ${bookingDetails.totalPrice} -  tiền đã trả ${bookingDetails.paidPrice} ₫`,
                             price: roomTotal,
                         },
-                        services: fetchedServices, 
-                        damagedItems: fetchedDamages, 
+                        services: fetchedServices,
+                        damagedItems: fetchedDamages,
                         bookingId: bookingId,
                         isPaid: isPaid, // 👈 SỬA: Giờ đã dùng 'isPaid' được tính đúng từ 'payments'
                     };

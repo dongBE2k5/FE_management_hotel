@@ -11,6 +11,7 @@ export type RootStackParamList = {
   Saved: undefined;
   RoomCard: { rooms: Room[]; checkInDate: Date; checkOutDate?: Date | null };
   FormBooking: { room: Room, checkInDate: Date, checkOutDate: Date | null };   // 👈 thêm roomPrice
+  PaymentWebView: undefined;
   ConfirmBooking: {
     room: Room;
     checkInDate: string;
@@ -18,6 +19,7 @@ export type RootStackParamList = {
     nights: number;
     specialRequests: UtilityItem[],
     price: number,
+
 
   };
   ReviewBooking: {
@@ -69,7 +71,7 @@ export type RootStackParamList = {
 
 
 export type ProfileStackParamList = {
-  
+
   Profile: undefined; //
   Account: undefined;
   Login: undefined;
@@ -79,7 +81,7 @@ export type ProfileStackParamList = {
   Home: undefined;
   ForgotPassword: undefined;
   ResetPassword: { email: string };
-    ChangePassword: undefined;
+  ChangePassword: undefined;
 };
 
 export type EmployeeStackParamList = {
@@ -90,6 +92,8 @@ export type EmployeeStackParamList = {
   listRoom: undefined;
   bookingDetail: { bookingId: number }; // có params thì khai báo ở đây
   checkout: undefined; // có params thì khai báo ở đây
+  PaymentWebView: undefined;
+
 }
 
 export type HostStackParamList = {
@@ -101,15 +105,15 @@ export type HostStackParamList = {
   ManageRoomTypes: undefined;
   ManageServices: undefined;
   // RoomDetail:{roomId:number};
-  RoomDetail:undefined;
+  RoomDetail: undefined;
 }
-export type HostStack ={
+export type HostStack = {
   VoucherList: undefined;
-  FormVoucher: {isEdit: boolean, voucher: Voucher | null};
+  FormVoucher: { isEdit: boolean, voucher: Voucher | null };
   // CCCDScanner: undefined;
-  CCCDScannerScreen : undefined;
-  CameraCaptureView: { onCapture: (imageUri: string) => void }; 
-   hostBookings: undefined;
+  CCCDScannerScreen: undefined;
+  CameraCaptureView: { onCapture: (imageUri: string) => void };
+  hostBookings: undefined;
   bookingDetail: { bookingId: number }; // có params thì khai báo ở đây
   checkout: undefined; // có params thì khai báo ở đây
   RoomList: undefined;
@@ -117,17 +121,17 @@ export type HostStack ={
   ManageRoomTypes: undefined;
   ManageServices: undefined;
   // RoomDetail:{roomId:number};
-  RoomDetail:undefined;
-    hotelEdit: { id: number },
+  RoomDetail: undefined;
+  hotelEdit: { id: number },
   CreateHotel: undefined,
   HotelList: undefined,
-  
+
   listRoom: undefined;
-  
-  
+
+
 
 }
-export type CleningEmployee ={
-  CleaningStaffScreen:undefined
-  CheckRoomScreen:{id:number,priority:String,status :String}
+export type CleningEmployee = {
+  CleaningStaffScreen: undefined
+  CheckRoomScreen: { id: number, priority: String, status: String }
 }

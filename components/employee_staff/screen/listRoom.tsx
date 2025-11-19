@@ -2,6 +2,7 @@ import { useHost } from '@/context/HostContext';
 import { getAllBookingsByHotelId } from '@/service/BookingAPI';
 import { connectAndSubscribeBooking, disconnect } from '@/service/Realtime/BookingWS';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
@@ -59,16 +60,24 @@ export default function ListRoom() {
     });
 
     const [data, setData] = useState([]);
-    const { hotelId } = useHost();
-    console.log("HOTEL ID", hotelId);
-    
+    // const { hotelId: hostHotelId } = useHost();
+
     useFocusEffect(
         useCallback(() => {
             let isMounted = true;
             const fetchBookings = async () => {
                 try {
-                    // const hotelIdStr = await AsyncStorage.getItem('hotelID');
-                    // const hotelId = hotelIdStr ? Number(hotelIdStr) : null;
+                    const role = await AsyncStorage.getItem('role');
+                 
+                    let hotelId = null;
+
+             
+                        const hotelIdStr = await AsyncStorage.getItem('hotelID');
+                        hotelId = hotelIdStr ? Number(hotelIdStr) : null;
+                    
+
+                    console.log("HOTEL ID:", hotelId);
+
                     if (!hotelId) {
                         console.error("Hotel ID không hợp lệ.");
                         return;
@@ -85,7 +94,7 @@ export default function ListRoom() {
 
                     setData(formattedData);
                     console.log("DATA", formattedData);
-                    
+
                 } catch (error) {
                     console.log("Lỗi", error);
                 }
@@ -106,8 +115,8 @@ export default function ListRoom() {
                             const data = typeof newRequest === 'string' ? JSON.parse(newRequest) : newRequest;
                             const message = data?.message || '';
                             const type = data?.type || '';
-                                console.log("type",type);
-                                
+                            console.log("type", type);
+
                             // --- LOGIC THÔNG BÁO TOAST ---
                             if (type === 'NEW_BOOKING' || message.startsWith("New booking")) {
                                 Toast.show({
@@ -153,11 +162,9 @@ export default function ListRoom() {
     const { filteredBookings, counts } = useMemo(() => {
         const calculatedCounts = {
             ALL: data.length,
-            // 👈 SỬA: Chỉ đếm CHUA_THANH_TOAN
             PENDING_GROUP: data.filter(b =>
                 b.status === 'CHUA_THANH_TOAN'
             ).length,
-            // 👈 THÊM MỚI: Đếm DA_COC và DA_THANH_TOAN
             PAID_GROUP: data.filter(b =>
                 b.status === 'DA_COC' ||
                 b.status === 'DA_THANH_TOAN'
@@ -170,12 +177,10 @@ export default function ListRoom() {
         // Lọc theo tab
         switch (activeFilter) {
             case 'PENDING_GROUP':
-                // 👈 SỬA: Chỉ lọc CHUA_THANH_TOAN
                 list = data.filter(b =>
                     b.status === 'CHUA_THANH_TOAN'
                 );
                 break;
-            // 👈 THÊM MỚI: Lọc DA_COC và DA_THANH_TOAN
             case 'PAID_GROUP':
                 list = data.filter(b =>
                     b.status === 'DA_COC' ||
@@ -286,12 +291,29 @@ export default function ListRoom() {
 
     return (
         <SafeAreaView style={styles.safeArea}>
+            {/* ✨ SỬA ĐỔI PHẦN HEADER */}
             <View style={styles.header}>
                 <Text style={styles.title}>Danh sách Booking</Text>
-                <TouchableOpacity style={styles.addButton} onPress={() => { /* Navigate to Add Booking screen */ }}>
-                    <Ionicons name="add" size={30} color="#fff" />
-                </TouchableOpacity>
+
+                {/* ✨ THÊM: View chứa các nút header */}
+                <View style={styles.headerButtons}>
+                    {/* ✨ THÊM: Nút chuyển đến Lịch sử Giao dịch */}
+                    <TouchableOpacity
+                        style={[styles.iconButton, { marginRight: 10 }]}
+                        // Đảm bảo tên 'PaymentListScreen' khớp với tên trong Stack Navigator
+                        onPress={() => navigation.navigate('PaymentListScreen')}
+                    >
+                        <Ionicons name="receipt-outline" size={28} color="#007bff" />
+                    </TouchableOpacity>
+
+                    {/* Nút thêm cũ */}
+                    <TouchableOpacity style={styles.addButton} onPress={() => { /* Navigate to Add Booking screen */ }}>
+                        <Ionicons name="add" size={30} color="#fff" />
+                    </TouchableOpacity>
+                </View>
             </View>
+            {/* ✨ KẾT THÚC SỬA ĐỔI HEADER */}
+
 
             <View style={styles.stickyHeader}>
                 {/* Thanh tìm kiếm */}
@@ -309,7 +331,6 @@ export default function ListRoom() {
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterContainer}>
                         <FilterButton title="Tất cả" filterKey="ALL" count={counts.ALL} />
                         <FilterButton title="Chờ xử lý" filterKey="PENDING_GROUP" count={counts.PENDING_GROUP} />
-                        {/* 👈 THÊM MỚI: Nút lọc "Đã thanh toán" */}
                         <FilterButton title="Đã thanh toán" filterKey="PAID_GROUP" count={counts.PAID_GROUP} />
                         <FilterButton title="Đang ở" filterKey="CHECK_IN" count={counts.CHECK_IN} />
                         <FilterButton title="Hoàn tất" filterKey="COMPLETED_GROUP" count={counts.COMPLETED_GROUP} />
@@ -340,6 +361,23 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
     },
     title: { fontSize: 28, fontWeight: 'bold' },
+
+    // ✨ THÊM: Style cho nhóm nút header
+    headerButtons: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+
+    // ✨ THÊM: Style cho nút icon (nút hóa đơn)
+    iconButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f0f2f5', // Màu nền khác nút "Add"
+    },
+
     addButton: {
         width: 44,
         height: 44,
