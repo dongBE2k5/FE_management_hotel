@@ -201,9 +201,7 @@ export default function ListRoom() {
             default:
                 list = data;
                 break;
-            default:
-                list = data;
-                break;
+          
         }
 
         // Lọc tiếp theo từ khóa tìm kiếm

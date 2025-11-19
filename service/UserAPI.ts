@@ -222,7 +222,7 @@ async function changePassword(
         } else {
           errorMessage = errText; // Trường hợp không có trường message
         }
-      } catch (e) {
+     
       } catch (e) {
         errorMessage = errText;
       }
