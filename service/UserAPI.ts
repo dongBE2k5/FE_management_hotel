@@ -3,9 +3,10 @@ import RegisterResponse from '@/models/RegisterResponse';
 import UserLogin from '@/models/UserLogin';
 import UserLoginResponse from '@/models/UserLoginResponse';
 import UserRegister from '@/models/UserRegister';
+import { RegisterEmployee } from '@/models/RegisterEmployee';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import BaseUrl from '../constants/BaseURL';
-
+import axios from 'axios';
 async function register(user: UserRegister): Promise<RegisterResponse | any> {
   try {
     const res = await fetch(`${BaseUrl}/auth/register`, {
@@ -63,7 +64,7 @@ async function logoutFunction(): Promise<LogoutResponse> {
       throw new Error(errorBody);
     }
 
-  
+
     await AsyncStorage.removeItem('userToken');
     await AsyncStorage.removeItem('userId');
 
@@ -211,17 +212,17 @@ async function changePassword(
       let errorMessage = "Đổi mật khẩu thất bại."; // Giá trị mặc định
 
       try {
-     
+
         const errorObject = JSON.parse(errText);
         if (errorObject.message) {
           errorMessage = errorObject.message;
         } else {
           errorMessage = errText; // Trường hợp không có trường message
         }
-      } catch (e) { 
+      } catch (e) {
         errorMessage = errText;
       }
-      
+
 
       return { success: false, message: errorMessage };
     }
@@ -269,13 +270,17 @@ async function updateProfile(
   } catch (error: any) {
     return { success: false, message: error.message };
   }
+
+
+
 }
+
 
 export default updateProfile;
 
 
 export {
   getUserById, loginFunction, register, logoutFunction, getCurrentUser, sendOtp,
-  resetPassword, changePassword, updateProfile
+  resetPassword, changePassword, updateProfile, 
 };
 

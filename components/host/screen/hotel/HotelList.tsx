@@ -1,9 +1,11 @@
 import { useHost } from '@/context/HostContext';
+import { useRouter } from 'expo-router';
 import { getAllHotelsByUser } from '@/service/HotelAPI';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { useFocusEffect } from 'expo-router';
+// import StaffListScreen from './employee/ListStaffHotel';
 import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -27,7 +29,7 @@ export default function HotelList() {
             if (!userId) return;
             const res = await getAllHotelsByUser(Number(userId));
             console.log("res", res);
-            if(!res) return;
+            if (!res) return;
             setHotels(res.data || []);
         } catch (error) {
             console.error("Lỗi khi tải danh sách khách sạn:", error);
@@ -44,7 +46,7 @@ export default function HotelList() {
     //       console.error("Lỗi khi xóa khách sạn:", error);
     //     }
     //   };
-
+    const router = useRouter();
     const renderItem = ({ item }: { item: any }) => (
         <TouchableOpacity
             style={styles.card}
@@ -102,12 +104,29 @@ export default function HotelList() {
     }
 
     return (
+
         <View style={styles.container}>
+            <View style={styles.headerContainer}>
+                <View style={styles.profileSection}>
+                    <Image
+                        source={{ uri: 'https://i.pravatar.cc/150?u=admin' }}
+                        style={styles.avatar}
+                    />
+                    <View>
+                        <Text style={styles.greeting}>Xin chào,</Text>
+                        <Text style={styles.adminName}>Admin</Text>
+                    </View>
+                </View>
+                <TouchableOpacity style={styles.notificationBell}>
+                    <Ionicons name="notifications-outline" size={26} color="#FFFFFF" />
+                </TouchableOpacity>
+            </View>
             <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("CreateHotel")}>
                 <Ionicons name="add-circle-outline" size={28} color="#fff" />
                 <Text style={styles.addText}>Thêm khách sạn</Text>
             </TouchableOpacity>
-
+            
+            
             <FlatList
                 data={hotels}
                 keyExtractor={(item) => item.id.toString()}
@@ -212,4 +231,51 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'space-between',
     },
+    headerContainer: {
+        backgroundColor: '#0062E0', // Nền xanh dương chính
+        paddingTop: 20,
+        paddingHorizontal: 20,
+        paddingBottom: 20,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderBottomLeftRadius: 20, // Thêm một chút bo góc
+        borderBottomRightRadius: 20,
+        elevation: 5,
+        shadowColor: '#0062E0',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
+    },
+    profileSection: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    avatar: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        marginRight: 15,
+        borderWidth: 2,
+        borderColor: '#FFFFFF', // Viền trắng
+    },
+    greeting: {
+        fontSize: 16,
+        color: '#E0F0FF', // Màu trắng xanh nhạt
+        fontWeight: '300',
+    },
+    adminName: {
+        fontSize: 22,
+        color: '#FFFFFF', // Màu trắng
+        fontWeight: 'bold',
+    },
+    notificationBell: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.15)', // Nền trong suốt
+    },
+
 });

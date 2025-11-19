@@ -1,3 +1,5 @@
+import { HostProvider } from "@/context/HostContext";
+import HostIdLoader from "@/context/HostLoader";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs } from "expo-router";
 import React from "react";
@@ -16,6 +18,7 @@ export default function TabLayout() {
         headerShown: false,
       }}
     >
+    
       <Tabs.Screen
         name="index"
         options={{

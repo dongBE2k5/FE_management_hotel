@@ -1,5 +1,6 @@
 import Room from "@/models/Room";
 import { UtilityItem } from "@/models/Utility/Utility";
+import ItemListHotel from '../components/host/screen/employee/itemListHotel';
 
 // src/types/navigation.ts
 export type RootStackParamList = {
@@ -100,6 +101,8 @@ export type HostStackParamList = {
   ManageServices: undefined;
   // RoomDetail:{roomId:number};
   RoomDetail:undefined;
+ ListStaffHotel:undefined;
+  ItemListHotel:undefined;
 }
 export type HostStack ={
   // CCCDScanner: undefined;
@@ -117,7 +120,8 @@ export type HostStack ={
     hotelEdit: { id: number },
   CreateHotel: undefined,
   HotelList: undefined,
-  
+  StaffListHotel:undefined,
+  ItemListHotel:undefined;
   listRoom: undefined;
   
   

@@ -15,6 +15,8 @@ export default function HostBookings() {
     //         const bookings = await getBookingsByHotelId(hotelId);
     //     }
     // }, []);
+
+    
     return (
         // Bọc trong một View cha với flex: 1
         <View style={styles.pageContainer}>
@@ -25,7 +27,10 @@ export default function HostBookings() {
                 <ListRoom />
             </View>
         </View>
+
+        
     )
+    
 }
 
 const styles = StyleSheet.create({
@@ -39,5 +44,13 @@ const styles = StyleSheet.create({
     },
     listContainer: {
         flex: 1, // ListRoom sẽ chiếm toàn bộ không gian còn lại
+    },
+       addText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '500',
+        marginLeft: 8,
+        width: 100,
+        height: 20,
     }
 });

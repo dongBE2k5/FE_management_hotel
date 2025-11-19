@@ -27,4 +27,3 @@ export async function getEmployeeByHotel(hotelId: number): Promise<Employee[] | 
         return null;
     }
 }
-

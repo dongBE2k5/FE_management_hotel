@@ -1,4 +1,5 @@
 import { HostProvider } from '@/context/HostContext';
+import HostIdLoader from '@/context/HostLoader';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 
@@ -18,6 +19,7 @@ export default function TabLayout() {
             headerShown: false
           }}
         >
+
           <Tabs.Screen
             name="index"
             options={{

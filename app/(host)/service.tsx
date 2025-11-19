@@ -5,7 +5,7 @@ import { Utility, UtilityItem } from '@/models/Utility/Utility';
 import { createUtilityOfHotel, deleteUtilityOfHotel, getUtilityByHotel, getUtilityOfHotelById, updateUtilityOfHotel, updateUtilityOfHotelById } from '@/service/HotelUtilityAPI';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from "expo-image-picker";
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Image, Modal, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -16,6 +16,7 @@ const allRoomTypes = [
 ];
 
 export default function Service() {
+    const router = useRouter();
     const [utilities, setUtilities] = useState<Utility>();
     const [roomTypes, setRoomTypes] = useState<TypeOfRoomResponse>();
     const [selectedServices, setSelectedServices] = useState<number[]>([]);
@@ -186,8 +187,19 @@ const handleDeleteUtility = async (id: number) => {
 }
 
 return (
+
+    
     <View style={styles.container}>
-        <Text style={styles.mainSectionTitle}>Dịch vụ áp dụng</Text>
+        <View style={styles.headerContainer}>
+            <Text style={styles.mainSectionTitle}>Dịch vụ áp dụng</Text>
+            <TouchableOpacity
+                style={styles.itemListButton}
+                onPress={() => router.push('./itemTest' as any)}
+            >
+                <Ionicons name="cube-outline" size={20} color="#fff" />
+                <Text style={styles.itemListButtonText}>Vật dụng</Text>
+            </TouchableOpacity>
+        </View>
 
         {/* --- Tabs --- */}
         <View style={styles.tabContainer}>
@@ -545,11 +557,31 @@ const styles = StyleSheet.create({
         padding: 16,
         paddingTop: 40,
     },
+    headerContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 15,
+    },
     mainSectionTitle: {
         fontSize: 22,
         fontWeight: "700",
-        marginBottom: 15,
         color: "#1f1f1f",
+        flex: 1,
+    },
+    itemListButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: "#28a745",
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 8,
+        gap: 6,
+    },
+    itemListButtonText: {
+        color: "#fff",
+        fontWeight: "600",
+        fontSize: 14,
     },
     serviceCard: {
         backgroundColor: "#fff",
