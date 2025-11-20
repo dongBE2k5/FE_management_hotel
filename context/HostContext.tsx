@@ -48,7 +48,7 @@ export const HostProvider = ({ children }: { children: React.ReactNode }) => {
       console.error("Lỗi khi lấy role:", error);
     }
   }
-  fetchRole();
+  // fetchRole();
 }, []);
 
 
