@@ -439,6 +439,7 @@ const ModalChooseDate = ({
                             <Text style={styles.label}>Ngày trả phòng</Text>
                             <Text style={styles.value}>{checkOut ? formatVN(checkOut) : "Chưa chọn"}</Text>
                         </TouchableOpacity>
+
                         {modalChooseDateType == "checkIn" && (
                             <>
                                 <Modal
@@ -496,7 +497,7 @@ const ModalChooseDate = ({
                                         </View>
                                     </View>
                                 </Modal>
-                            // {/* Android giữ nguyên */}
+
                                 {Platform.OS === 'android' && modalChooseDateType && (
                                     <DateTimePicker
                                         value={checkIn}

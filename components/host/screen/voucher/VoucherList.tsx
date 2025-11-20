@@ -124,7 +124,7 @@ export default function VoucherList() {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 40 }}>
                     <Ionicons style={{ marginRight: 10 }} name="ticket" size={20} color="#0b84ff" />
                     <Text style={styles.heading}>Danh sách voucher</Text>
                 </View>

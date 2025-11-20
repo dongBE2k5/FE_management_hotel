@@ -156,7 +156,7 @@ export default function HotelPaymentTypeScreen() {
     };
 
     return (
-        <ScrollView style={styles.container}>
+        <ScrollView style={[styles.container, { marginTop: 40 }]}>
             <Text style={styles.title}>💳 Quản Lí Thanh Toán Khách Sạn</Text>
 
             {/* Payment Type */}

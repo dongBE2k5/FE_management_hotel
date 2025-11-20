@@ -1,16 +1,16 @@
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
+  Alert,
   FlatList,
   StyleSheet,
+  Text,
   TouchableOpacity,
-  Alert, // Giữ lại Alert để phòng trường hợp cập nhật UI bị lỗi
+  View,
 } from "react-native";
 
-import ListStaffHotelModal from "./StaffAdd";
-import { getEmployeeByHotel } from "@/service/EmpoyeeAPI";
 import { useHost } from "@/context/HostContext";
+import { getEmployeeByHotel } from "@/service/EmpoyeeAPI";
+import ListStaffHotelModal from "./StaffAdd";
 
 
 
@@ -42,7 +42,7 @@ export default function StaffListHotel() {
     console.log("✅ Dữ liệu nhận từ Modal (đã có ID thật):", newStaffFromServer);
     try {
       
-   handleReload();
+
 
     } catch (error) {
       console.error("❌ Lỗi khi cập nhật UI danh sách nhân viên:", error);

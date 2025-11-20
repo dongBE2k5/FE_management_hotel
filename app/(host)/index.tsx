@@ -47,7 +47,7 @@ useFocusEffect(
           setIsHost(false);
         }
       } catch (error) {
-        console.error("❌ Lỗi khi gọi getHostByUser:", error);
+        // console.error("❌ Lỗi khi gọi getHostByUser:", error);
         setIsHost(false);
       } finally {
         setLoading(false);

@@ -163,7 +163,7 @@ export default function ListRoom() {
     const navigation = useNavigation();
     const [activeFilter, setActiveFilter] = useState('ALL');
     const [searchQuery, setSearchQuery] = useState(''); // State cho thanh tìm kiếm
-
+    console.log("data", data);
     const { filteredBookings, counts } = useMemo(() => {
         const calculatedCounts = {
             ALL: data.length,
@@ -177,7 +177,6 @@ export default function ListRoom() {
             CHECK_IN: data.filter(b => b.status === 'CHECK_IN').length,
             COMPLETED_GROUP: data.filter(b => b.status === 'CHECK_OUT' || b.status === 'DA_HUY').length,
         };
-
         let list = data;
         // Lọc theo tab
         switch (activeFilter) {
@@ -217,6 +216,7 @@ export default function ListRoom() {
         return { filteredBookings: list, counts: calculatedCounts };
     }, [data, activeFilter, searchQuery]);
 
+    console.log("filteredBookings", filteredBookings);
 
     // --- GIAO DIỆN MỚI ---
 
@@ -233,7 +233,7 @@ export default function ListRoom() {
 
     const PaymentProgress = ({ item }) => {
         const { amountPaid, price, status } = item;
-
+        console.log("item", item);
 
         const percentage = useMemo(() => {
             if (status === 'DA_THANH_TOAN' || status === 'CHECK_IN' || status === 'CHECK_OUT') {
