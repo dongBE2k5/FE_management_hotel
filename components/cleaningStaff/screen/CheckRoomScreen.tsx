@@ -188,7 +188,7 @@ export default function CheckRoomScreen() {
                 setIsLoading(true);
                 
                 const [damageData, minibarData] = await Promise.all([
-                    getRoomItemsByTypeRoomId(roomTypeId),
+                    getRoomItemsByTypeRoomId(roomTypeId,hotelId),
                     getUtilityOfHotelByHotelIdAndType(hotelId, 'MINIBAR')
                 ]);
 

@@ -1,4 +1,3 @@
-// file: app/_layout.js
 import { UserProvider, useUser } from '@/context/UserContext';
 import { Slot } from 'expo-router';
 import { View } from 'react-native';

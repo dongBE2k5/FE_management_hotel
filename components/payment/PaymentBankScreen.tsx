@@ -1,3 +1,4 @@
+import PaymentAPI from "@/service/Payment/PaymentAPI";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system/legacy";
 import * as MediaLibrary from "expo-media-library";
@@ -12,9 +13,9 @@ export default function PaymentBankScreen({ visible, onClose, route }) {
 
   if (!visible) return null;
   //   const navigation = useNavigation();
-  const url = route.data;   // lấy đúng URL
-  const urlImage = url;
+  const url = route?.data.url;   // lấy đúng URL
   console.log("url đã nhận", url);
+  const urlImage = url;
 
   const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
 
@@ -45,11 +46,13 @@ export default function PaymentBankScreen({ visible, onClose, route }) {
     try {
       const role = await AsyncStorage.getItem("role")
       if (role === "ROLE_USER") {
-        onClose
+        onClose();
         router.replace("/(tabs)/booking");
       }
       else {
-        onClose
+        
+        PaymentAPI.updateStatusPayById(Number(route?.data.idpay),"SUCCESS")
+        onClose();
       }
 
     } catch (error) {

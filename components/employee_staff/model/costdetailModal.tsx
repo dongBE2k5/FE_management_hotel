@@ -1,7 +1,10 @@
+import PaymentBankScreen from "@/components/payment/PaymentBankScreen";
 import { initiatePayment } from "@/components/payment/PaymentButton";
 import { urlImage } from "@/constants/BaseURL";
+import { EmployeeStackParamList } from "@/types/navigation";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useState } from "react";
+import { useNavigation } from "@react-navigation/native";
+import React, { useState, useEffect } from "react"; // Thêm useEffect nếu cần, hiện tại dùng logic trực tiếp
 import {
   Alert,
   Image,
@@ -13,11 +16,6 @@ import {
   View,
 } from "react-native";
 import PaymentAPI from "../../../service/Payment/PaymentAPI";
-import PaymentBankScreen from "@/components/payment/PaymentBankScreen";
-import { EmployeeStackParamList } from "@/types/navigation";
-import { useNavigation } from "@react-navigation/native";
-import { ro } from "date-fns/locale";
-
 
 const formatCurrency = (value) => {
   if (typeof value !== "number") return "—";
@@ -27,23 +25,22 @@ const formatCurrency = (value) => {
   }).format(value);
 };
 
-// ✨ 1. ĐỊNH NGHĨA CÁC PHƯƠNG THỨC THANH TOÁN
+// 1. ĐỊNH NGHĨA CÁC PHƯƠNG THỨC THANH TOÁN
 const PaymentMethods = {
   VNPAY: "VNPAY",
   BANK: "BANK",
-  CASH: "CASH", // Đổi từ MANUAL thành CASH
+  CASH: "CASH",
 };
 
 export default function CostDetailModal({
   visible,
   onClose,
   costData,
-  onManualPayment, // onManualPayment được giữ lại để dùng cho CASH
+  onManualPayment,
 }) {
   console.log("tiền", costData);
 
   if (!costData || Object.keys(costData).length === 0) {
-    // (Modal "Không có thông tin" giữ nguyên)
     return (
       <Modal
         visible={visible}
@@ -67,7 +64,7 @@ export default function CostDetailModal({
     );
   }
 
-  // (Phần tính toán giữ nguyên)
+  // Tính toán chi phí
   const roomPrice = costData?.roomDetails?.price ?? 0;
   const servicesTotal =
     costData?.services?.reduce(
@@ -82,83 +79,110 @@ export default function CostDetailModal({
 
   const totalAmount = roomPrice + servicesTotal + damagedItemsTotal;
 
-  // (Logic xác định số tiền thanh toán giữ nguyên)
   const isPaid = costData?.isPaid ?? false;
   const hasDamages = damagedItemsTotal > 0;
   const amountToPay = !isPaid ? totalAmount : hasDamages ? damagedItemsTotal : 0;
-  // const amountToPay = 100000;
   const showPaymentButtons = !isPaid;
-  console.log(showPaymentButtons);
+
   const [showModalBank, setShowModalBank] = useState(false);
-  const [urlPay, setUrlpay] = useState();
- 
-    const navigation = useNavigation<EmployeeStackParamList>();
-  // ✨ 2. HÀM THANH TOÁN TỔNG HỢP (Thay thế 2 hàm cũ)
+  const [urlPay, setUrlpay] = useState(); // Dùng để truyền vào WebView hoặc Modal Bank
+  const navigation = useNavigation<EmployeeStackParamList>();
+
+  // ✨ STATE MỚI: Cache URL và lưu số tiền lần cuối tạo URL
+  const [paymentCache, setPaymentCache] = useState({
+    VNPAY: null,
+    BANK: null,
+    lastAmount: 0, // Lưu số tiền lúc tạo link
+  });
+
+  // ✨ 2. HÀM XỬ LÝ THANH TOÁN
   const handlePayment = async (paymentMethod) => {
     try {
-      const hotelIdStr = await AsyncStorage.getItem('hotelID');
+      const hotelIdStr = await AsyncStorage.getItem("hotelID");
       const hotelId = hotelIdStr ? Number(hotelIdStr) : null;
-
-      // 1. Validation chung
+      if (!hotelId) {
+        Alert.alert("Lỗi", "Không tìm thấy hotelID. Vui lòng kiểm tra HostProvider.");
+        return;
+      }
+      
       if (!costData?.bookingId || amountToPay <= 0) {
         Alert.alert("Lỗi", "Không đủ thông tin hoặc tổng tiền không hợp lệ.");
         return;
       }
 
-      let url;
- 
-      // 2. Chia logic theo paymentMethod
+      let url = null;
+
       switch (paymentMethod) {
         // --- Case Online (VNPAY, BANK) ---
         case PaymentMethods.VNPAY:
         case PaymentMethods.BANK:
-          url = await  initiatePayment(
-            amountToPay,
-            paymentMethod, // Gửi "VNPAY" hoặc "BANK"
-            costData.bookingId,
-            hotelId
-          );
-          setUrlpay(url)
+          
+          // ✨ LOGIC CACHE:
+          // Kiểm tra xem số tiền có thay đổi không hoặc URL method đó đã có chưa
+          const isAmountChanged = amountToPay !== paymentCache.lastAmount;
+          const cachedUrl = paymentCache[paymentMethod];
+
+          if (!isAmountChanged && cachedUrl) {
+            // CASE 1: Tiền không đổi và đã có URL -> Dùng lại URL cũ
+            console.log(`Using cached URL for ${paymentMethod}`);
+            url = cachedUrl;
+          } else {
+            // CASE 2: Tiền đổi HOẶC chưa có URL -> Gọi API tạo mới
+            console.log(`Creating new URL for ${paymentMethod}. Amount changed: ${isAmountChanged}`);
+            
+            url = await initiatePayment(
+              amountToPay,
+              paymentMethod,
+              costData.bookingId,
+              hotelId
+            );
+
+            // Lưu vào state cache nếu tạo thành công
+            if (url) {
+              setPaymentCache((prev) => ({
+                ...prev,
+                // Nếu tiền đổi thì reset cả 2 URL, nếu không thì chỉ update method hiện tại
+                VNPAY: isAmountChanged ? (paymentMethod === "VNPAY" ? url : null) : (paymentMethod === "VNPAY" ? url : prev.VNPAY),
+                BANK: isAmountChanged ? (paymentMethod === "BANK" ? url : null) : (paymentMethod === "BANK" ? url : prev.BANK),
+                lastAmount: amountToPay,
+              }));
+            }
+          }
+
+          // Xử lý điều hướng sau khi có URL
+          setUrlpay(url);
+
           if (paymentMethod === "VNPAY") {
-
-
             if (url) {
               navigation.navigate("PaymentWebView", { url });
             }
-
-          }
-          else if (paymentMethod === "BANK") {
-
+          } else if (paymentMethod === "BANK") {
             if (url) {
-
-              setShowModalBank(true)
+              setShowModalBank(true);
             }
           }
-
           break;
 
         // --- Case Manual (CASH) ---
         case PaymentMethods.CASH:
-          // Sử dụng hàm createPaymentMumanual như code cũ
           url = await PaymentAPI.createPaymentMumanual(
             amountToPay,
-            PaymentMethods.CASH, // Gửi "CASH" (thay vì "MANUAL")
+            PaymentMethods.CASH,
             costData.bookingId
           );
 
           if (url) {
             if (onManualPayment) {
-              // onManualPayment(); // Gọi hàm xác nhận checkout (nếu có)
+               // onManualPayment();
             } else {
               Alert.alert("Thành công", "Đã ghi nhận thanh toán tiền mặt.");
             }
-            onClose(); // Đóng modal
+            onClose();
           } else {
             Alert.alert("Lỗi", "Không thể tạo thanh toán tiền mặt.");
           }
           break;
 
-        // --- Case mặc định ---
         default:
           Alert.alert("Lỗi", "Phương thức thanh toán không hợp lệ.");
       }
@@ -167,12 +191,6 @@ export default function CostDetailModal({
       Alert.alert("Lỗi", `Đã xảy ra sự cố khi thanh toán [${paymentMethod}].`);
     }
   };
-
-  /*
-  // (Hai hàm cũ đã bị xoá và gộp thành handlePayment ở trên)
-  // const handlePayment = async () => { ... };
-  // const handleManualPayment = async () => { ... };
-  */
 
   return (
     <Modal
@@ -185,7 +203,6 @@ export default function CostDetailModal({
         <View style={styles.modalContainer}>
           <Text style={styles.title}>Chi tiết dịch vụ & chi phí</Text>
 
-          {/* (Phần ScrollView Tiền phòng, Dịch vụ, Đền bù giữ nguyên) */}
           <ScrollView style={{ maxHeight: 400 }}>
             {/* Tiền phòng */}
             {costData.roomDetails && (
@@ -260,16 +277,12 @@ export default function CostDetailModal({
                             {item.description}
                           </Text>
                         ) : null}
-                        {/* Hiển thị ảnh nếu có */}
                         {item.image && (
-                          <>
-                            {console.log("Ảnh:", `${urlImage}${item.image}`)}
-                            <Image
-                              source={{ uri: `${urlImage}${item.image}` }}
-                              style={styles.itemImage}
-                              resizeMode="cover"
-                            />
-                          </>
+                          <Image
+                            source={{ uri: `${urlImage}${item.image}` }}
+                            style={styles.itemImage}
+                            resizeMode="cover"
+                          />
                         )}
                       </View>
                       <Text style={[styles.price, { color: "red" }]}>
@@ -285,62 +298,59 @@ export default function CostDetailModal({
 
           <View style={styles.divider} />
 
-          {/* (Tổng cộng giữ nguyên) */}
           <View style={styles.rowBetween}>
             <Text style={styles.totalLabel}>Tổng cộng</Text>
             <Text style={styles.totalPrice}>{formatCurrency(totalAmount)}</Text>
           </View>
 
-          {/* Nút Đóng (luôn hiển thị) */}
           <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
             <Text style={styles.closeText}>Đóng</Text>
           </TouchableOpacity>
 
-          {/* ✨ 3. CẬP NHẬT KHỐI THANH TOÁN */}
           {showPaymentButtons && (
             <>
               {/* Nút 1: Thanh toán VNPAY */}
               <TouchableOpacity
                 style={[styles.paymentBtn, { backgroundColor: "#28a745" }]}
-                onPress={() => handlePayment(PaymentMethods.VNPAY)} // 👈 SỬA
+                onPress={() => handlePayment(PaymentMethods.VNPAY)}
               >
                 <Text style={styles.closeText}>
                   Thanh toán VNPAY {formatCurrency(amountToPay)}
                 </Text>
               </TouchableOpacity>
 
-              {/* Nút 2: Thanh toán BANK (Nút mới) */}
+              {/* Nút 2: Thanh toán BANK */}
               <TouchableOpacity
-                style={[styles.paymentBtn, { backgroundColor: "#17a2b8" }]} // Màu khác
-                onPress={() => handlePayment(PaymentMethods.BANK)} // 👈 SỬA
+                style={[styles.paymentBtn, { backgroundColor: "#17a2b8" }]}
+                onPress={() => handlePayment(PaymentMethods.BANK)}
               >
                 <Text style={styles.closeText}>
                   Thanh toán BANK {formatCurrency(amountToPay)}
                 </Text>
               </TouchableOpacity>
 
-              {/* Nút 3: Thanh toán Tiền mặt (CASH) */}
+              {/* Nút 3: Thanh toán Tiền mặt */}
               <TouchableOpacity
                 style={[styles.paymentBtn, { backgroundColor: "#007BFF" }]}
-                onPress={() => handlePayment(PaymentMethods.CASH)} // 👈 SỬA
+                onPress={() => handlePayment(PaymentMethods.CASH)}
               >
-                <Text style={styles.closeText}>Xác nhận (Thanh toán tiền mặt)</Text>
+                <Text style={styles.closeText}>
+                  Xác nhận (Thanh toán tiền mặt)
+                </Text>
               </TouchableOpacity>
             </>
           )}
         </View>
       </View>
       <PaymentBankScreen
-                visible={showModalBank}
-                route={urlPay}
-                onClose={() => setShowModalBank(false)}
-              />
+        visible={showModalBank}
+        route={urlPay}
+        onClose={() => setShowModalBank(false)}
+      />
     </Modal>
-    
   );
 }
 
-// (Styles giữ nguyên)
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
@@ -432,11 +442,6 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 8,
     alignSelf: "flex-start",
-    backgroundColor: "#f5f5f5", // fallback màu nền khi chưa load
-  },
-  itemRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    backgroundColor: "#f5f5f5",
   },
 });

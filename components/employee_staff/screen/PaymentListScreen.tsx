@@ -118,6 +118,7 @@ export default function PaymentListScreen() {
     }, [payments, filterStatus]);
 
     // ✨ HÀM XỬ LÝ NÚT BẤM (Đã thêm lại)
+ // ✨ HÀM XỬ LÝ NÚT BẤM (Đã sửa)
     const handleConfirmPayment = (paymentId: number) => {
         Alert.alert(
             "Xác nhận thanh toán",
@@ -127,19 +128,29 @@ export default function PaymentListScreen() {
                 {
                     text: "Xác nhận",
                     onPress: async () => {
-                        // Xử lý logic API update status tại đây
-                        console.log("Confirmed payment:", paymentId);
-                        // Tạm thời update giao diện giả lập
-                        setPayments(prev => prev.map(p => 
-                            p.id === paymentId ? {...p, status: 'SUCCESS'} : p
-                        ));
-                        Alert.alert("Thành công", "Đã cập nhật trạng thái.");
+                        try {
+                            // BƯỚC 1: Gọi API để cập nhật xuống Database trước
+                            // Chú ý: Dùng paymentId được truyền vào hàm, không phải p.id
+                            await PaymentAPI.updateStatusPayById(paymentId, "SUCCESS");
+
+                            // BƯỚC 2: Nếu API không lỗi, tiến hành cập nhật giao diện (State)
+                            setPayments(prev => prev.map(p => 
+                                p.id === paymentId ? { ...p, status: 'SUCCESS' } : p
+                            ));
+                            
+                            console.log("Confirmed payment:", paymentId);
+                            Alert.alert("Thành công", "Đã cập nhật trạng thái.");
+
+                        } catch (error) {
+                            // Xử lý lỗi nếu gọi API thất bại
+                            console.log("Lỗi update status:", error);
+                            Alert.alert("Thất bại", "Có lỗi xảy ra khi cập nhật trạng thái.");
+                        }
                     }
                 }
             ]
         );
     };
-
     // Component Card
     const PaymentCard = ({ item }: { item: Payment }) => {
         const statusInfo = paymentStatusConfig[item.status] || { text: item.status, color: '#6c757d' };

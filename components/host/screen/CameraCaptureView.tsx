@@ -182,11 +182,7 @@ export default function CameraCaptureView(props: {
                   if (onClose) onClose();
                 }
               }
-              // Nếu 'result' là 'null' (quét sai):
-              // - 'useScannerCCCD' đã hiển thị Alert.
-              // - Chúng ta không làm gì cả, modal sẽ giữ nguyên.
-              // - 'loading' đã được set 'false' (trong finally của hook).
-              // Người dùng có thể bấm chụp lại.
+           
 
             } else if (loading) {
               // Không làm gì nếu đang loading
@@ -270,16 +266,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  // ⚠️ XÓA HOẶC SỬA STYLE NÀY (nếu bạn muốn giữ nó)
-  // Hiện tại nó đang đè lên nút "Close" trong 'header'
-  /* closeButton: {
-    position: "absolute",
-    top: 50,
-    left: 20,
-    zIndex: 50,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    padding: 10,
-    borderRadius: 30,
-  },
-  */
+
 });

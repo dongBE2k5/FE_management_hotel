@@ -1,5 +1,6 @@
 import Room from "@/models/Room";
 import { UtilityItem } from "@/models/Utility/Utility";
+import ItemListHotel from '../components/host/screen/employee/itemListHotel';
 import Voucher from "@/models/Voucher";
 
 // src/types/navigation.ts
@@ -105,6 +106,9 @@ export type HostStackParamList = {
   ManageRoomTypes: undefined;
   ManageServices: undefined;
   // RoomDetail:{roomId:number};
+
+ ListStaffHotel:undefined;
+  ItemListHotel:undefined;
   RoomDetail: undefined;
 }
 export type HostStack = {
@@ -126,6 +130,8 @@ export type HostStack = {
   hotelEdit: { id: number },
   CreateHotel: undefined,
   HotelList: undefined,
+  StaffListHotel:undefined,
+  ItemListHotel:undefined;
 
   listRoom: undefined;
 

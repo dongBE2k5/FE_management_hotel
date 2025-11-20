@@ -10,4 +10,6 @@ interface TypeOfRoom {
     room: string;
     imageRooms: ImageRoom[];
 }
+
+
 export default TypeOfRoomResponse

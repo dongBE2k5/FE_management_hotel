@@ -48,7 +48,6 @@ export const useScannerCCCD = () => {
     imageUri: string,
     expectedSide?: "front" | "back" | "license"
   ): Promise<any | null> => {
-
     let dataToReturn: any = null;
 
     try {
@@ -61,7 +60,6 @@ export const useScannerCCCD = () => {
       console.log("🧾 Normalized text:", normalized.slice(0, 500));
 
       if (!normalized || normalized.length < 10) {
-        console.log("⚠️ Không phát hiện được văn bản hợp lệ.");
         Alert.alert(
           "Không thể đọc ảnh",
           "Vui lòng đảm bảo ảnh rõ nét, đủ sáng và không bị lóa."
@@ -69,12 +67,8 @@ export const useScannerCCCD = () => {
       } else {
         let detectedSide: CurrentSide = null;
         const text = normalized;
-        // ... (Regex isLicense, isFront, isBack giữ nguyên) ...
-        const isLicense =
-          /GIAY\s+(PHEP|CHUNG\s+NHAN)\s+(KINH\s+DOANH|DANG\s+KY\s+DOANH\s+NGHIEP)/.test(text) ||
-          /MA\s*SO\s*(DOANH\s+NGHIEP|MSDN)/.test(text) ||
-          /CONG\s+TY/.test(text) ||
-          /DOANH\s+NGHIEP/.test(text);
+
+        // Kiểm tra CCCD mặt trước và mặt sau giữ nguyên
         const isFront =
           /CAN.?CUOC/.test(text) ||
           /CON.?G.?DAN/.test(text) ||
@@ -89,65 +83,50 @@ export const useScannerCCCD = () => {
           /NOI\s*CAP/.test(text) ||
           /IDVNM[0-9A-Z<]+/.test(text);
 
-        if (isLicense) detectedSide = "license";
-        else if (isFront) detectedSide = "front";
+        if (isFront) detectedSide = "front";
         else if (isBack) detectedSide = "back";
+        else if (expectedSide === "license") detectedSide = "license"; // Luôn cho phép lưu license
+
         console.log("🧭 Detected Side:", detectedSide);
 
         if (!detectedSide) {
-          console.log("❌ Không xác định được loại giấy tờ.");
           Alert.alert(
             "Không nhận diện được",
             "Không tìm thấy giấy tờ hợp lệ trong ảnh. Vui lòng căn chỉnh lại."
           );
         } else {
           const sideToCheck = expectedSide || currentSide;
-          if (sideToCheck && detectedSide !== sideToCheck) {
-            console.log(`🚫 Sai loại giấy tờ! Mong đợi: ${sideToCheck}, phát hiện: ${detectedSide}`);
+          if (sideToCheck && detectedSide !== sideToCheck && detectedSide !== "license") {
             Alert.alert(
               "Quét sai mặt giấy tờ",
-              `Bạn đang chọn quét "${sideToCheck === "front" ? "Mặt trước" : sideToCheck === "back" ? "Mặt sau" : "Giấy phép KD"}", nhưng ảnh lại là "${detectedSide}".\n\nVui lòng thử lại.`
+              `Bạn đang chọn quét "${sideToCheck}", nhưng ảnh lại là "${detectedSide}". Vui lòng thử lại.`
             );
           } else {
-            console.log("✅ Loại giấy tờ hợp lệ:", detectedSide);
+            // Xử lý mặt trước
             if (detectedSide === "front") {
-              console.log("🔍 Đang xử lý MẶT TRƯỚC...");
-
-              // ⬇️ --- SỬA LỖI REGEX TẠI ĐÂY --- ⬇️
-              // Regex cũ: const soCCCDMatch = normalized.match(/\b0\d{11}\b/);
-
-              // Regex mới: Tìm 12 chữ số (bắt đầu bằng 0) có cho phép khoảng trắng ở giữa
               const soCCCDMatch = normalized.match(/\b(0\s*\d\s*\d\s*\d\s*\d\s*\d\s*\d\s*\d\s*\d\s*\d\s*\d\s*\d)\b/);
-
-              // ⬆️ --- KẾT THÚC SỬA REGEX --- ⬆️
-
               const ngaySinhMatch = normalized.match(/\b\d{2}[\/\-]\d{2}[\/\-]\d{4}\b/);
               const hoTenMatch =
                 normalized.match(/HO VA TEN\s*([A-Z\s]+)/) ||
                 normalized.match(/([A-Z]{2,}\s){2,}[A-Z]{2,}/);
               const hoTen = hoTenMatch ? (hoTenMatch[1] || hoTenMatch[0]).trim() : "Không xác định";
               const ngaySinh = ngaySinhMatch ? ngaySinhMatch[0] : "---";
-
-              // ⬇️ --- SỬA CÁCH LẤY KẾT QUẢ --- ⬇️
-              // Nếu tìm thấy, loại bỏ tất cả khoảng trắng
               const soCCCD = soCCCDMatch ? soCCCDMatch[0].replace(/\s/g, "") : "---";
-              // ⬆️ --- KẾT THÚC SỬA --- ⬆️
-
-              console.log("🆔 Số CCCD:", soCCCD);
 
               const data = { hoTen, ngaySinh, soCCCD, uri: imageUri };
               setFrontData(data);
               setImagePreview(imageUri);
               setCurrentSide("back");
+
               Alert.alert(
-                "Thành công: Mặt trước",
-                "Đã nhận diện xong mặt trước. Vui lòng lật thẻ và quét MẶT SAU."
+                "✅ Quét Mặt Trước Thành Công",
+                `🎯 Họ và Tên: ${hoTen}\n🗓 Ngày Sinh: ${ngaySinh}\n🆔 Số CCCD: ${soCCCD}\n\n➡️ Vui lòng lật thẻ và quét Mặt Sau.`,
+                [{ text: "OK" }]
               );
               dataToReturn = data;
 
+            // Xử lý mặt sau
             } else if (detectedSide === "back") {
-              console.log("🔍 Đang xử lý MẶT SAU...");
-              // ... (bóc tách) ...
               let noiCap = "Không xác định";
               if (normalized.includes("CUC CANH SAT") || normalized.includes("CONG AN"))
                 noiCap = "Cục Cảnh sát QLHC về TTXH";
@@ -162,46 +141,34 @@ export const useScannerCCCD = () => {
                   ? `✅ Họ tên trùng khớp`
                   : `⚠️ Họ tên không khớp`
                 : "Không có dữ liệu mặt trước để so sánh.";
-              Alert.alert(
-                "Hoàn tất: Mặt sau",
-                `Nơi cấp: ${noiCap}\nTrạng thái: ${matchResult}`
-              );
+
               const data = { ngayCap: "---", noiCap, uri: imageUri };
               setBackData(data);
+              Alert.alert(
+                "✅ Quét Mặt Sau Thành Công",
+                `🏢 Nơi Cấp: ${noiCap}\n🆔 Mã Số: ${maSo}\n🧾 Tên: ${tenSau}\n📌 So khớp Họ tên: ${matchResult}`,
+                [{ text: "OK" }]
+              );
               dataToReturn = data;
 
+            // Xử lý License (bỏ kiểm tra regex, luôn lưu)
             } else if (detectedSide === "license") {
-              console.log("🔍 Đang xử lý GIẤY PHÉP KINH DOANH...");
-              // ... (bóc tách) ...
-              const businessCodeMatch = normalized.match(/\b\d{10}\b/);
-              const companyNameMatch = normalized.match(/CONG TY[ A-Z0-9]+/);
-              const legalRepMatch =
-                normalized.match(/HO VA TEN[:\s]*([A-Z\s]+)/) ||
-                normalized.match(/NGUOI DAI DIEN[ A-Z0-9\s]+/);
-              const addressMatch =
-                normalized.match(/(DIA CHI|TRU SO CHINH)[:\s]*([A-Z0-9,\s]+)/);
-              const businessCode = businessCodeMatch ? businessCodeMatch[0].trim() : "---";
-              const companyName = companyNameMatch ? companyNameMatch[0].replace(/CONG TY\s*/, "CÔNG TY ").trim() : "---";
-              const legalRep = legalRepMatch ? (legalRepMatch[1] || legalRepMatch[0]).replace(/NGUOI DAI DIEN|HO VA TEN/gi, "").trim() : "---";
-              const address = addressMatch ? (addressMatch[2] || addressMatch[0]).trim() : "---";
-              Alert.alert(
-                "Thành công: Giấy phép KD",
-                `Công ty: ${companyName}\nMã số: ${businessCode}`
-              );
-              const data = { companyName, businessCode, legalRep, address, uri: imageUri };
+              const data = { uri: imageUri };
               setImagePreview(imageUri);
               setCurrentSide("license");
               setCameraActive(false);
               setModalVisible(true);
+              Alert.alert(
+                "✅ Ảnh đã được lưu thành công",
+                "📷 Ảnh này đã được lưu lại và sẽ xử lý xác minh sau .",
+                [{ text: "OK" }]
+              );
               dataToReturn = data;
             }
-
           }
         }
       }
-      console.log("========== ✅ OCR HOÀN TẤT ==========");
     } catch (err) {
-      console.error("❌ Lỗi OCR:", err);
       Alert.alert(
         "Đã xảy ra lỗi",
         `Không thể xử lý ảnh. Vui lòng thử lại sau.\n(Lỗi: ${String(err)})`
@@ -213,27 +180,20 @@ export const useScannerCCCD = () => {
   };
 
   const handleCapture = async (uri: string, expectedSide?: "front" | "back" | "license") => {
-    const result = await processImageOCR(uri, expectedSide);
-    return result;
+    return await processImageOCR(uri, expectedSide);
   };
 
-  // ⬇️ --- SỬA HÀM PICK IMAGE (ĐÃ LÀM Ở BƯỚC TRƯỚC) --- ⬇️
-  const pickImageFromLibrary = async (
-    expectedSide?: "front" | "back" | "license"
-  ): Promise<any | null> => {
+  const pickImageFromLibrary = async (expectedSide?: "front" | "back" | "license") => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
     });
 
     if (!result.canceled && result.assets.length > 0) {
       const selected = result.assets[0];
-      if (selected.uri) {
-        return await processImageOCR(selected.uri, expectedSide);
-      }
+      if (selected.uri) return await processImageOCR(selected.uri, expectedSide);
     }
     return null;
   };
-  // ⬆️ --- KẾT THÚC SỬA --- ⬆️
 
   const closeModal = () => {
     setCameraActive(false);

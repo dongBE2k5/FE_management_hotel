@@ -156,14 +156,35 @@ async function getAllPayByHotel(hotelId:number): Promise<Payment[] | null> {
   }
 }
 
-async function updateStatusPayById(id:number,status:string):Promise<Payment|null> {
+
+/**
+ * Cập nhật trạng thái của giao dịch thanh toán bằng ID.
+ * * @param id ID của giao dịch thanh toán.
+ * @param status Trạng thái mới (ví dụ: 'SUCCESS', 'CANCELLED', 'WAITING').
+ * @returns Promise<Payment|null> Trả về đối tượng Payment đã cập nhật hoặc null nếu lỗi.
+ */
+async function updateStatusPayById(id: number, status: string): Promise<Payment | null> {
+    // 1. Đóng gói trạng thái vào một đối tượng JSON
+
+
     try {
-      const response= await axios.put(`${BaseUrl}/pay/${id}/status`,status)
-      return response.data
+        const response = await axios.put<Payment>(
+            `${BaseUrl}/pay/${id}/status?status=${status}`
+           
+        );
+        
+        // Axios trả về response.data là dữ liệu từ server
+        return response.data;
+
     } catch (error) {
-       console.error('❌ Lỗi khi cập nhật payment:', error);
-    return null;
-    }  
+        // Log lỗi chi tiết hơn (ví dụ: response status)
+        if (axios.isAxiosError(error) && error.response) {
+            console.error('❌ Lỗi API khi cập nhật payment:', error.response.status, error.response.data);
+        } else {
+            console.error('❌ Lỗi khi cập nhật payment:', error);
+        }
+        return null;
+    }
 }
 
 

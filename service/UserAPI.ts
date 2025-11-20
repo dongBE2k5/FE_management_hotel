@@ -3,9 +3,10 @@ import RegisterResponse from '@/models/RegisterResponse';
 import UserLogin from '@/models/UserLogin';
 import UserLoginResponse from '@/models/UserLoginResponse';
 import UserRegister from '@/models/UserRegister';
+import { RegisterEmployee } from '@/models/RegisterEmployee';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import BaseUrl from '../constants/BaseURL';
-
+import axios from 'axios';
 async function register(user: UserRegister): Promise<RegisterResponse | any> {
   try {
     const res = await fetch(`${BaseUrl}/auth/register`, {
@@ -62,6 +63,7 @@ async function logoutFunction(): Promise<LogoutResponse> {
       const errorBody = await res.text();
       throw new Error(errorBody);
     }
+
 
 
     await AsyncStorage.removeItem('userToken');
@@ -213,15 +215,18 @@ async function changePassword(
 
       try {
 
+
         const errorObject = JSON.parse(errText);
         if (errorObject.message) {
           errorMessage = errorObject.message;
         } else {
           errorMessage = errText; // Trường hợp không có trường message
         }
+     
       } catch (e) {
         errorMessage = errText;
       }
+
 
 
       return { success: false, message: errorMessage };
@@ -270,6 +275,9 @@ async function updateProfile(
   } catch (error: any) {
     return { success: false, message: error.message };
   }
+
+
+
 }
 
 async function sendRegisterOtp(email: string): Promise<{ success: boolean; message: string }> {
