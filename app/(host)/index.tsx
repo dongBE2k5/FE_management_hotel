@@ -15,11 +15,11 @@ import { HostStack } from "@/types/navigation";
 
 import BookingDetail from "@/components/employee_staff/screen/bookingDetail";
 import Checkout from "@/components/employee_staff/screen/checkOut";
-import { useFocusEffect } from "expo-router";
-import CCCDScannerScreen from '@/components/host/screen/CCCDScannerScreen';
+import RevenueDashboard from "@/components/host/screen/bookings/RevenueDashboard";
 import CameraCaptureScreen from '@/components/host/screen/CameraCaptureView';
-import KycFormScreen from "@/components/host/screen/CCCDScannerScreen";
+import { default as CCCDScannerScreen, default as KycFormScreen } from '@/components/host/screen/CCCDScannerScreen';
 import StaffListHotel from "@/components/host/screen/employee/ListStaffHotel";
+import { useFocusEffect } from "expo-router";
 
 const Stack = createStackNavigator<HostStack>();
 
@@ -47,7 +47,7 @@ useFocusEffect(
           setIsHost(false);
         }
       } catch (error) {
-        console.error("❌ Lỗi khi gọi getHostByUser:", error);
+        // console.error("❌ Lỗi khi gọi getHostByUser:", error);
         setIsHost(false);
       } finally {
         setLoading(false);
@@ -76,6 +76,7 @@ useFocusEffect(
             <Stack.Screen name="hostBookings" component={HostBookings} />
             <Stack.Screen name="hotelEdit" component={EditHotel} />
             <Stack.Screen name="CreateHotel" component={CreateHotel} />
+            <Stack.Screen name="revenueDashboard" component={RevenueDashboard} />
             <Stack.Screen name="bookingDetail" component={BookingDetail} />
             <Stack.Screen name="checkout" component={Checkout} />
           </> */}
@@ -89,7 +90,7 @@ useFocusEffect(
             <Stack.Screen name="bookingDetail" component={BookingDetail} />
             <Stack.Screen name="checkout" component={Checkout} />
             <Stack.Screen name="ListStaffHotel" component={StaffListHotel} />
-            
+            <Stack.Screen name="revenueDashboard" component={RevenueDashboard} />
           </>
         ) : (
           // 🧾 Nếu chưa là host => hiển thị quy trình KYC

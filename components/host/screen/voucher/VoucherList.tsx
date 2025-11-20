@@ -1,6 +1,7 @@
 import { useHost } from '@/context/HostContext';
 import Voucher from '@/models/Voucher';
-import { getVouchersByHotelId } from '@/service/VoucherAPI';
+import VoucherRequest from '@/models/Voucher/VoucherRequest';
+import { getVouchersByHotelId, updateVoucherOfHotel } from '@/service/VoucherAPI';
 import { HostStack } from '@/types/navigation';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -51,10 +52,29 @@ export default function VoucherList() {
             fetchVouchers();
         }, [hotelId]));
 
-    const handleToggleActive = (item: Voucher) => {
+    const handleToggleActive = async (item: Voucher) => {
         setVouchers((prev) =>
             prev.map((v) => (v.id === item.id ? { ...v, active: !v.active } : v))
         );
+        const voucherData: VoucherRequest = {
+            code: item.code,
+            name: item.name,
+            description: item.description,
+            priceCondition: item.priceCondition,
+            hotelId: hotelId!,
+            quantity: item.quantity,
+            percent: item.percent,
+            initialQuantity: item.initialQuantity,
+            active: !item.active
+        }
+        const voucherUpdate = await updateVoucherOfHotel(item.id!, voucherData);
+        if (voucherUpdate) {
+            Alert.alert('Thành công', 'Voucher đã được cập nhật thành công', [
+                { text: 'OK', onPress: () => {
+                    setVouchers((prev) => prev.map((v) => (v.id === item.id ? { ...v, active: !v.active } : v)));
+                } }
+            ]);
+        }
     };
 
     const handleDelete = (id) => {
@@ -104,7 +124,7 @@ export default function VoucherList() {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 40 }}>
                     <Ionicons style={{ marginRight: 10 }} name="ticket" size={20} color="#0b84ff" />
                     <Text style={styles.heading}>Danh sách voucher</Text>
                 </View>

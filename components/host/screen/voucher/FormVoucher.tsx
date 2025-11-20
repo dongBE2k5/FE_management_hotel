@@ -122,7 +122,7 @@ export default function FormVoucher() {
       <TouchableOpacity style={{ marginBottom: 10 }} onPress={() => navigation.goBack()}>
         <Ionicons name="arrow-back" size={24} color="black" />
       </TouchableOpacity>
-      <Text style={styles.heading}>Thêm voucher mới</Text>
+      <Text style={styles.heading}>{isEdit ? "Cập nhật voucher" : "Thêm voucher mới"}</Text>
 
       <Text style={styles.label}>Mã voucher</Text>
       <TextInput

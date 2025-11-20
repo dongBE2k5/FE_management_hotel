@@ -1,11 +1,13 @@
 import { useHost } from "@/context/HostContext";
 import HotelPaymentTypeResponse from "@/models/Payment/HotelPaymentTypeResponse";
+import TypeOfRoomResponse from "@/models/TypeOfRoom/TypeOfRoomResponse";
 import {
     createHotelPaymentType,
     deleteHotelPaymentType,
     getHotelPaymentTypesByHotelId,
     updateHotelPaymentType
 } from "@/service/Payment/HotelPaymentTypeAPI";
+import { getTypeOfRoomByHotel } from "@/service/TypeOfRoomService";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
@@ -43,7 +45,7 @@ const roomTypesData: RoomType[] = [
 export default function HotelPaymentTypeScreen() {
     const [paymentTypes] = useState(paymentTypesData);
     const [hotelPaymentTypes, setHotelPaymentTypes] = useState<HotelPaymentTypeResponse[]>([]);
-
+    const [roomTypes, setRoomTypes] = useState<TypeOfRoomResponse[]>([]);
     const [selectedPayment, setSelectedPayment] = useState<PaymentType | null>(null);
     const [depositPercent, setDepositPercent] = useState<number | undefined>(undefined);
     const [selectedRoomTypes, setSelectedRoomTypes] = useState<number[]>([]);
@@ -60,6 +62,7 @@ export default function HotelPaymentTypeScreen() {
             loadData();
         }, [hotelId])
     );
+    
 
     const loadData = async () => {
         
@@ -67,6 +70,9 @@ export default function HotelPaymentTypeScreen() {
         console.log("DATA", res.data);
 
         setHotelPaymentTypes(res.data);
+        const typeOfRoom = await getTypeOfRoomByHotel(hotelId!);
+        console.log("TYPE OF ROOM", typeOfRoom.data);
+        setRoomTypes(typeOfRoom.data);
     };
 
     const resetForm = () => {
@@ -75,6 +81,12 @@ export default function HotelPaymentTypeScreen() {
         setSelectedRoomTypes([]);
         setEditingId(false);
     };
+
+    const configRoomTypes = {
+        "DON": "Phòng Đơn",
+        "DOI": "Phòng Đôi",
+        "GIA_DINH": "Phòng Gia Đình",
+    }
 
     const handleSubmit = async () => {
         console.log("ADD");
@@ -144,7 +156,7 @@ export default function HotelPaymentTypeScreen() {
     };
 
     return (
-        <ScrollView style={styles.container}>
+        <ScrollView style={[styles.container, { marginTop: 40 }]}>
             <Text style={styles.title}>💳 Quản Lí Thanh Toán Khách Sạn</Text>
 
             {/* Payment Type */}
@@ -179,7 +191,7 @@ export default function HotelPaymentTypeScreen() {
                     {/* Room Type Multi Select */}
                     <Text style={styles.label}>Chọn loại phòng áp dụng:</Text>
                     <View style={styles.chipContainer}>
-                        {roomTypesData.map(room => {
+                        {roomTypes.map(room => {
                             const isActive = selectedRoomTypes.includes(room.id);
                             return (
                                 <TouchableOpacity
@@ -192,7 +204,7 @@ export default function HotelPaymentTypeScreen() {
                                     }}
                                 >
                                     <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
-                                        {room.name}
+                                        {configRoomTypes[room.room]}
                                     </Text>
                                 </TouchableOpacity>
                             );
@@ -204,7 +216,7 @@ export default function HotelPaymentTypeScreen() {
             {/* Submit Button */}
             <TouchableOpacity style={styles.mainButton} onPress={handleSubmit}>
                 <Text style={styles.mainButtonText}>
-                    {editingId ? "Cập nhật phương thức" : "Thêm phương thức"}
+                    {editingId ? "Cập nhật loại thanh toán" : "Thêm loại thanh toán"}
                 </Text>
             </TouchableOpacity>
 

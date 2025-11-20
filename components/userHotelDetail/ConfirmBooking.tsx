@@ -25,8 +25,8 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import { initiatePayment } from '../payment/PaymentButton';
 import PaymentBankScreen from '../payment/PaymentBankScreen';
+import { initiatePayment } from '../payment/PaymentButton';
 type ConfirmBookingProps = {
   room: Room,
   checkInDate: Date,
@@ -169,7 +169,9 @@ export default function ConfirmBooking() {
         })
       }
       console.log("idhotel" + selectedPayment?.hotelId);
-      if (!bookingUtilityRequest.utilityItemBooking) {
+      console.log("bookingUtilityRequest", bookingUtilityRequest);
+      if (bookingUtilityRequest.utilityItemBooking) {
+        console.log("bookingUtilityRequest.utilityItemBooking", bookingUtilityRequest.utilityItemBooking);
         const createdBookingUtility = await createBookingUtility(bookingUtilityRequest);
         console.log("Đã tạo booking utility thành công:", createdBookingUtility);
       }
@@ -207,7 +209,7 @@ export default function ConfirmBooking() {
       {/* Tên khách sạn */}
       <View style={styles.section}>
         <Text style={styles.label}>Khách sạn</Text>
-        <Text style={styles.value}>{room.hotelName}</Text>
+        <Text style={styles.value}>{room.hotel?.name}</Text>
       </View>
       <View style={styles.section}>
         <Text style={styles.label}>Loại phòng</Text>

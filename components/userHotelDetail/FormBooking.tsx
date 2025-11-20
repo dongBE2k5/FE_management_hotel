@@ -250,16 +250,16 @@ export default function FormBooking() {
                     <Text style={{ color: '#999494', fontSize: 11, left: 68 }}>{room.typeRoom == "DON" ? "1 người" : room.typeRoom == "DOI" ? "2 người" : "4 trở lên"} /Phòng</Text>
                 </View>
                 <View style={{ flexDirection: 'row', marginTop: 5 }}>
-                    <Text style={{ color: '#999494', fontSize: 11 }}>Loại giường</Text>
-                    <Text style={{ color: '#999494', fontSize: 11, left: 40 }}>2 giường đơn</Text>
+                    {/* <Text style={{ color: '#999494', fontSize: 11 }}>Loại giường</Text>
+                    <Text style={{ color: '#999494', fontSize: 11, left: 40 }}>2 giường đơn</Text> */}
 
                 </View>
 
                 <View style={{ flexDirection: 'row' }}>
                     <Image style={{ width: 70, height: 50, borderRadius: 5, marginTop: 5 }} source={require("../../assets/images/room1.jpg")} />
                     <View>
-                        <Text style={{ color: '#999494', fontSize: 11, left: 28, marginTop: 5 }}>Gồm bữa sáng</Text>
-                        <Text style={{ color: '#999494', fontSize: 11, left: 28, marginTop: 5 }}>Wifi miễn phí</Text>
+                        {/* <Text style={{ color: '#999494', fontSize: 11, left: 28, marginTop: 5 }}>Gồm bữa sáng</Text>
+                        <Text style={{ color: '#999494', fontSize: 11, left: 28, marginTop: 5 }}>Wifi miễn phí</Text> */}
                     </View>
                 </View>
             </View>
@@ -341,14 +341,14 @@ export default function FormBooking() {
                         <Text style={styles.insuranceItem}>• Tài sản cá nhân: Chi trả lên đến VND 210,000,000.</Text>
                     </View>
 
-                    <View style={styles.priceRow}>
+                    {/* <View style={styles.priceRow}>
                         <Text style={{ color: '#e53935', fontWeight: 'bold' }}>VND 43.500</Text>
                         <Ionicons
                             name={insuranceSelected ? 'checkbox' : 'square-outline'}
                             size={22}
                             color={insuranceSelected ? '#007AFF' : '#aaa'}
                         />
-                    </View>
+                    </View> */}
                 </TouchableOpacity>
                 {/* Chi tiết phí thanh toán */}
                 <View style={styles.insuranceBox}>
@@ -381,13 +381,13 @@ export default function FormBooking() {
                         </>
                     )}
 
-                    {specialRequests.length > 0 && (
+                    {/* {specialRequests.length > 0 && (
 
                         <View style={styles.itemRow}>
                             <Text style={styles.itemName}>Phí yêu cầu </Text>
                             <Text style={styles.itemValue}>{specialRequestTotal.toLocaleString('vi-VN')} VND</Text>
                         </View>
-                    )}
+                    )} */}
                     {insuranceSelected && (
                         <View style={styles.itemRow}>
                             <Text style={styles.itemName}>Bảo hiểm Du lịch</Text>

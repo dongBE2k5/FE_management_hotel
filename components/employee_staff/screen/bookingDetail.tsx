@@ -1,4 +1,5 @@
 import { getBookingById, getHistoryBookingsByBookingId, updateBookingStatus } from "@/service/BookingAPI";
+import { getBookingUtilityByBookingId } from "@/service/BookingUtilityAPI";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
@@ -36,9 +37,9 @@ const transformApiData = (booking) => {
             guests: booking.numberOfGuests ?? 0,
         },
         pricing: {
-            price_per_night: booking.room?.pricePerNight ?? (booking.totalPrice / (nights || 1)),
+            price_per_night: booking.room?.price,
             extra_hour_fee: booking.extraFee ?? 0,
-            room_total: booking.totalPrice ?? 0,
+            room_total: (Number(booking.room?.price) * nights) || 0,
         },
         services: booking.services ?? [],
     };
@@ -48,7 +49,7 @@ const transformApiData = (booking) => {
 const mapHistoryData = (historyItem) => {
     const time = new Date(historyItem.createdAt).toLocaleString('vi-VN');
     let statusText = "Không xác định";
-    let color = 'black'; 
+    let color = 'black';
 
     switch (historyItem.newStatus) {
         case "CHUA_THANH_TOAN":
@@ -56,11 +57,11 @@ const mapHistoryData = (historyItem) => {
             break;
         case "DA_THANH_TOAN":
             statusText = "Đã thanh toán";
-            color = '#0077aa'; 
+            color = '#0077aa';
             break;
         case "DA_COC":
             statusText = "Đã cọc";
-            color = '#0077aa'; 
+            color = '#0077aa';
             break;
         case "CHECK_IN":
             statusText = "Đã check-in";
@@ -75,7 +76,7 @@ const mapHistoryData = (historyItem) => {
             color = 'gray';
             break;
         default:
-            statusText = historyItem.newStatus; 
+            statusText = historyItem.newStatus;
     }
 
     return {
@@ -93,7 +94,7 @@ export default function BookingDetail() {
     const { bookingId } = route.params;
 
     const [bookingData, setBookingData] = useState(null);
-    const [history, setHistory] = useState([]); 
+    const [history, setHistory] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showCheckInModal, setShowCheckInModal] = useState(false);
@@ -111,17 +112,21 @@ export default function BookingDetail() {
             if (!bookingData) setIsLoading(true);
             setError(null);
 
-            const [rawData, rawHistoryData] = await Promise.all([
+            const [rawData, rawHistoryData, rawBookingUtilityData] = await Promise.all([
                 getBookingById(bookingId),
-                getHistoryBookingsByBookingId(bookingId)
+                getHistoryBookingsByBookingId(bookingId),
+                getBookingUtilityByBookingId(bookingId)
             ]);
-
+            console.log("rawData", rawData);
             const formattedData = transformApiData(rawData);
-            setBookingData(formattedData);
+            formattedData.services = rawBookingUtilityData?.utilityItemBookingResponse;
+            console.log("formattedData", formattedData);
 
+            setBookingData(formattedData);
+            console.log("formattedData", formattedData);
             const formattedHistory = rawHistoryData.map(mapHistoryData);
             setHistory(formattedHistory);
-
+            console.log("formattedHistory", formattedHistory);
         } catch (err) {
             console.error("Lỗi khi lấy chi tiết đặt phòng:", err);
             setError(err.message || "Đã xảy ra lỗi.");
@@ -147,7 +152,7 @@ export default function BookingDetail() {
 
             setShowCheckInModal(false);
             setShowSuccess(true);
-            
+
             await fetchBookingDetails();
 
         } catch (err) {
@@ -184,7 +189,7 @@ export default function BookingDetail() {
 
     const isCheckedIn = bookingData?.status === 'CHECK_IN';
     const isCheckedOut = bookingData?.status === 'CHECK_OUT';
-    
+
     // ✨ BIẾN MỚI: Kiểm tra đã thanh toán 100% chưa
     const isPaid = bookingData?.status === 'DA_THANH_TOAN'|| 'DA_COC';
 
@@ -220,7 +225,7 @@ export default function BookingDetail() {
                 // 3. Chưa check-in: Hiển thị nút Check-in (với logic mới)
                 <TouchableOpacity
                     style={[
-                        styles.checkinBtn, 
+                        styles.checkinBtn,
                         // Đặt màu dựa trên trạng thái đã thanh toán
                         isPaid ? { backgroundColor: "#32d35d" } : { backgroundColor: "#6c757d" }
                     ]}
@@ -240,9 +245,9 @@ export default function BookingDetail() {
                 </TouchableOpacity>
             )}
 
-            <CheckinModal 
-                visible={showCheckInModal} 
-                onClose={() => setShowCheckInModal(false)} 
+            <CheckinModal
+                visible={showCheckInModal}
+                onClose={() => setShowCheckInModal(false)}
                 onConfirm={handleCheckInConfirm}
             />
             <SuccessModal visible={showSuccess} message="Check-in thành công!" onClose={() => setShowSuccess(false)} />
@@ -304,7 +309,7 @@ export default function BookingDetail() {
                 <Text style={styles.cardTitle}>Thông tin phòng</Text>
                 <Text style={styles.roomName}>{bookingData.room.name} <Text style={styles.roomTag}>: {bookingData.room.number}</Text></Text>
                 <View style={styles.rowBetween}><Text>📅 Check-in: {bookingData.room.checkin_date}</Text><Text>📅 Check-out: {bookingData.room.checkout_date}</Text></View>
-                <View style={styles.rowBetween}><Text>🛏️ Số đêm: {bookingData.room.nights} đêm</Text><Text>👥 Số người: {bookingData.room.guests} người</Text></View>
+                <View style={styles.rowBetween}><Text>🛏️ Số đêm: {bookingData.room.nights} đêm</Text></View>
             </View>
 
             <View style={styles.card}>
@@ -321,9 +326,9 @@ export default function BookingDetail() {
                     <View style={[styles.tableRow, styles.tableHeaderRow]}>
                         <Text style={[styles.tableHeader, styles.serviceNameCol]}>Tên dịch vụ</Text><Text style={[styles.tableHeader, styles.serviceCol]}>Loại</Text><Text style={[styles.tableHeader, styles.serviceCol]}>Số lượng</Text><Text style={[styles.tableHeader, styles.servicePriceCol]}>Giá</Text>
                     </View>
-                    {bookingData.services.map(service => (
+                    {bookingData.services?.map(service => (
                         <View style={styles.tableRow} key={service.id}>
-                            <Text style={[styles.tableText, styles.serviceNameCol]}>{service.name}</Text><Text style={[styles.tableText, styles.serviceCol]}>{service.type}</Text><Text style={[styles.tableText, styles.serviceCol]}>{service.quantity}</Text><Text style={[styles.tableText, styles.servicePriceCol]}>{(service.price ?? 0).toLocaleString('vi-VN')} ₫</Text>
+                            <Text style={[styles.tableText, styles.serviceNameCol]}>{service.utilityName}</Text><Text style={[styles.tableText, styles.serviceCol]}>{service.type}</Text><Text style={[styles.tableText, styles.serviceCol]}>{service.quantity}</Text><Text style={[styles.tableText, styles.servicePriceCol]}>{(service.price ?? 0).toLocaleString('vi-VN')} ₫</Text>
                         </View>
                     ))}
                 </View>

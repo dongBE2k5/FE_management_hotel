@@ -112,6 +112,7 @@ export type HostStackParamList = {
   RoomDetail: undefined;
 }
 export type HostStack = {
+  revenueDashboard: undefined;
   VoucherList: undefined;
   FormVoucher: { isEdit: boolean, voucher: Voucher | null };
   // CCCDScanner: undefined;
