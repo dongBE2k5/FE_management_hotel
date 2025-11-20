@@ -17,16 +17,27 @@ export default function DashboardScreen() {
     const navigation = useNavigation();
 
     const handlePress = (featureName) => {
+        // Sau này bạn có thể switch case ở đây để navigate
+        if (featureName === 'Danh sách nhân viên') {
+            // navigation.navigate('EmployeeListScreen'); 
+            Alert.alert("Thông báo", "Chuyển đến màn hình danh sách nhân viên");
+            return;
+        }
         Alert.alert("Chức năng đang phát triển", `Màn hình "${featureName}" sẽ được cập nhật sớm.`);
     };
 
     return (
         <View style={styles.container}>
-            <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false} 
+            <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.scrollViewContent}
             >
+                <DashboardButton
+                    icon="people-outline"
+                    title="Nhân viên"
+                    onPress={() => navigation.navigate('ListStaffHotel')} // Thay 'EmployeeList' bằng tên màn hình thực tế của bạn
+                />
                 <DashboardButton
                     icon="stats-chart-outline"
                     title="Doanh thu"
@@ -42,7 +53,10 @@ export default function DashboardScreen() {
                     title="Lịch sử"
                     onPress={() => handlePress('Lịch sử thao tác')}
                 />
-                {/* Bạn có thể dễ dàng thêm các nút khác ở đây */}
+
+                {/* ✨ Nút Nhân viên mới thêm ✨ */}
+
+
             </ScrollView>
         </View>
     );

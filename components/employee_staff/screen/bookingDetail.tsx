@@ -186,7 +186,7 @@ export default function BookingDetail() {
     const isCheckedOut = bookingData?.status === 'CHECK_OUT';
     
     // ✨ BIẾN MỚI: Kiểm tra đã thanh toán 100% chưa
-    const isPaid = bookingData?.status === 'DA_THANH_TOAN';
+    const isPaid = bookingData?.status === 'DA_THANH_TOAN'|| 'DA_COC';
 
     const serviceTotal = (bookingData?.services ?? []).reduce((total, service) => total + (service.price || 0), 0);
 
@@ -248,14 +248,14 @@ export default function BookingDetail() {
             <SuccessModal visible={showSuccess} message="Check-in thành công!" onClose={() => setShowSuccess(false)} />
             <Modal visible={showMiniBar} animationType="slide"><MiniBarScreen onClose={() => setShowMiniBar(false)} /></Modal>
 
-            <View style={styles.actionRow}>
+            {/* <View style={styles.actionRow}>
                 <TouchableOpacity style={styles.actionBtn} onPress={() => setShowMiniBar(true)}>
                     <Text style={styles.actionText}>Thêm dịch vụ</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.actionBtn, styles.editBtn]}>
                     <Text style={styles.actionText}>Chỉnh sửa</Text>
                 </TouchableOpacity>
-            </View>
+            </View> */}
 
             <View style={styles.card}>
                 <View style={styles.customerRow}>
@@ -315,7 +315,7 @@ export default function BookingDetail() {
                 <View style={[styles.rowBetween, styles.totalRow]}><Text style={styles.totalLabel}>Tổng cộng</Text><Text style={styles.totalPrice}>{bookingData.pricing.room_total.toLocaleString('vi-VN')} ₫</Text></View>
             </View>
 
-            <View style={styles.card}>
+            {/* <View style={styles.card}>
                 <Text style={styles.cardTitle}>Thông tin dịch vụ</Text>
                 <View>
                     <View style={[styles.tableRow, styles.tableHeaderRow]}>
@@ -331,7 +331,7 @@ export default function BookingDetail() {
                     <Text style={styles.totalLabel}>Tổng cộng</Text>
                     <Text style={styles.totalPrice}>{serviceTotal.toLocaleString('vi-VN')} ₫</Text>
                 </View>
-            </View>
+            </View> */}
         </ScrollView>
     );
 }
