@@ -30,7 +30,7 @@ export default function DashboardScreen() {
                 <DashboardButton
                     icon="stats-chart-outline"
                     title="Doanh thu"
-                    onPress={() => handlePress('Báo cáo Doanh thu')}
+                    onPress={() => navigation.navigate('revenueDashboard')}
                 />
                 <DashboardButton
                     icon="git-network-outline"

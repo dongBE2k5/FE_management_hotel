@@ -249,12 +249,12 @@ export default function BookingDetail() {
             <Modal visible={showMiniBar} animationType="slide"><MiniBarScreen onClose={() => setShowMiniBar(false)} /></Modal>
 
             <View style={styles.actionRow}>
-                <TouchableOpacity style={styles.actionBtn} onPress={() => setShowMiniBar(true)}>
+                {/* <TouchableOpacity style={styles.actionBtn} onPress={() => setShowMiniBar(true)}>
                     <Text style={styles.actionText}>Thêm dịch vụ</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.actionBtn, styles.editBtn]}>
                     <Text style={styles.actionText}>Chỉnh sửa</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
             </View>
 
             <View style={styles.card}>
@@ -304,7 +304,7 @@ export default function BookingDetail() {
                 <Text style={styles.cardTitle}>Thông tin phòng</Text>
                 <Text style={styles.roomName}>{bookingData.room.name} <Text style={styles.roomTag}>: {bookingData.room.number}</Text></Text>
                 <View style={styles.rowBetween}><Text>📅 Check-in: {bookingData.room.checkin_date}</Text><Text>📅 Check-out: {bookingData.room.checkout_date}</Text></View>
-                <View style={styles.rowBetween}><Text>🛏️ Số đêm: {bookingData.room.nights} đêm</Text><Text>👥 Số người: {bookingData.room.guests} người</Text></View>
+                <View style={styles.rowBetween}><Text>🛏️ Số đêm: {bookingData.room.nights} đêm</Text></View>
             </View>
 
             <View style={styles.card}>

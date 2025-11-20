@@ -15,6 +15,7 @@ import { HostStack } from "@/types/navigation";
 
 import BookingDetail from "@/components/employee_staff/screen/bookingDetail";
 import Checkout from "@/components/employee_staff/screen/checkOut";
+import RevenueDashboard from "@/components/host/screen/bookings/RevenueDashboard";
 import { useFocusEffect } from "expo-router";
 
 const Stack = createStackNavigator<HostStack>();
@@ -78,6 +79,7 @@ useFocusEffect(
             <Stack.Screen name="CreateHotel" component={CreateHotel} />
             <Stack.Screen name="bookingDetail" component={BookingDetail} />
             <Stack.Screen name="checkout" component={Checkout} />
+            <Stack.Screen name="revenueDashboard" component={RevenueDashboard} />
           </>
         {/* {isHost ? (
           // 🏨 Nếu là host => hiển thị các màn hình quản lý khách sạn

@@ -81,7 +81,7 @@ export default function ListRoom() {
                         console.error("Hotel ID không hợp lệ.");
                         return;
                     }
-                    const bookings = await getAllBookingsByHotelId(Number(1));
+                    const bookings = await getAllBookingsByHotelId(Number(hotelId));
                     console.log("BOOKINGS", bookings);
 
                     const sortedData = bookings.sort(
