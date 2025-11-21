@@ -71,7 +71,10 @@ const getBookingsByUserId = async (userId: number): Promise<BookingResponse[]> =
 const getAllBookingsByHotelId = async (hotelId: number): Promise<BookingResponse[]> => {
     try {
         const response = await fetch(`${BaseUrl}/bookings/hotel/${hotelId}`);
-        return response.json();
+        if (!response.ok || !response) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
     } catch (error) {
         console.error(" Lỗi khi lấy danh sách đặt phòng:", error);
         return [];

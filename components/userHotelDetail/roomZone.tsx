@@ -13,11 +13,17 @@ export default function RoomZone({ utilityOfTypeRoom, roomTypeImage }: RoomZoneP
         console.log("utilityOfTypeRoomImage: ", urlImage + utilityOfTypeRoom[0].imageUrl
         );
     }
-    console.log("roomTypeImage: " + roomTypeImage);
+    console.log("roomTypeImage: " + JSON.stringify(roomTypeImage));
+
+    const configRoomType = {
+        1: "Phòng đơn",
+        2: "Phòng đôi",
+        3: "Phòng gia đình",
+    }
 
     return (
         <View style={{ backgroundColor: '#EFEFEF', borderRadius: 15, width: '100%', height: 400 }}>
-            <Text style={{ color: '#275DE5', fontWeight: 'bold', margin: 10, fontSize: 20, marginLeft: 10 }}>Phòng có sẵn</Text>
+            <Text style={{ color: '#275DE5', fontWeight: 'bold', margin: 10, fontSize: 20, marginLeft: 10 }}>Phòng có sẵn:   {configRoomType[roomTypeImage[0].roomTypeId as keyof typeof configRoomType]} </Text>
             <View style={{ flexDirection: 'row', backgroundColor: 'white', width: '100%', padding: 10 }}>
                 <ScrollView
                     horizontal
