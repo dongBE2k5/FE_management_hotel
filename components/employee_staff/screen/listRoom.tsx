@@ -353,20 +353,7 @@ export default function ListRoom() {
                 contentContainerStyle={{ paddingHorizontal: 15, paddingTop: 10 }}
                 ListEmptyComponent={<View style={styles.emptyContainer}><Text style={styles.emptyText}>Không có booking nào.</Text></View>}
             />
-             <TouchableOpacity 
-                style={styles.bottomActionButton} 
-                onPress={() => {
-                    // Route này không có trong EmployeeStackParamList, cần thêm vào hoặc dùng route khác
-                    console.log('Navigate to ListStaffHotel');
-                    navigation.navigate("ListStaffHotel");
-                }}
-                activeOpacity={0.8}
-            >
-                <View style={styles.bottomButtonContent}>
-                    <Ionicons name="people-outline" size={24} color="#fff" />
-                    <Text style={styles.bottomButtonContent}>Danh Sách Nhân Viên</Text>
-                </View>
-            </TouchableOpacity>
+           
 
         </SafeAreaView>
     );

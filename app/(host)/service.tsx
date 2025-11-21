@@ -5,7 +5,7 @@ import { Utility, UtilityItem } from '@/models/Utility/Utility';
 import { createUtilityOfHotel, deleteUtilityOfHotel, getUtilityByHotel, getUtilityOfHotelById, updateUtilityIsUsed, updateUtilityOfHotel, updateUtilityOfHotelById } from '@/service/HotelUtilityAPI';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from "expo-image-picker";
-import { useFocusEffect, useRouter } from 'expo-router';
+import { router, useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Image, Modal, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
